@@ -26,31 +26,14 @@ const TODEPOND_RAINBOW_COLOURS = TODEPOND_COLOURS.slice(0, -4)
 // CELL //
 //======//
 const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
-	const cell = {x, y, width, height, colour}
-	return cell
-}
-
-const splitCell = (cell, width, height, colours = []) => {
-	
-	const cellRight = cell.x + cell.width
-	const cellBottom = cell.y + cell.height
-
-	const childWidth = cell.width / width
-	const childHeight = cell.height / height
-
-	const children = []
-
-	let i = 0
-	for (let x = cell.x; x < cellRight; x += childWidth) {
-		for (let y = cell.y; y < cellBottom; y += childHeight) {
-			const colour = colours[i] !== undefined? colours[i] : cell.colour
-			const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
-			children.push(child)
-			i++
-		}
+	const neighbours = {
+		left: undefined,
+		right: undefined,
+		up: undefined,
+		down: undefined,
 	}
-
-	return children
+	const cell = {x, y, width, height, colour, neighbours}
+	return cell
 }
 
 // TODO: make this quicker (it is slow)
@@ -69,8 +52,8 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: [makeCell({colour: 888})],
-	speed: 300,
+	cells: [makeCell({colour: 777})],
+	aer: 0.15,
 	ticker: () => {},
 }
 
@@ -113,13 +96,15 @@ on.load(() => {
 	}
 	
 	FIRE.randomSpotEvents = () => {
-		for (let i = 0; i < state.speed; i++) {
+		const eventCount = state.cells.length * state.aer
+		for (let i = 0; i < eventCount; i++) {
 			fireRandomSpotEvent()
 		}
 	}
 
 	FIRE.randomCellEvents = () => {
-		for (let i = 0; i < state.speed; i++) {
+		const eventCount = state.cells.length * state.aer
+		for (let i = 0; i < eventCount; i++) {
 			fireRandomCellEvent()
 		}
 	}
@@ -144,34 +129,91 @@ on.load(() => {
 	// this function is currently full of debug code
 	const fireCellEvent = (cell, id) => {
 
+		//DEBUG_FIZZ(cell, id)
+		DEBUG_WORLD(cell, id)
+		
+	}
+
+	// start on 888
+	const DEBUG_WORLD = (cell, id) => {
+		if (cell.colour < 111) return
+		cell.colour -= 111
+		const width = 2
+		const height = 2
+		const children = splitCell(cell, id, width, height)
+		for (const child of children) {
+			drawCell(child)
+		}
+	}
+
+	// start on 888
+	const DEBUG_FIZZ = (cell, id) => {
+
 		let width = 1
 		let height = 1
 
-		// DEBUG
 		if (cell.colour >= 100) {
 			cell.colour -= 100
 			width = 2
 			height = 2
 		}
 
-		const children = splitCell(cell, width, height)
+		const children = splitCell(cell, id, width, height)
 
-		// DEBUG
 		for (const child of children) {
 			const r = child.colour - (child.colour % 100)
 			const gb = Random.Uint8 % 100
 			child.colour = r + gb
-		}
-
-		replaceCell(cell, id, children)
-		
-	}
-	
-	const replaceCell = (cell, id, replacement) => {
-		state.cells.splice(id, 1, ...replacement)
-		for (const child of replacement) {
 			drawCell(child)
 		}
+
+	}
+	
+	const splitCell = (cell, id, width, height) => {
+	
+		const cellRight = cell.x + cell.width
+		const cellBottom = cell.y + cell.height
+
+		const childWidth = cell.width / width
+		const childHeight = cell.height / height
+
+		const children = []
+
+		let i = 0
+		for (let x = cell.x; x < cellRight; x += childWidth) {
+			for (let y = cell.y; y < cellBottom; y += childHeight) {
+				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
+				children.push(child)
+				i++
+			}
+		}
+
+		// Link neighbours
+		let j = 0
+		for (let x = 0; x < width; x++) {
+			for (let y = 0; y < height; y++) {
+				const child = children[j]
+
+				if (x === 0) child.neighbours.left = cell.left
+				else child.neighbours.left = children[j-width]
+
+				if (y === 0) child.neighbours.top = cell.top
+				else child.neighbours.top = children[j-1]
+
+				if (x === width-1) child.neighbours.right = cell.right
+				else child.neighbours.right = children[j+width]
+
+				if (y === height-1) child.neighbours.bottom = cell.bottom
+				else child.neighbours.bottom = children[j+1]
+
+				j++
+			}
+		}
+		
+		// Insert children
+		state.cells.splice(id, 1, ...children)
+
+		return children
 	}
 	
 	state.fire = FIRE.randomSpotEvents
