@@ -26,21 +26,36 @@ const TODEPOND_RAINBOW_COLOURS = TODEPOND_COLOURS.slice(0, -4)
 // CELL //
 //======//
 const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
-	const cell = {x, y, width, height, colour}
+	
+	const left = x
+	const right = x+width
+	const top = y
+	const bottom = y+height
+
+	const sections = []
+
+	const cell = {x, y, width, height, colour, left, right, top, bottom, sections}
 	return cell
+
 }
 
 // TODO: make this quicker (it is slow)
 const pickCell = (x, y) => {
-	for (let i = 0; i < state.cells.length; i++) {
-		const cell = state.cells[i]
-		if (cell.x > x) continue
-		if (cell.y > y) continue
-		if (cell.x+cell.width <= x) continue
-		if (cell.y+cell.height <= y) continue
-		return [cell, i]
+
+	const gridX = Math.floor(x * GRID_SIZE)
+	const gridY = Math.floor(y * GRID_SIZE)
+	const sectionId = gridX*GRID_SIZE + gridY
+	const section = state.grid[sectionId]
+
+	for (const cell of section.values()) {
+		if (cell.left > x) continue
+		if (cell.top > y) continue
+		if (cell.right <= x) continue
+		if (cell.bottom <= y) continue
+		return cell
 	}
-	return [undefined, undefined]
+
+	return undefined
 }
 
 //=======//
@@ -48,23 +63,20 @@ const pickCell = (x, y) => {
 //=======//
 const state = {
 
-	cells: [makeCell({colour: 777})],
+	cells: [],
 	grid: [],
 	ticker: () => {},
 	
 	speed: {
 		count: 200,
 		dynamic: true,
-		aer: 0.1,
+		aer: 1.0,
 	},
 
 	brush: {
 		colour: Colour.Yellow.splash,
-		//colour: 333,
 	},
 }
-
-const FIRE = {}
 
 //======//
 // GRID //
@@ -72,7 +84,7 @@ const FIRE = {}
 // The grid is basically the screen cut up into smaller sections
 // It helps to speed up cell lookup because it gives us a smaller area to search through
 // Note: Cells can be in multiple sections if they are big enough :)
-const GRID_SIZE = 10
+const GRID_SIZE = 100
 for (let x = 0; x < GRID_SIZE; x++) {
 	for (let y = 0; y < GRID_SIZE; y++) {
 		const section = new Set()
@@ -80,9 +92,37 @@ for (let x = 0; x < GRID_SIZE; x++) {
 	}
 }
 
+const cacheCell = (cell) => {
+	const left = Math.floor(cell.left * GRID_SIZE)
+	const top = Math.floor(cell.top * GRID_SIZE)
+	const right = (cell.right * GRID_SIZE)
+	const bottom = (cell.bottom * GRID_SIZE)
+
+	
+	for (let x = left; x < right; x++) {
+		for (let y = top; y < bottom; y++) {
+			const i = x*GRID_SIZE + y
+			const section = state.grid[i]
+			if (section === undefined) {
+				print(left, top)
+				print(i, x, y)
+				continue
+			}
+			section.add(cell)
+			cell.sections.push(section)			
+			
+		}
+	}
+}
+
+
 //=======//
 // SETUP //
 //=======//
+const world = makeCell({colour: 777})
+cacheCell(world)
+state.cells.push(world)
+
 on.load(() => {
 
 	const show = Show.start({paused: true})
@@ -97,7 +137,6 @@ on.load(() => {
 		}
 	}
 
-	const CELL_OVERFIT = 1.1
 	const drawCell = (cell) => {
 		const colour = Colour.splash(cell.colour)
 		if (context.fillStyle !== colour) {
@@ -125,7 +164,7 @@ on.load(() => {
 		x /= canvas.width
 		y /= canvas.height
 
-		const [cell] = pickCell(x, y)
+		const cell = pickCell(x, y)
 		if (cell === undefined) return
 		cell.colour = state.brush.colour
 		drawCell(cell)
@@ -141,6 +180,7 @@ on.load(() => {
 		state.fire()
 	}
 	
+	const FIRE = {}
 	FIRE.randomSpotEvents = () => {
 		const count = state.speed.dynamic? state.speed.aer * state.cells.length : state.speed.count
 		for (let i = 0; i < count; i++) {
@@ -158,7 +198,7 @@ on.load(() => {
 	const fireRandomCellEvent = () => {
 		const id = Random.Uint32 % state.cells.length
 		const cell = state.cells[id]
-		fireCellEvent(cell, id)
+		fireCellEvent(cell)
 	}
 
 	const fireRandomSpotEvent = () => {
@@ -168,30 +208,30 @@ on.load(() => {
 	}
 
 	const fireSpotEvent = (x, y) => {
-		const [cell, id] = pickCell(x, y)
-		fireCellEvent(cell, id)
+		const cell = pickCell(x, y)
+		fireCellEvent(cell)
 	}
 
 	// this function is currently full of debug code
-	const fireCellEvent = (cell, id) => {
+	const fireCellEvent = (cell) => {
 
 		const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
-			return behave(cell, id)
+			return behave(cell)
 		}
 
-		//DEBUG_FIZZ(cell, id)
-		DEBUG_WORLD(cell, id)
-		//DEBUG_DRIFT(cell, id)
+		//DEBUG_FIZZ(cell)
+		DEBUG_WORLD(cell)
+		//DEBUG_DRIFT(cell)
 		
 	}
 	
-	state.fire = FIRE.randomCellEvents
+	state.fire = FIRE.randomSpotEvents
 	
 	//=======//
 	// SPLIT //
 	//=======//
-	const splitCell = (cell, id, width, height) => {
+	const splitCell = (cell, width, height) => {
 	
 		const cellRight = cell.x + cell.width
 		const cellBottom = cell.y + cell.height
@@ -205,13 +245,18 @@ on.load(() => {
 		for (let x = cell.x; x < cellRight; x += childWidth) {
 			for (let y = cell.y; y < cellBottom; y += childHeight) {
 				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
+				cacheCell(child)
 				children.push(child)
 				i++
 			}
 		}
 		
 		// Insert children
+		const id = state.cells.indexOf(cell)
 		state.cells.splice(id, 1, ...children)
+		for (const section of cell.sections) {
+			section.delete(cell)
+		}
 
 		return children
 	}
@@ -222,9 +267,9 @@ on.load(() => {
 	//=========//
 	const BEHAVE = new Map()
 
-	BEHAVE.set(Colour.Yellow.splash, (cell, id) => {
+	BEHAVE.set(Colour.Yellow.splash, (cell) => {
 				
-		const [down, downId] = pickCell(cell.x, cell.y + cell.height)
+		const down = pickCell(cell.x, cell.y + cell.height)
 		if (down === undefined) return
 		if (down.colour === Colour.Black.splash) {
 			down.colour = Colour.Yellow.splash
@@ -235,19 +280,19 @@ on.load(() => {
 
 	})
 
-	const DEBUG_WORLD = (cell, id) => {
+	const DEBUG_WORLD = (cell) => {
 		if (cell.colour < 111) return
 		cell.colour -= 111
 		drawCell(cell)
 		const width = 2
 		const height = 2
-		const children = splitCell(cell, id, width, height)
+		const children = splitCell(cell, width, height)
 		for (const child of children) {
 			drawCell(child)
 		}
 	}
 
-	const DEBUG_FIZZ = (cell, id) => {
+	const DEBUG_FIZZ = (cell) => {
 
 		let width = 1
 		let height = 1
@@ -258,7 +303,7 @@ on.load(() => {
 			height = 2
 		}
 
-		const children = splitCell(cell, id, width, height)
+		const children = splitCell(cell, width, height)
 
 		for (const child of children) {
 			const r = child.colour - (child.colour % 100)
@@ -275,7 +320,7 @@ on.load(() => {
 		return number
 	}
 
-	const DEBUG_DRIFT = (cell, id) => {
+	const DEBUG_DRIFT = (cell) => {
 
 		const width = 2
 		const height = 2
@@ -295,7 +340,7 @@ on.load(() => {
 
 		cell.colour = r+g+b
 		
-		const children = splitCell(cell, id, width, height)
+		const children = splitCell(cell, width, height)
 		for (const child of children) {
 			drawCell(child)
 		}
