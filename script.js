@@ -49,12 +49,13 @@ const pickCell = (x, y) => {
 const state = {
 
 	cells: [makeCell({colour: 777})],
+	grid: [],
 	ticker: () => {},
 	
 	speed: {
 		count: 200,
 		dynamic: true,
-		aer: 1.0,
+		aer: 0.1,
 	},
 
 	brush: {
@@ -64,6 +65,20 @@ const state = {
 }
 
 const FIRE = {}
+
+//======//
+// GRID //
+//======//
+// The grid is basically the screen cut up into smaller sections
+// It helps to speed up cell lookup because it gives us a smaller area to search through
+// Note: Cells can be in multiple sections if they are big enough :)
+const GRID_SIZE = 10
+for (let x = 0; x < GRID_SIZE; x++) {
+	for (let y = 0; y < GRID_SIZE; y++) {
+		const section = new Set()
+		state.grid.push(section)
+	}
+}
 
 //=======//
 // SETUP //
@@ -82,6 +97,7 @@ on.load(() => {
 		}
 	}
 
+	const CELL_OVERFIT = 1.1
 	const drawCell = (cell) => {
 		const colour = Colour.splash(cell.colour)
 		if (context.fillStyle !== colour) {
@@ -139,7 +155,6 @@ on.load(() => {
 		}
 	}
 	
-
 	const fireRandomCellEvent = () => {
 		const id = Random.Uint32 % state.cells.length
 		const cell = state.cells[id]
