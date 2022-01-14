@@ -52,8 +52,9 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: [makeCell({colour: 777})],
-	aer: 0.15,
+	cells: [makeCell({colour: 555})],
+	aer: 0.003,
+	speed: 200,
 	ticker: () => {},
 }
 
@@ -78,7 +79,9 @@ on.load(() => {
 
 	const drawCell = (cell) => {
 		const colour = Colour.splash(cell.colour)
-		context.fillStyle = colour
+		if (context.fillStyle !== colour) {
+			context.fillStyle = colour
+		}
 
 		const x = canvas.width * cell.x
 		const y = canvas.height * cell.y
@@ -92,19 +95,18 @@ on.load(() => {
 	//======//
 	drawCells()
 	show.tick = () => {
+		//state.speed = state.cells.length * state.aer
 		state.fire()
 	}
 	
 	FIRE.randomSpotEvents = () => {
-		const eventCount = state.cells.length * state.aer
-		for (let i = 0; i < eventCount; i++) {
+		for (let i = 0; i < state.speed; i++) {
 			fireRandomSpotEvent()
 		}
 	}
 
 	FIRE.randomCellEvents = () => {
-		const eventCount = state.cells.length * state.aer
-		for (let i = 0; i < eventCount; i++) {
+		for (let i = 0; i < state.speed; i++) {
 			fireRandomCellEvent()
 		}
 	}
@@ -130,7 +132,8 @@ on.load(() => {
 	const fireCellEvent = (cell, id) => {
 
 		//DEBUG_FIZZ(cell, id)
-		DEBUG_WORLD(cell, id)
+		//DEBUG_WORLD(cell, id)
+		DEBUG_DRIFT(cell, id)
 		
 	}
 
@@ -138,6 +141,7 @@ on.load(() => {
 	const DEBUG_WORLD = (cell, id) => {
 		if (cell.colour < 111) return
 		cell.colour -= 111
+		drawCell(cell)
 		const width = 2
 		const height = 2
 		const children = splitCell(cell, id, width, height)
@@ -164,6 +168,39 @@ on.load(() => {
 			const r = child.colour - (child.colour % 100)
 			const gb = Random.Uint8 % 100
 			child.colour = r + gb
+			drawCell(child)
+		}
+
+	}
+
+	const clamp = (number, min, max) => {
+		if (number < min) return min
+		if (number > max) return max
+		return number
+	}
+
+	const DEBUG_DRIFT = (cell, id) => {
+
+		const width = 2
+		const height = 2
+
+		const gb = cell.colour % 100
+		let b = gb % 10
+		let r = cell.colour - gb
+		let g = gb - b
+		
+		r += oneIn(2)? 100 : -100
+		g += oneIn(2)? 10 : -10
+		b += oneIn(2)? 1 : -1
+
+		r = clamp(r, 0, 900)
+		g = clamp(g, 0, 90)
+		b = clamp(b, 0, 9)
+
+		cell.colour = r+g+b
+		
+		const children = splitCell(cell, id, width, height)
+		for (const child of children) {
 			drawCell(child)
 		}
 
