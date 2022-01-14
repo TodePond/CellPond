@@ -38,19 +38,21 @@ Show.start = ({interval = 1000 / 60, tick = () => {}, overload = 1, paused = fal
 	const wrappedTick = () => {
 		
 		// Interval changed
-		if (show.interval !== previousInterval) {
+		/*if (show.interval !== previousInterval) {
 			clearInterval(show.id)
 			show.id = setInterval(wrappedTick, show.interval)
 			previousTick = show.interval
-		}
+		}*/
 		
 		for (let i = 0; i < show.overload; i++) {
 			if (!show.paused) show.tick()
 		}
+		requestAnimationFrame(wrappedTick)
 		
 	}
 	
-	show.id = setInterval(wrappedTick, interval)
+	//show.id = setInterval(wrappedTick, interval)
+	requestAnimationFrame(wrappedTick)
 	
 	
 	return show

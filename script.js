@@ -69,7 +69,7 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: [makeCell({colour: 777})],
+	cells: [makeCell({colour: 888})],
 	speed: 1000,
 	ticker: () => {},
 }
@@ -81,7 +81,7 @@ const FIRE = {}
 //=======//
 on.load(() => {
 
-	const show = Show.start({interval: 1000 / 60, paused: true})
+	const show = Show.start({paused: true})
 	const {context, canvas} = show
 
 	//======//
@@ -125,7 +125,9 @@ on.load(() => {
 	}
 
 	const fireRandomCellEvent = () => {
-
+		const id = Random.Uint32 % state.cells.length
+		const cell = state.cells[id]
+		fireCellEvent(cell, id)
 	}
 
 	const fireRandomSpotEvent = () => {
