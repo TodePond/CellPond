@@ -26,13 +26,7 @@ const TODEPOND_RAINBOW_COLOURS = TODEPOND_COLOURS.slice(0, -4)
 // CELL //
 //======//
 const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
-	const neighbours = {
-		left: undefined,
-		right: undefined,
-		up: undefined,
-		down: undefined,
-	}
-	const cell = {x, y, width, height, colour, neighbours}
+	const cell = {x, y, width, height, colour}
 	return cell
 }
 
@@ -46,16 +40,27 @@ const pickCell = (x, y) => {
 		if (cell.y+cell.height <= y) continue
 		return [cell, i]
 	}
+	return [undefined, undefined]
 }
 
 //=======//
 // STATE //
 //=======//
 const state = {
+
 	cells: [makeCell({colour: 777})],
-	aer: 0.05,
-	speed: 200,
 	ticker: () => {},
+	
+	speed: {
+		count: 200,
+		dynamic: true,
+		aer: 1.0,
+	},
+
+	brush: {
+		colour: Colour.Yellow.splash,
+		//colour: 333,
+	},
 }
 
 const FIRE = {}
@@ -90,26 +95,50 @@ on.load(() => {
 		context.fillRect(x, y, width, height)
 	}
 
+	//========//
+	// CURSOR //
+	//========//
+	const updateCursor = () => {
+
+		if (!Mouse.Left) return
+		let [x, y] = Mouse.position
+		if (x === undefined || y === undefined) {
+			return
+		}
+
+		x /= canvas.width
+		y /= canvas.height
+
+		const [cell] = pickCell(x, y)
+		if (cell === undefined) return
+		cell.colour = state.brush.colour
+		drawCell(cell)
+	}
+
 	//======//
 	// TICK //
 	//======//
 	drawCells()
 	show.tick = () => {
-		state.speed = state.cells.length * state.aer
+		updateCursor()
+		if (show.paused) return
 		state.fire()
 	}
 	
 	FIRE.randomSpotEvents = () => {
-		for (let i = 0; i < state.speed; i++) {
+		const count = state.speed.dynamic? state.speed.aer * state.cells.length : state.speed.count
+		for (let i = 0; i < count; i++) {
 			fireRandomSpotEvent()
 		}
 	}
 
 	FIRE.randomCellEvents = () => {
-		for (let i = 0; i < state.speed; i++) {
+		const count = state.speed.dynamic? state.speed.aer * state.cells.length : state.speed.count
+		for (let i = 0; i < count; i++) {
 			fireRandomCellEvent()
 		}
 	}
+	
 
 	const fireRandomCellEvent = () => {
 		const id = Random.Uint32 % state.cells.length
@@ -131,13 +160,66 @@ on.load(() => {
 	// this function is currently full of debug code
 	const fireCellEvent = (cell, id) => {
 
+		const behave = BEHAVE.get(cell.colour)
+		if (behave !== undefined) {
+			return behave(cell, id)
+		}
+
 		//DEBUG_FIZZ(cell, id)
 		DEBUG_WORLD(cell, id)
 		//DEBUG_DRIFT(cell, id)
 		
 	}
+	
+	state.fire = FIRE.randomCellEvents
+	
+	//=======//
+	// SPLIT //
+	//=======//
+	const splitCell = (cell, id, width, height) => {
+	
+		const cellRight = cell.x + cell.width
+		const cellBottom = cell.y + cell.height
 
-	// start on 888
+		const childWidth = cell.width / width
+		const childHeight = cell.height / height
+
+		const children = []
+
+		let i = 0
+		for (let x = cell.x; x < cellRight; x += childWidth) {
+			for (let y = cell.y; y < cellBottom; y += childHeight) {
+				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
+				children.push(child)
+				i++
+			}
+		}
+		
+		// Insert children
+		state.cells.splice(id, 1, ...children)
+
+		return children
+	}
+	
+
+	//=========//
+	// ELEMENT //
+	//=========//
+	const BEHAVE = new Map()
+
+	BEHAVE.set(Colour.Yellow.splash, (cell, id) => {
+				
+		const [down, downId] = pickCell(cell.x, cell.y + cell.height)
+		if (down === undefined) return
+		if (down.colour === Colour.Black.splash) {
+			down.colour = Colour.Yellow.splash
+			cell.colour = Colour.Black.splash
+			drawCell(down)
+			drawCell(cell)
+		}
+
+	})
+
 	const DEBUG_WORLD = (cell, id) => {
 		if (cell.colour < 111) return
 		cell.colour -= 111
@@ -150,7 +232,6 @@ on.load(() => {
 		}
 	}
 
-	// start on 888
 	const DEBUG_FIZZ = (cell, id) => {
 
 		let width = 1
@@ -205,54 +286,5 @@ on.load(() => {
 		}
 
 	}
-	
-	const splitCell = (cell, id, width, height) => {
-	
-		const cellRight = cell.x + cell.width
-		const cellBottom = cell.y + cell.height
-
-		const childWidth = cell.width / width
-		const childHeight = cell.height / height
-
-		const children = []
-
-		let i = 0
-		for (let x = cell.x; x < cellRight; x += childWidth) {
-			for (let y = cell.y; y < cellBottom; y += childHeight) {
-				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
-				children.push(child)
-				i++
-			}
-		}
-
-		// Link neighbours
-		let j = 0
-		for (let x = 0; x < width; x++) {
-			for (let y = 0; y < height; y++) {
-				const child = children[j]
-
-				if (x === 0) child.neighbours.left = cell.left
-				else child.neighbours.left = children[j-width]
-
-				if (y === 0) child.neighbours.top = cell.top
-				else child.neighbours.top = children[j-1]
-
-				if (x === width-1) child.neighbours.right = cell.right
-				else child.neighbours.right = children[j+width]
-
-				if (y === height-1) child.neighbours.bottom = cell.bottom
-				else child.neighbours.bottom = children[j+1]
-
-				j++
-			}
-		}
-		
-		// Insert children
-		state.cells.splice(id, 1, ...children)
-
-		return children
-	}
-	
-	state.fire = FIRE.randomSpotEvents
 
 })

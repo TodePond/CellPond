@@ -45,7 +45,7 @@ Show.start = ({interval = 1000 / 60, tick = () => {}, overload = 1, paused = fal
 		}*/
 		
 		for (let i = 0; i < show.overload; i++) {
-			if (!show.paused) show.tick()
+			show.tick()
 		}
 		requestAnimationFrame(wrappedTick)
 		
