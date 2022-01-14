@@ -55,7 +55,8 @@ const splitCell = (cell, width, height, colours = []) => {
 
 // TODO: make this quicker (it is slow)
 const pickCell = (x, y) => {
-	for (const cell of state.cells.values()) {
+	const cells = state.cells.values()
+	for (const cell of cells) {
 		if (cell.x > x) continue
 		if (cell.y > y) continue
 		if (cell.x+cell.width <= x) continue
@@ -69,9 +70,12 @@ const pickCell = (x, y) => {
 //=======//
 const state = {
 	cells: new Set(),
+	speed: 1000,
+	ticker: () => {},
 }
 
-state.cells.add(makeCell({colour: 999}))
+state.cells.add(makeCell({colour: 777}))
+const TICKER = {}
 
 //=======//
 // SETUP //
@@ -104,25 +108,40 @@ on.load(() => {
 	//======//
 	// TICK //
 	//======//
-	const EVENT_COUNT = 20
-	
 	drawCells()
 	show.tick = () => {
-
-		for (let i = 0; i < EVENT_COUNT; i++) {
-			fireRandomEvent()
+		state.ticker()
+	}
+	
+	TICKER.fireRandomSpotEvents = () => {
+		for (let i = 0; i < state.speed; i++) {
+			fireRandomSpotEvent()
 		}
-		
 	}
 
-	const fireRandomEvent = () => {
+	TICKER.fireRandomCellEvents = () => {
+		for (let i = 0; i < state.speed; i++) {
+			fireRandomCellEvent()
+		}
+	}
+
+	const fireRandomCellEvent = () => {
+
+	}
+
+	const fireRandomSpotEvent = () => {
 		const x = Math.random()
 		const y = Math.random()
-		fireEvent(x, y)
+		const cell = pickCell(x, y)
+		fireSpotEvent(x, y)
 	}
 
-	const fireEvent = (x, y) => {
+	const fireSpotEvent = (x, y) => {
 		const cell = pickCell(x, y)
+		fireCellEvent(cell)
+	}
+
+	const fireCellEvent = (cell) => {
 
 		// BELOW IS DEBUG STUFF
 		let w = 1
@@ -133,6 +152,7 @@ on.load(() => {
 			h = 2
 			w = 2
 		}
+		else return
 
 		const children = splitCell(cell, w, h)
 		state.cells.delete(cell)
@@ -146,7 +166,7 @@ on.load(() => {
 		}
 
 	}
-
 	
+	state.ticker = TICKER.fireRandomSpotEvents
 
 })
