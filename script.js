@@ -69,7 +69,7 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: [makeCell({colour: Colour.Green.splash})],
+	cells: [makeCell({colour: 888})],
 	speed: 300,
 	ticker: () => {},
 }
@@ -147,41 +147,21 @@ on.load(() => {
 		let width = 1
 		let height = 1
 
-		/*if (cell.colour >= 111) {
-			cell.colour -= 111
-			h = 2
-			w = 2
-		}
-		else return*/
-
-		/*w = 2
-		h = 2*/
-
-		/*if (cell.colour >= 100) {
+		// DEBUG
+		if (cell.colour >= 100) {
 			cell.colour -= 100
 			width = 2
 			height = 2
-		}*/
-
-		if (cell.colour !== Colour.Green.splash) return
-
-		width = 2
-		height = 2
+		}
 
 		const children = splitCell(cell, width, height)
 
-		children[0].colour = Colour.Blue.splash
-		children[1].colour = Colour.Green.splash
-		children[2].colour = Colour.Green.splash
-		children[3].colour = Colour.Green.splash
-
-		/*for (const child of children) {
-			//child.colour = Random.Uint32 % 500
-			
+		// DEBUG
+		for (const child of children) {
 			const r = child.colour - (child.colour % 100)
 			const gb = Random.Uint8 % 100
 			child.colour = r + gb
-		}*/
+		}
 
 		replaceCell(cell, id, children)
 		
