@@ -55,13 +55,13 @@ const splitCell = (cell, width, height, colours = []) => {
 
 // TODO: make this quicker (it is slow)
 const pickCell = (x, y) => {
-	const cells = state.cells.values()
-	for (const cell of cells) {
+	for (let i = 0; i < state.cells.length; i++) {
+		const cell = state.cells[i]
 		if (cell.x > x) continue
 		if (cell.y > y) continue
 		if (cell.x+cell.width <= x) continue
 		if (cell.y+cell.height <= y) continue
-		return cell
+		return [cell, i]
 	}
 }
 
@@ -69,13 +69,12 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: new Set(),
+	cells: [makeCell({colour: 777})],
 	speed: 1000,
 	ticker: () => {},
 }
 
-state.cells.add(makeCell({colour: 777}))
-const TICKER = {}
+const FIRE = {}
 
 //=======//
 // SETUP //
@@ -89,7 +88,7 @@ on.load(() => {
 	// DRAW //
 	//======//
 	const drawCells = () => {
-		for (const cell of state.cells.values()) {
+		for (const cell of state.cells) {
 			drawCell(cell)
 		}
 	}
@@ -110,16 +109,16 @@ on.load(() => {
 	//======//
 	drawCells()
 	show.tick = () => {
-		state.ticker()
+		state.fire()
 	}
 	
-	TICKER.fireRandomSpotEvents = () => {
+	FIRE.randomSpotEvents = () => {
 		for (let i = 0; i < state.speed; i++) {
 			fireRandomSpotEvent()
 		}
 	}
 
-	TICKER.fireRandomCellEvents = () => {
+	FIRE.randomCellEvents = () => {
 		for (let i = 0; i < state.speed; i++) {
 			fireRandomCellEvent()
 		}
@@ -132,18 +131,17 @@ on.load(() => {
 	const fireRandomSpotEvent = () => {
 		const x = Math.random()
 		const y = Math.random()
-		const cell = pickCell(x, y)
 		fireSpotEvent(x, y)
 	}
 
 	const fireSpotEvent = (x, y) => {
-		const cell = pickCell(x, y)
-		fireCellEvent(cell)
+		const [cell, id] = pickCell(x, y)
+		fireCellEvent(cell, id)
 	}
 
-	const fireCellEvent = (cell) => {
+	// this function is currently full of debug code
+	const fireCellEvent = (cell, id) => {
 
-		// BELOW IS DEBUG STUFF
 		let w = 1
 		let h = 1
 
@@ -154,19 +152,18 @@ on.load(() => {
 		}
 		else return
 
+		/*w = 2
+		h = 2*/
+
 		const children = splitCell(cell, w, h)
-		state.cells.delete(cell)
+		state.cells.splice(id, 1, ...children)
 		for (const child of children) {
-			//child.colour = TODEPOND_COLOURS[Random.Uint8 % TODEPOND_RAINBOW_COLOURS.length]
-			//child.colour = Random.Uint32 % 300 
-			//child.colour = Math.round(cell.colour * 0.85)
-			//child.colour -= Random.Uint8 % 20 + 50
-			state.cells.add(child)
+			//child.colour = Random.Uint32 % 500
 			drawCell(child)
 		}
 
 	}
 	
-	state.ticker = TICKER.fireRandomSpotEvents
+	state.fire = FIRE.randomSpotEvents
 
 })
