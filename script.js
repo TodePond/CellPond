@@ -69,8 +69,8 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: [makeCell({colour: 888})],
-	speed: 1000,
+	cells: [makeCell({colour: Colour.Green.splash})],
+	speed: 300,
 	ticker: () => {},
 }
 
@@ -144,26 +144,54 @@ on.load(() => {
 	// this function is currently full of debug code
 	const fireCellEvent = (cell, id) => {
 
-		let w = 1
-		let h = 1
+		let width = 1
+		let height = 1
 
-		if (cell.colour >= 111) {
+		/*if (cell.colour >= 111) {
 			cell.colour -= 111
 			h = 2
 			w = 2
 		}
-		else return
+		else return*/
 
 		/*w = 2
 		h = 2*/
 
-		const children = splitCell(cell, w, h)
-		state.cells.splice(id, 1, ...children)
-		for (const child of children) {
+		/*if (cell.colour >= 100) {
+			cell.colour -= 100
+			width = 2
+			height = 2
+		}*/
+
+		if (cell.colour !== Colour.Green.splash) return
+
+		width = 2
+		height = 2
+
+		const children = splitCell(cell, width, height)
+
+		children[0].colour = Colour.Blue.splash
+		children[1].colour = Colour.Green.splash
+		children[2].colour = Colour.Green.splash
+		children[3].colour = Colour.Green.splash
+
+		/*for (const child of children) {
 			//child.colour = Random.Uint32 % 500
+			
+			const r = child.colour - (child.colour % 100)
+			const gb = Random.Uint8 % 100
+			child.colour = r + gb
+		}*/
+
+		replaceCell(cell, id, children)
+		
+	}
+	
+	const replaceCell = (cell, id, replacement) => {
+		state.cells.splice(id, 1, ...replacement)
+		for (const child of replacement) {
 			drawCell(child)
 		}
-
 	}
 	
 	state.fire = FIRE.randomSpotEvents
