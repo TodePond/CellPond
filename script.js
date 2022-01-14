@@ -52,8 +52,8 @@ const pickCell = (x, y) => {
 // STATE //
 //=======//
 const state = {
-	cells: [makeCell({colour: 555})],
-	aer: 0.003,
+	cells: [makeCell({colour: 777})],
+	aer: 0.05,
 	speed: 200,
 	ticker: () => {},
 }
@@ -95,7 +95,7 @@ on.load(() => {
 	//======//
 	drawCells()
 	show.tick = () => {
-		//state.speed = state.cells.length * state.aer
+		state.speed = state.cells.length * state.aer
 		state.fire()
 	}
 	
@@ -132,8 +132,8 @@ on.load(() => {
 	const fireCellEvent = (cell, id) => {
 
 		//DEBUG_FIZZ(cell, id)
-		//DEBUG_WORLD(cell, id)
-		DEBUG_DRIFT(cell, id)
+		DEBUG_WORLD(cell, id)
+		//DEBUG_DRIFT(cell, id)
 		
 	}
 
