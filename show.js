@@ -1,6 +1,6 @@
 const Show = {}
 
-Show.start = ({interval = 1000 / 60, tick = () => {}, overload = 1, paused = false, scale = 1.0} = {}) => {
+Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize = () => {}} = {}) => {
 	
 	document.body.style["margin"] = "0px"
 	document.body.style["overflow"] = "hidden"
@@ -8,10 +8,20 @@ Show.start = ({interval = 1000 / 60, tick = () => {}, overload = 1, paused = fal
 
 	const canvas = document.createElement("canvas")
 	const context = canvas.getContext("2d")
-	//canvas.style["background-color"] = Colour.Black
+	canvas.style["background-color"] = Colour.Black
+	canvas.style["image-rendering"] = "pixelated"
 	document.body.appendChild(canvas)
+
+	const pad = {}
+	pad.canvas = document.createElement("canvas")
+	pad.context = pad.canvas.getContext("2d")
 	
+	const show = {canvas, context, tick, speed, paused, scale, resize}
+
 	on.resize(() => {
+
+		pad.context.drawImage(canvas, 0, 0, canvas.width, canvas.height)
+
 		canvas.width = innerWidth * show.scale
 		canvas.height = innerHeight * show.scale
 		canvas.style["width"] = canvas.width
@@ -22,36 +32,41 @@ Show.start = ({interval = 1000 / 60, tick = () => {}, overload = 1, paused = fal
 		canvas.style["margin-bottom"] = `${margin}vh`
 		canvas.style["margin-left"] = `${margin}vw`
 		canvas.style["margin-right"] = `${margin}vw`
+		
+		show.resize(pad.canvas)
+		
+		pad.canvas.width = canvas.width
+		pad.canvas.height = canvas.height
+		pad.canvas.style["width"] = canvas.style["width"]
+		pad.canvas.style["height"] = canvas.style["height"]
+		
+		pad.canvas.style["margin-top"] = canvas.style["margin-top"]
+		pad.canvas.style["margin-bottom"] = canvas.style["margin-bottom"]
+		pad.canvas.style["margin-left"] = canvas.style["margin-left"]
+		pad.canvas.style["margin-right"] = canvas.style["margin-right"]
 
 	})
 	
-	
-	const show = {canvas, context, interval, tick, overload, paused, scale}
 	trigger("resize")
 
 	on.keydown(e => {
 		if (e.key === " ") show.paused = !show.paused
 	})
 	
-	let previousInterval = interval
-	
+	let t = 0
 	const wrappedTick = () => {
 		
-		// Interval changed
-		/*if (show.interval !== previousInterval) {
-			clearInterval(show.id)
-			show.id = setInterval(wrappedTick, show.interval)
-			previousTick = show.interval
-		}*/
-		
-		for (let i = 0; i < show.overload; i++) {
+		t += show.speed
+		if (t < 1.0) return
+		t = 0
+
+		for (let i = 0; i < show.speed; i++) {
 			show.tick()
 		}
+
 		requestAnimationFrame(wrappedTick)
-		
 	}
 	
-	//show.id = setInterval(wrappedTick, interval)
 	requestAnimationFrame(wrappedTick)
 	
 	
