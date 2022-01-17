@@ -63,7 +63,10 @@ const pickCell = (x, y) => {
 //=======//
 const state = {
 
-	cells: [],
+	cells: new Map(),
+	cellCount: 0,
+	freeIds: [],
+
 	grid: [],
 	ticker: () => {},
 	
@@ -76,6 +79,25 @@ const state = {
 	brush: {
 		colour: Colour.Yellow.splash,
 	},
+}
+
+const getFreeCellId = () => {
+	if (state.freeIds.length === 0)	return state.cells.size
+	return state.freeIds.pop()
+}
+
+const addCell = (cell) => {
+	cacheCell(cell)
+	const id = getFreeCellId()
+	state.cellCount++
+	state.cells.set(id, cell)
+}
+
+const deleteCell = (cell) => {
+	state.freeIds.push(cell.id)
+	uncacheCell(cell)
+	state.cellCount--
+	state.cells.delete(cell.id)
 }
 
 //======//
@@ -115,13 +137,17 @@ const cacheCell = (cell) => {
 	}
 }
 
+const uncacheCell = (cell) => {
+	for (const section of cell.sections) {
+		section.delete(cell)
+	}
+}
 
 //=======//
 // SETUP //
 //=======//
 const world = makeCell({colour: 777})
-cacheCell(world)
-state.cells.push(world)
+addCell(world)
 
 on.load(() => {
 
@@ -132,7 +158,7 @@ on.load(() => {
 	// DRAW //
 	//======//
 	const drawCells = () => {
-		for (const cell of state.cells) {
+		for (const cell of state.cells.values()) {
 			drawCell(cell)
 		}
 	}
@@ -182,21 +208,21 @@ on.load(() => {
 	
 	const FIRE = {}
 	FIRE.randomSpotEvents = () => {
-		const count = state.speed.dynamic? state.speed.aer * state.cells.length : state.speed.count
+		const count = state.speed.dynamic? state.speed.aer * state.cells.size : state.speed.count
 		for (let i = 0; i < count; i++) {
 			fireRandomSpotEvent()
 		}
 	}
 
 	FIRE.randomCellEvents = () => {
-		const count = state.speed.dynamic? state.speed.aer * state.cells.length : state.speed.count
+		const count = state.speed.dynamic? state.speed.aer * state.cells.size : state.speed.count
 		for (let i = 0; i < count; i++) {
 			fireRandomCellEvent()
 		}
 	}
 	
 	const fireRandomCellEvent = () => {
-		const id = Random.Uint32 % state.cells.length
+		const id = Random.Uint32 % state.cells.size
 		const cell = state.cells[id]
 		fireCellEvent(cell)
 	}
@@ -220,8 +246,8 @@ on.load(() => {
 			return behave(cell)
 		}
 
-		//DEBUG_FIZZ(cell)
-		DEBUG_WORLD(cell)
+		DEBUG_FIZZ(cell)
+		//DEBUG_WORLD(cell)
 		//DEBUG_DRIFT(cell)
 		
 	}
@@ -252,10 +278,9 @@ on.load(() => {
 		}
 		
 		// Insert children
-		const id = state.cells.indexOf(cell)
-		state.cells.splice(id, 1, ...children)
-		for (const section of cell.sections) {
-			section.delete(cell)
+		deleteCell(cell)
+		for (const child of children) {
+			addCell(child)
 		}
 
 		return children
