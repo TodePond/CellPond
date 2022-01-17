@@ -4,7 +4,7 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 	
 	document.body.style["margin"] = "0px"
 	document.body.style["overflow"] = "hidden"
-	document.body.style["background-color"] = Colour.Black
+	document.body.style["background-color"] = Colour.Void
 
 	const canvas = document.createElement("canvas")
 	const context = canvas.getContext("2d")

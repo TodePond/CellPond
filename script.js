@@ -57,7 +57,7 @@ const pickCell = (x, y) => {
 	const size = section.size
 
 	for (const cell of section.values()) {
-		//if (i === size) return cell
+		if (i === size) return cell
 		i++
 		if (cell.left > x) continue
 		if (cell.top > y) continue
@@ -83,6 +83,8 @@ const state = {
 		dynamic: true,
 		aer: 1.0,
 	},
+
+	size: 1000,
 
 	imageData: undefined,
 
@@ -160,17 +162,25 @@ on.load(() => {
 	const show = Show.start({paused: true})
 	const {context, canvas} = show
 
-
 	//======//
 	// DRAW //
 	//======//
+	context.fillStyle = Colour.Void
+	context.fillRect(0, 0, canvas.width, canvas.height)
 	state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+	state.size = Math.min(canvas.width, canvas.height)
+
 	for (let i = 3; i < state.imageData.data.length; i += 4) {
 		state.imageData.data[i] = 255
 	}
 	
 	show.resize = (image) => {
-		context.drawImage(image, 0, 0, canvas.width, canvas.height)
+		const size = state.size
+		state.size = Math.min(canvas.width, canvas.height)
+		const scale = state.size / size
+		context.fillStyle = Colour.Void
+		context.fillRect(0, 0, canvas.width, canvas.height)
+		context.drawImage(image, 0, 0, image.width * scale, image.height * scale)
 		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
 	}
 
@@ -192,14 +202,15 @@ on.load(() => {
 		const green = splash[1]
 		const blue = splash[2]
 
-		const left = Math.round(canvas.width * cell.left)
-		const top = Math.round(canvas.height * cell.top)
-		const right = Math.round(canvas.width * cell.right)
-		const bottom = Math.round(canvas.height * cell.bottom)
+		const left = Math.round(state.size * cell.left)
+		const top = Math.round(state.size * cell.top)
+		const right = Math.round(state.size * cell.right)
+		const bottom = Math.round(state.size * cell.bottom)
 
 		let id = (top*canvas.width + left) * 4
 		
 		const iy = canvas.width * 4
+
 		const width = right-left
 		const sx = width * 4
 
@@ -229,8 +240,8 @@ on.load(() => {
 			return
 		}
 
-		x /= canvas.width
-		y /= canvas.height
+		x /= state.size
+		y /= state.size
 
 		const cell = pickCell(x, y)
 		if (cell === undefined) return
@@ -292,8 +303,8 @@ on.load(() => {
 			return behave(cell)
 		}
 
-		DEBUG_FIZZ(cell)
-		//DEBUG_WORLD(cell)
+		//DEBUG_FIZZ(cell)
+		DEBUG_WORLD(cell)
 		//DEBUG_WORLD_WIDE(cell)
 		//DEBUG_DRIFT(cell)
 		
