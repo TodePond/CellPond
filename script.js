@@ -82,6 +82,7 @@ const state = {
 		count: 200,
 		dynamic: true,
 		aer: 1.0,
+		redraw: 0.1,
 	},
 
 	size: 1000,
@@ -154,7 +155,7 @@ const uncacheCell = (cell) => {
 //=======//
 // SETUP //
 //=======//
-const world = makeCell({colour: 888})
+const world = makeCell({colour: 777})
 addCell(world)
 
 on.load(() => {
@@ -256,61 +257,53 @@ on.load(() => {
 	show.tick = () => {
 		updateCursor()
 		if (!show.paused) {
-			state.fire()
+			fireRandomSpotEvents()
+		}
+		else {
+			fireRandomSpotDrawEvents()
 		}
 		context.putImageData(state.imageData, 0, 0)
 	}
 	
-	const FIRE = {}
-	FIRE.randomSpotEvents = () => {
+	const fireRandomSpotEvents = () => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
+		const redrawCount = count * state.speed.redraw
+		let redraw = true
 		for (let i = 0; i < count; i++) {
-			fireRandomSpotEvent()
+			if (redraw && i > redrawCount) redraw = false
+			const x = Math.random()
+			const y = Math.random()
+			const cell = pickCell(x, y)
+			fireCellEvent(cell, redraw)
 		}
 	}
 
-	// THIS IS VERY SLOW
-	FIRE.randomCellEvents = () => {
+	const fireRandomSpotDrawEvents = () => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
-		for (let i = 0; i < count; i++) {
-			fireRandomCellEvent()
+		const redrawCount = count * state.speed.redraw
+		for (let i = 0; i < redrawCount; i++) {
+			const x = Math.random()
+			const y = Math.random()
+			const cell = pickCell(x, y)
+			drawCell(cell)
 		}
-	}
-	
-	const fireRandomCellEvent = () => {
-		const id = Random.Uint32 % state.cellCount
-		const cells = [...getCells()] //VERY VERY VERY SLOW
-		const cell = cells[id]
-		fireCellEvent(cell)
-	}
-
-	const fireRandomSpotEvent = () => {
-		const x = Math.random()
-		const y = Math.random()
-		fireSpotEvent(x, y)
-	}
-
-	const fireSpotEvent = (x, y) => {
-		const cell = pickCell(x, y)
-		fireCellEvent(cell)
 	}
 
 	// this function is currently full of debug code
-	const fireCellEvent = (cell) => {
+	const fireCellEvent = (cell, redraw) => {
 
 		const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
-			return behave(cell)
+			return behave(cell, redraw)
 		}
 
 		//DEBUG_FIZZ(cell)
-		DEBUG_WORLD(cell)
-		//DEBUG_WORLD_WIDE(cell)
+		DEBUG_WORLD(cell, redraw)
 		//DEBUG_DRIFT(cell)
+
+		//if (redraw) drawCell(cell)
 		
 	}
-	
-	state.fire = FIRE.randomSpotEvents
 	
 	//=======//
 	// SPLIT //
@@ -345,35 +338,31 @@ on.load(() => {
 	//=========//
 	const BEHAVE = new Map()
 
-	BEHAVE.set(Colour.Yellow.splash, (cell) => {
+	BEHAVE.set(Colour.Yellow.splash, (cell, redraw) => {
 		
 		const down = pickCell(cell.x + cell.width/2, cell.y + cell.height/2 + cell.height)
-		if (down === undefined) return
+		if (down === undefined) {
+			if (redraw) drawCell(cell)
+			return
+		}
 		if (down.colour === Colour.Black.splash) {
 			down.colour = Colour.Yellow.splash
 			cell.colour = Colour.Black.splash
 			drawCell(down)
 			drawCell(cell)
+			return
 		}
+
+		if (redraw) drawCell(cell)
 
 	})
 
-	const DEBUG_WORLD = (cell) => {
-		if (cell.colour < 111) return
-		cell.colour -= 111
-		drawCell(cell)
-		const width = 2
-		const height = 2
-		const children = splitCell(cell, width, height)
-		for (const child of children) {
-			drawCell(child)
+	const DEBUG_WORLD = (cell, redraw) => {
+		if (cell.colour < 111) {
+			if (redraw) drawCell(cell)
+			return
 		}
-	}
-
-	const DEBUG_WORLD_WIDE = (cell) => {
-		if (cell.colour < 111) return
 		cell.colour -= 111
-		drawCell(cell)
 		const width = 2
 		const height = 2
 		const children = splitCell(cell, width, height)
