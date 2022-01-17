@@ -48,7 +48,12 @@ const pickCell = (x, y) => {
 
 	if (section === undefined) return undefined
 
+	let i = 1
+	const size = section.size
+
 	for (const cell of section.values()) {
+		if (i === size) return cell
+		i++
 		if (cell.left > x) continue
 		if (cell.top > y) continue
 		if (cell.right <= x) continue
@@ -119,7 +124,6 @@ const cacheCell = (cell) => {
 	const right = (cell.right * GRID_SIZE)
 	const bottom = (cell.bottom * GRID_SIZE)
 
-	
 	for (let x = left; x < right; x++) {
 		for (let y = top; y < bottom; y++) {
 			const i = x*GRID_SIZE + y
