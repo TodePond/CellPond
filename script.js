@@ -199,23 +199,23 @@ on.load(() => {
 
 		let id = (top*canvas.width + left) * 4
 		
-		const iy = canvas.width*4
-		const sy = iy*(bottom-top)
+		const iy = canvas.width * 4
+		const width = right-left
+		const sx = width * 4
 
 		const data = state.imageData.data
 
-		for (let x = left; x < right; x++) {
-			for (let y = top; y < bottom; y++) {
+		for (let y = top; y < bottom; y++) {
+			for (let x = left; x < right; x++) { 
 				data[id] = red
 				data[id+1] = green
 				data[id+2] = blue
-				id += iy
+				id += 4
 			}
-			id -= sy
-			id += 4
+			id -= sx
+			id += iy
 		}
 
-		
 	}
 
 	//========//
