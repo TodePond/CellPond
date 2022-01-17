@@ -46,6 +46,8 @@ const pickCell = (x, y) => {
 	const sectionId = gridX*GRID_SIZE + gridY
 	const section = state.grid[sectionId]
 
+	if (section === undefined) return undefined
+
 	for (const cell of section.values()) {
 		if (cell.left > x) continue
 		if (cell.top > y) continue
@@ -103,7 +105,7 @@ const getCells = () => {
 // The grid is basically the screen cut up into smaller sections
 // It helps to speed up cell lookup because it gives us a smaller area to search through
 // Note: Cells can be in multiple sections if they are big enough :)
-const GRID_SIZE = 100
+const GRID_SIZE = 128
 for (let x = 0; x < GRID_SIZE; x++) {
 	for (let y = 0; y < GRID_SIZE; y++) {
 		const section = new Set()
@@ -156,9 +158,7 @@ on.load(() => {
 
 	const drawCell = (cell) => {
 		const colour = Colour.splash(cell.colour)
-		if (context.fillStyle !== colour) {
-			context.fillStyle = colour
-		}
+		context.fillStyle = colour
 
 		const x = canvas.width * cell.x
 		const y = canvas.height * cell.y
@@ -320,6 +320,13 @@ on.load(() => {
 			width = 2
 			height = 2
 		}
+		/*else {
+			const r = cell.colour - (cell.colour % 100)
+			const gb = Random.Uint8 % 100
+			cell.colour = r + gb
+			drawCell(cell)
+			return
+		}*/
 
 		const children = splitCell(cell, width, height)
 
