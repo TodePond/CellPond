@@ -39,7 +39,6 @@ const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
 
 }
 
-// TODO: make this quicker (it is slow)
 const pickCell = (x, y) => {
 
 	const gridX = Math.floor(x * GRID_SIZE)
@@ -63,13 +62,10 @@ const pickCell = (x, y) => {
 //=======//
 const state = {
 
-	cells: new Map(),
-	cellCount: 0,
-	freeIds: [],
-
 	grid: [],
+	cellCount: 0,
+
 	ticker: () => {},
-	
 	speed: {
 		count: 200,
 		dynamic: true,
@@ -81,23 +77,24 @@ const state = {
 	},
 }
 
-const getFreeCellId = () => {
-	if (state.freeIds.length === 0)	return state.cells.size
-	return state.freeIds.pop()
-}
-
 const addCell = (cell) => {
 	cacheCell(cell)
-	const id = getFreeCellId()
 	state.cellCount++
-	state.cells.set(id, cell)
 }
 
 const deleteCell = (cell) => {
-	state.freeIds.push(cell.id)
 	uncacheCell(cell)
 	state.cellCount--
-	state.cells.delete(cell.id)
+}
+
+const getCells = () => {
+	const cells = new Set()
+	for (const section of state.grid) {
+		for (const cell of section.values()) {
+			cells.add(cell)
+		}
+	}
+	return cells
 }
 
 //======//
@@ -124,15 +121,8 @@ const cacheCell = (cell) => {
 	for (let x = left; x < right; x++) {
 		for (let y = top; y < bottom; y++) {
 			const i = x*GRID_SIZE + y
-			const section = state.grid[i]
-			if (section === undefined) {
-				print(left, top)
-				print(i, x, y)
-				continue
-			}
-			section.add(cell)
-			cell.sections.push(section)			
-			
+			state.grid[i].add(cell)
+			cell.sections.push(state.grid[i])
 		}
 	}
 }
@@ -158,7 +148,8 @@ on.load(() => {
 	// DRAW //
 	//======//
 	const drawCells = () => {
-		for (const cell of state.cells.values()) {
+		const cells = getCells()
+		for (const cell of cells.values()) {
 			drawCell(cell)
 		}
 	}
@@ -208,22 +199,24 @@ on.load(() => {
 	
 	const FIRE = {}
 	FIRE.randomSpotEvents = () => {
-		const count = state.speed.dynamic? state.speed.aer * state.cells.size : state.speed.count
+		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		for (let i = 0; i < count; i++) {
 			fireRandomSpotEvent()
 		}
 	}
 
+	// THIS IS VERY SLOW
 	FIRE.randomCellEvents = () => {
-		const count = state.speed.dynamic? state.speed.aer * state.cells.size : state.speed.count
+		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		for (let i = 0; i < count; i++) {
 			fireRandomCellEvent()
 		}
 	}
 	
 	const fireRandomCellEvent = () => {
-		const id = Random.Uint32 % state.cells.size
-		const cell = state.cells[id]
+		const id = Random.Uint32 % state.cellCount
+		const cells = [...getCells()] //VERY VERY VERY SLOW
+		const cell = cells[id]
 		fireCellEvent(cell)
 	}
 
