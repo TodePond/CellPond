@@ -99,21 +99,35 @@ const state = {
 	ticker: () => {},
 	speed: {
 		count: 200,
-		dynamic: false,
-		aer: 1.0,
-		redraw: 0.1,
+		dynamic: true,
+		aer: 2.0,
+		redraw: 0.2,
 	},
 
 	imageData: undefined,
 	size: 1000,
 
-	brush: {
-		colour: Colour.Red.splash,
-		//colour: 90,
+	camera: {
+		position: {
+			x: 0,
+			y: 0,
+		},
+		scale: 1.0,
 	},
+
+	brush: {
+		colour: Colour.Yellow.splash,
+	},
+
+	cursor: {
+		previous: {
+			x: undefined,
+			y: undefined,
+		},
+	}
 }
 
-const WORLD_SIZE = 3
+const WORLD_SIZE = 7
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -178,33 +192,50 @@ const uncacheCell = (cell) => {
 //=======//
 // SETUP //
 //=======//
+// Setup World
 const world = makeCell({colour: WORLD_SIZE * 111})
 addCell(world)
 
 on.load(() => {
 
+	// Setup Show
 	const show = Show.start({paused: true})
-	const {context, canvas} = show
-
-	//======//
-	// DRAW //
-	//======//
+	const {context, canvas, pad} = show
+	state.size = Math.min(canvas.width, canvas.height)
+	
+	// Setup ImageData
 	context.fillStyle = Colour.Void
 	context.fillRect(0, 0, canvas.width, canvas.height)
-	state.size = Math.min(canvas.width, canvas.height)
-
 	state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
 	for (let i = 3; i < state.imageData.data.length; i += 4) {
 		state.imageData.data[i] = 255
 	}
-	
-	show.resize = (image) => {
-		const size = state.size
-		state.size = Math.min(canvas.width, canvas.height)
-		const scale = state.size / size
+
+	//======//
+	// DRAW //
+	//======//
+	show.resize = () => {
+
+		const oldSize = state.size
+		const newSize = Math.min(canvas.width, canvas.height)
+		const scale = newSize / oldSize
+		state.size = newSize
+
 		context.fillStyle = Colour.Void
 		context.fillRect(0, 0, canvas.width, canvas.height)
-		context.drawImage(image, 0, 0, image.width * scale, image.height * scale)
+		//context.drawImage(image, 0, 0, image.width * scale, image.height * scale)
+		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+	}
+
+	const stampScale = (scale) => {
+
+		//pad.context.drawImage(canvas, 0, 0, canvas.width, canvas.height)
+		
+		context.fillStyle = Colour.Void
+		context.fillRect(0, 0, canvas.width, canvas.height)
+		
+		//context.drawImage(pad.canvas, 0, 0, canvas.width * scale, canvas.height * scale)
+
 		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
 	}
 
@@ -226,10 +257,14 @@ on.load(() => {
 		const green = splash[1]
 		const blue = splash[2]
 
-		const left = Math.round(state.size * cell.left)
-		const top = Math.round(state.size * cell.top)
-		const right = Math.round(state.size * cell.right)
-		const bottom = Math.round(state.size * cell.bottom)
+		const scale = state.size * state.camera.scale
+
+		const left = Math.round(scale * cell.left)
+		const top = Math.round(scale * cell.top)
+		const right = Math.round(scale * cell.right)
+		const bottom = Math.round(scale * cell.bottom)
+
+		if (left >= canvas.width) return
 
 		let id = (top*canvas.width + left) * 4
 		
@@ -258,27 +293,66 @@ on.load(() => {
 	//========//
 	const updateCursor = () => {
 
-		if (Mouse.Left) {
-			let [x, y] = Mouse.position
-			if (x === undefined || y === undefined) {
-				return
-			}
+		updateBrush()
+		updatePan()
 
-			x /= state.size
-			y /= state.size
-
-			const cell = pickCell(x, y)
-			if (cell === undefined) return
-			if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
-			cell.colour = state.brush.colour
-			drawCell(cell)
-		}
-
-		if (Mouse.Right) {
-			
-		}
-
+		const [x, y] = Mouse.position
+		state.cursor.previous.x = x
+		state.cursor.previous.y = y
+		
 	}
+
+	const updateBrush = () => {
+		if (!Mouse.Left) return
+		let [x, y] = Mouse.position
+		if (x === undefined || y === undefined) {
+			return
+		}
+
+		const scale = state.size * state.camera.scale
+
+		x /= scale
+		y /= scale
+
+		const cell = pickCell(x, y)
+		if (cell === undefined) return
+		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
+		cell.colour = state.brush.colour
+		drawCell(cell)
+	}
+
+	const updatePan = () => {
+		if (!Mouse.Right) return
+		const [x, y] = Mouse.position
+		const {x: px, y: py} = state.cursor.previous
+		if (px === undefined || py === undefined) return
+		const [dx, dy] = [x - px, y - py]
+		state.camera.position.x += dx
+		state.camera.position.y += dy
+	}
+
+	const ZOOM = 0.05
+	on.mousewheel((e) => {
+		const dy = e.deltaY / 100
+		const sign = -Math.sign(dy)
+		const d = Math.abs(dy)
+
+		const oldScale = state.camera.scale
+
+		for (let i = 0; i < d; i++) {
+			const zoom = ZOOM * state.camera.scale
+			state.camera.scale += zoom * sign
+		}
+
+		const newScale = state.camera.scale
+		const scale = newScale / oldScale
+
+		stampScale(scale)
+	})
+
+	on.contextmenu((e) => {
+		e.preventDefault()
+	})
 
 	//======//
 	// TICK //
@@ -324,17 +398,17 @@ on.load(() => {
 
 		if (BUILD_WORLD(cell, redraw)) return
 
-		/*const behave = BEHAVE.get(cell.colour)
+		const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
 			return behave(cell, redraw)
-		}*/
+		}
 
-		DEBUG_RED_SPLIT_2(cell, redraw)
+		//DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
 
-		//if (redraw) drawCell(cell)
+		if (redraw) drawCell(cell)
 		
 	}
 	
@@ -473,12 +547,6 @@ on.load(() => {
 			drawCell(down)
 			drawCell(cell)
 			return
-		}
-		
-		if (down.colour === Colour.Blue.splash || down.colour === Colour.Yellow.splash) {
-			const merged = mergeCells([cell, down])
-			merged.colour = Colour.Blue.splash
-			drawCell(merged)
 		}
 
 		if (redraw) drawCell(cell)
@@ -651,20 +719,26 @@ on.load(() => {
 			height = 2
 		}
 		else {
-			const r = cell.colour - (cell.colour % 100)
+			let [r, g, b] = getRGB(cell.colour)
 			const gb = Random.Uint8 % 100
-			cell.colour = r + gb
-			drawCell(cell)
+			/*g += oneIn(2)? 10 : -10
+			b += oneIn(2)? 1 : -1
+			g = clamp(g, 0, 90)
+			b = clamp(b, 0, 9)*/
+			setCellColour(cell, r+gb)
 			return
 		}
 
 		const children = splitCell(cell, width, height)
 
 		for (const child of children) {
-			const r = child.colour - (child.colour % 100)
+			let [r, g, b] = getRGB(child.colour)
 			const gb = Random.Uint8 % 100
-			child.colour = r + gb
-			drawCell(child)
+			/*g += oneIn(2)? 10 : -10
+			b += oneIn(2)? 1 : -1
+			g = clamp(g, 0, 90)
+			b = clamp(b, 0, 9)*/
+			setCellColour(child, r+gb)
 		}
 
 	}

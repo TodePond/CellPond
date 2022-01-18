@@ -16,11 +16,11 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 	pad.canvas = document.createElement("canvas")
 	pad.context = pad.canvas.getContext("2d")
 	
-	const show = {canvas, context, tick, speed, paused, scale, resize}
+	const show = {canvas, context, tick, speed, paused, scale, resize, pad}
 
 	on.resize(() => {
 
-		pad.context.drawImage(canvas, 0, 0, canvas.width, canvas.height)
+		//pad.context.drawImage(canvas, 0, 0, canvas.width, canvas.height)
 
 		canvas.width = innerWidth * show.scale
 		canvas.height = innerHeight * show.scale
@@ -33,9 +33,9 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 		canvas.style["margin-left"] = `${margin}vw`
 		canvas.style["margin-right"] = `${margin}vw`
 		
-		show.resize(pad.canvas)
+		show.resize()
 		
-		pad.canvas.width = canvas.width
+		/*pad.canvas.width = canvas.width
 		pad.canvas.height = canvas.height
 		pad.canvas.style["width"] = canvas.style["width"]
 		pad.canvas.style["height"] = canvas.style["height"]
@@ -43,7 +43,7 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 		pad.canvas.style["margin-top"] = canvas.style["margin-top"]
 		pad.canvas.style["margin-bottom"] = canvas.style["margin-bottom"]
 		pad.canvas.style["margin-left"] = canvas.style["margin-left"]
-		pad.canvas.style["margin-right"] = canvas.style["margin-right"]
+		pad.canvas.style["margin-right"] = canvas.style["margin-right"]*/
 
 	})
 	
