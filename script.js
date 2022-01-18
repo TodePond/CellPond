@@ -109,6 +109,7 @@ const state = {
 
 	brush: {
 		colour: Colour.Red.splash,
+		//colour: 90,
 	},
 }
 
@@ -547,11 +548,11 @@ on.load(() => {
 
 			const ns = [...neighbours.values()]
 
-			if (!aligns([cell, ...ns]) || !fits([cell, ...ns])) return
+			if (!aligns([cell, ...ns]) || !fits([cell, ns[0], ns[2]]) || !fits([ns[0], ns[1]]) || !fits([ns[1], ns[2]])) return
 
 			const merged = mergeCells([cell, ...ns])
-			//merged.colour = Math.max(11, Math.round((cell.colour + ns[0].colour) / 2))
-			merged.colour = Math.max(11, Random.Uint8 % 100)
+			merged.colour = Math.max(11, Math.round((cell.colour + ns[0].colour) / 2))
+			//merged.colour = Math.max(11, Random.Uint8 % 100)
 			drawCell(merged)
 
 
