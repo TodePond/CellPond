@@ -22,6 +22,14 @@ const TODEPOND_COLOURS = [
 
 const TODEPOND_RAINBOW_COLOURS = TODEPOND_COLOURS.slice(0, -4)
 
+const getRGB = (splash) => {
+	const gb = splash % 100
+	let b = gb % 10
+	let g = gb - b
+	let r = splash - gb
+	return [r, g, b]
+}
+
 //======//
 // CELL //
 //======//
@@ -69,6 +77,17 @@ const pickCell = (x, y) => {
 	return undefined
 }
 
+const pickNeighbour = (cell, dx, dy) => {
+	const centerX = cell.left + cell.width/2
+	const centerY = cell.top + cell.height/2
+
+	const x = centerX + dx*cell.width
+	const y = centerY + dy*cell.height
+
+	const neighbour = pickCell(x, y)
+	return neighbour
+}
+
 //=======//
 // STATE //
 //=======//
@@ -85,14 +104,17 @@ const state = {
 		redraw: 0.1,
 	},
 
+	imageData: undefined,
 	size: 1000,
 
-	imageData: undefined,
-
 	brush: {
-		colour: Colour.Yellow.splash,
+		colour: 90,
 	},
 }
+
+const WORLD_SIZE = 3
+const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
+const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
 const addCell = (cell) => {
 	cacheCell(cell)
@@ -155,7 +177,7 @@ const uncacheCell = (cell) => {
 //=======//
 // SETUP //
 //=======//
-const world = makeCell({colour: 777})
+const world = makeCell({colour: WORLD_SIZE * 111})
 addCell(world)
 
 on.load(() => {
@@ -246,6 +268,7 @@ on.load(() => {
 
 		const cell = pickCell(x, y)
 		if (cell === undefined) return
+		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
 		cell.colour = state.brush.colour
 		drawCell(cell)
 	}
@@ -292,13 +315,15 @@ on.load(() => {
 	// this function is currently full of debug code
 	const fireCellEvent = (cell, redraw) => {
 
-		const behave = BEHAVE.get(cell.colour)
+		if (BUILD_WORLD(cell, redraw)) return
+
+		/*const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
 			return behave(cell, redraw)
-		}
+		}*/
 
+		DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
-		DEBUG_WORLD(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
 
 		//if (redraw) drawCell(cell)
@@ -361,7 +386,59 @@ on.load(() => {
 		return cell
 
 	}
+
+	// TODO: should also check if cells are touching
+	// could do this by keeping a map of free sides, and then connecting things onto them?
+	// hmm no wait that wouldnt work because 'taking' a free side could also take another free side?
+	// OK BUT THAT SHOULD NEVER HAPPEN! so should be ok i think
+	const aligns = (cells) => {
+
+		const [head, ...tail] = cells
+		const {width, height} = head
+
+
+		const sameSize = tail.every(cell => cell.width === width && cell.height === height)
+		if (!sameSize) return false
+
+		const connections = [head]
+		let failureCount = 0
+		
+		let i = 0
+		while (connections.length < cells.length) {
+
+			const cell = tail[i]
+			const connection = connections.find(connection => isConnected(cell, connection))
+			if (!connection) {
+				failureCount++
+				if (failureCount === (cells.length - connections.length)) return false
+			} else {
+				failureCount = 0
+				connections.push(cell)
+			}
+
+			i++
+			if (i > tail.length) i = 0
+		}
+
+		return true
+
+	}
 	
+	const isConnected = (cell, connection) => {
+		
+		if (cell.top === connection.top) {
+			if (cell.left === connection.right) return true
+			if (cell.right === connection.left) return true
+		}
+		
+		if (cell.right === connection.right) {
+			if (cell.top === connection.bottom) return true
+			if (cell.bottom === connection.top) return true
+		}
+
+		return
+
+	}
 
 	//=========//
 	// ELEMENT //
@@ -399,12 +476,16 @@ on.load(() => {
 
 	})
 
-	const DEBUG_WORLD = (cell, redraw) => {
-		if (state.cellCount >= 16384) state.worldBuilt = true
-		if (state.worldBuilt) return
+	const BUILD_WORLD = (cell, redraw) => {
+		if (state.worldBuilt) return false
+		if (state.cellCount >= WORLD_CELL_COUNT) {
+			state.worldBuilt = true
+			return false
+		}
+
 		if (cell.colour < 111) {
 			if (redraw) drawCell(cell)
-			return
+			return true
 		}
 		cell.colour -= 111
 		const width = 2
@@ -413,6 +494,69 @@ on.load(() => {
 		for (const child of children) {
 			drawCell(child)
 		}
+
+		return true
+	}
+
+	const DEBUG_RED_SPLIT_NEIGHBOURS = [
+		[ 1, 0],
+		[-1, 0],
+		[ 0, 1],
+		[ 0,-1],
+	]
+	const DEBUG_RED_SPLIT = (cell, redraw) => {
+
+		if (!state.worldBuilt) return
+
+		let [red, green, blue] = getRGB(cell.colour)
+
+		if (red === 0) {
+
+			if (green === 0 && blue === 0) {
+				if (redraw) drawCell(cell)
+				return
+			}
+
+			const [nx, ny] = DEBUG_RED_SPLIT_NEIGHBOURS[Random.Uint8 % 4]
+			const neighbour = pickNeighbour(cell, nx, ny)
+			
+			if (neighbour === undefined || !aligns([cell, neighbour])) {
+				if (redraw) drawCell(cell)
+				return
+			}
+
+			let [nr, ng, nb] = getRGB(neighbour.colour) 
+			if (nr !== 0 || (ng === 0 && nb === 0)) {
+				if (redraw) drawCell(cell)
+				return
+			}
+
+			const merged = mergeCells([cell, neighbour])
+			//merged.colour = Math.round((cell.colour + neighbour.colour) / 2)
+			merged.colour = Random.Uint8 % 100
+			drawCell(merged)
+
+			return
+		}
+
+		const children = splitCell(cell, 2, 2)
+
+		for (const child of children) {
+			
+			let [r, g, b] = getRGB(child.colour)
+			r -= 200
+
+			g += oneIn(2)? 10 : -10
+			b += oneIn(2)? 1 : -1
+			
+			r = clamp(r, 0, 900)
+			g = clamp(g, 0, 90)
+			b = clamp(b, 0, 9)
+
+			child.colour = r+g+b
+			drawCell(child)
+		}
+
 	}
 
 	const DEBUG_FIZZ = (cell) => {
@@ -461,8 +605,6 @@ on.load(() => {
 		const width = 2
 		const height = 2
 
-
-		
 		const children = splitCell(cell, width, height)
 		for (const child of children) {
 
