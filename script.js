@@ -322,7 +322,8 @@ on.load(() => {
 			return behave(cell, redraw)
 		}*/
 
-		DEBUG_RED_SPLIT(cell, redraw)
+		DEBUG_RED_SPLIT_2(cell, redraw)
+		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
 
@@ -387,47 +388,12 @@ on.load(() => {
 
 	}
 
-	// TODO: should also check if cells are touching
-	// could do this by keeping a map of free sides, and then connecting things onto them?
-	// hmm no wait that wouldnt work because 'taking' a free side could also take another free side?
-	// OK BUT THAT SHOULD NEVER HAPPEN! so should be ok i think
-	const aligns = (cells) => {
-
-		const [head, ...tail] = cells
-		const {width, height} = head
-
-
-		const sameSize = tail.every(cell => cell.width === width && cell.height === height)
-		if (!sameSize) return false
-
-		const connections = [head]
-		let failureCount = 0
-		
-		let i = 0
-		while (connections.length < cells.length) {
-
-			const cell = tail[i]
-			const connection = connections.find(connection => isConnected(cell, connection))
-			if (!connection) {
-				failureCount++
-				if (failureCount === (cells.length - connections.length)) return false
-			} else {
-				failureCount = 0
-				connections.push(cell)
-			}
-
-			i++
-			if (i > tail.length) i = 0
-		}
-
-		return true
-
-	}
-
+	// NOTE: this checks if the cells fit together in ANY POSSIBLE WAY
+	// it might not be the arrangement of cells that you are interested in
 	const fits = (cells) => {
 
 		const [head, ...tail] = cells
-
+		
 		const connections = [head]
 		let failureCount = 0
 		
@@ -445,26 +411,20 @@ on.load(() => {
 			}
 
 			i++
-			if (i > tail.length) i = 0
+			if (i >= tail.length) i = 0
 		}
 
 		return true
 
 	}
-	
-	const isConnected = (cell, connection) => {
-		
-		if (cell.top === connection.top) {
-			if (cell.left === connection.right) return true
-			if (cell.right === connection.left) return true
-		}
-		
-		if (cell.right === connection.right) {
-			if (cell.top === connection.bottom) return true
-			if (cell.bottom === connection.top) return true
-		}
 
-		return
+	// Only checks if cells are the same size
+	const aligns = (cells) => {
+		
+		const [head, ...tail] = cells
+		const {width, height} = head
+		const isAligned = tail.every(cell => cell.width === width && cell.height === height)
+		return isAligned
 
 	}
 
@@ -546,6 +506,78 @@ on.load(() => {
 		[ 0, 1],
 		[ 0,-1],
 	]
+
+	// TODO: make it check for a 2x2 area to merge with
+	const DEBUG_RED_SPLIT_NEIGHBOURS_2 = [
+		[[ 1, 0], [ 1, 1], [ 0, 1]],
+		[[-1, 0], [-1, 1], [ 0, 1]],
+		[[-1, 0], [-1,-1], [ 0,-1]],
+		[[ 1, 0], [ 1,-1], [ 0,-1]],
+	]
+
+	const DEBUG_RED_SPLIT_2 = (cell, redraw) => {
+
+		if (!state.worldBuilt) return
+
+		let [red, green, blue] = getRGB(cell.colour)
+
+		if (red === 0) {
+
+			if (green === 0 && blue === 0) {
+				if (redraw) drawCell(cell)
+				return
+			}
+
+			const neighbourhood = DEBUG_RED_SPLIT_NEIGHBOURS_2[Random.Uint8 % 4]
+
+			const neighbours = new Set()
+
+			for (const [nx, ny] of neighbourhood) {
+				const neighbour = pickNeighbour(cell, nx, ny)
+				
+				if (neighbour === undefined) return
+
+				let [nr, ng, nb] = getRGB(neighbour.colour) 
+				if (nr !== 0 || (ng === 0 && nb === 0)) {
+					return
+				}
+
+				neighbours.add(neighbour)
+			}
+
+			const ns = [...neighbours.values()]
+
+			if (!aligns([cell, ...ns]) || !fits([cell, ...ns])) return
+
+			const merged = mergeCells([cell, ...ns])
+			//merged.colour = Math.max(11, Math.round((cell.colour + ns[0].colour) / 2))
+			merged.colour = Math.max(11, Random.Uint8 % 100)
+			drawCell(merged)
+
+
+			return
+		}
+
+		const children = splitCell(cell, 2, 2)
+
+		for (const child of children) {
+			
+			let [r, g, b] = getRGB(child.colour)
+			r -= 200
+
+			g += oneIn(2)? 10 : -10
+			b += oneIn(2)? 1 : -1
+			
+			r = clamp(r, 0, 900)
+			g = clamp(g, 0, 90)
+			b = clamp(b, 0, 9)
+
+			child.colour = r+g+b
+			drawCell(child)
+		}
+
+	}
+
 	const DEBUG_RED_SPLIT = (cell, redraw) => {
 
 		if (!state.worldBuilt) return
