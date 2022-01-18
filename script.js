@@ -99,7 +99,7 @@ const state = {
 	ticker: () => {},
 	speed: {
 		count: 200,
-		dynamic: true,
+		dynamic: false,
 		aer: 1.0,
 		redraw: 0.1,
 	},
@@ -258,20 +258,26 @@ on.load(() => {
 	//========//
 	const updateCursor = () => {
 
-		if (!Mouse.Left) return
-		let [x, y] = Mouse.position
-		if (x === undefined || y === undefined) {
-			return
+		if (Mouse.Left) {
+			let [x, y] = Mouse.position
+			if (x === undefined || y === undefined) {
+				return
+			}
+
+			x /= state.size
+			y /= state.size
+
+			const cell = pickCell(x, y)
+			if (cell === undefined) return
+			if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
+			cell.colour = state.brush.colour
+			drawCell(cell)
 		}
 
-		x /= state.size
-		y /= state.size
+		if (Mouse.Right) {
+			
+		}
 
-		const cell = pickCell(x, y)
-		if (cell === undefined) return
-		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
-		cell.colour = state.brush.colour
-		drawCell(cell)
 	}
 
 	//======//
