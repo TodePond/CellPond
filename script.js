@@ -108,7 +108,7 @@ const state = {
 	size: 1000,
 
 	brush: {
-		colour: 90,
+		colour: Colour.Red.splash,
 	},
 }
 
@@ -423,6 +423,34 @@ on.load(() => {
 		return true
 
 	}
+
+	const fits = (cells) => {
+
+		const [head, ...tail] = cells
+
+		const connections = [head]
+		let failureCount = 0
+		
+		let i = 0
+		while (connections.length < cells.length) {
+
+			const cell = tail[i]
+			const connection = connections.find(connection => isFit(cell, connection))
+			if (!connection) {
+				failureCount++
+				if (failureCount === (cells.length - connections.length)) return false
+			} else {
+				failureCount = 0
+				connections.push(cell)
+			}
+
+			i++
+			if (i > tail.length) i = 0
+		}
+
+		return true
+
+	}
 	
 	const isConnected = (cell, connection) => {
 		
@@ -438,6 +466,20 @@ on.load(() => {
 
 		return
 
+	}
+
+	const isFit = (cell, connection) => {
+		if (cell.height === connection.height && cell.top === connection.top) {
+			if (cell.left === connection.right) return true
+			if (cell.right === connection.left) return true
+		}
+		
+		if (cell.width === connection.width && cell.right === connection.right) {
+			if (cell.top === connection.bottom) return true
+			if (cell.bottom === connection.top) return true
+		}
+
+		return
 	}
 
 	//=========//
@@ -520,7 +562,7 @@ on.load(() => {
 			const [nx, ny] = DEBUG_RED_SPLIT_NEIGHBOURS[Random.Uint8 % 4]
 			const neighbour = pickNeighbour(cell, nx, ny)
 			
-			if (neighbour === undefined || !aligns([cell, neighbour])) {
+			if (neighbour === undefined || !fits([cell, neighbour])) {
 				if (redraw) drawCell(cell)
 				return
 			}
@@ -532,8 +574,8 @@ on.load(() => {
 			}
 
 			const merged = mergeCells([cell, neighbour])
-			//merged.colour = Math.round((cell.colour + neighbour.colour) / 2)
-			merged.colour = Random.Uint8 % 100
+			merged.colour = Math.max(11, Math.round((cell.colour + neighbour.colour) / 2))
+			//merged.colour = Math.max(11, Random.Uint8 % 100)
 			drawCell(merged)
 
 			return
