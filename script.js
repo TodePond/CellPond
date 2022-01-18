@@ -168,9 +168,9 @@ on.load(() => {
 	//======//
 	context.fillStyle = Colour.Void
 	context.fillRect(0, 0, canvas.width, canvas.height)
-	state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
 	state.size = Math.min(canvas.width, canvas.height)
 
+	state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
 	for (let i = 3; i < state.imageData.data.length; i += 4) {
 		state.imageData.data[i] = 255
 	}
@@ -297,17 +297,17 @@ on.load(() => {
 			return behave(cell, redraw)
 		}
 
-		//DEBUG_FIZZ(cell)
+		//DEBUG_FIZZ(cell, redraw)
 		DEBUG_WORLD(cell, redraw)
-		//DEBUG_DRIFT(cell)
+		//DEBUG_DRIFT(cell, redraw)
 
 		//if (redraw) drawCell(cell)
 		
 	}
 	
-	//=======//
-	// SPLIT //
-	//=======//
+	//===============//
+	// SPLIT + MERGE //
+	//===============//
 	const splitCell = (cell, width, height) => {
 
 		const childWidth = cell.width / width
@@ -331,6 +331,36 @@ on.load(() => {
 
 		return children
 	}
+
+	// Warning: bugs will happen if you try to merge cells that don't align or aren't next to each other
+	const mergeCells = (cells) => {
+		
+		let left = 1
+		let top = 1
+		let right = 0
+		let bottom = 0
+
+		for (const cell of cells) {
+			if (cell.left < left) left = cell.left
+			if (cell.top < top) top = cell.top
+			if (cell.right > right) right = cell.right
+			if (cell.bottom > bottom) bottom = cell.bottom
+			deleteCell(cell)
+		}
+
+		const cell = makeCell({
+			x: left,
+			y: top,
+			width: right-left,
+			height: bottom-top,
+			colour: cells[0].colour,
+		})
+
+		addCell(cell)
+
+		return cell
+
+	}
 	
 
 	//=========//
@@ -340,11 +370,17 @@ on.load(() => {
 
 	BEHAVE.set(Colour.Yellow.splash, (cell, redraw) => {
 		
+		if (cell.width !== cell.height) {
+			if (redraw) drawCell(cell)
+			return
+		}
+
 		const down = pickCell(cell.x + cell.width/2, cell.y + cell.height/2 + cell.height)
 		if (down === undefined) {
 			if (redraw) drawCell(cell)
 			return
 		}
+
 		if (down.colour === Colour.Black.splash) {
 			down.colour = Colour.Yellow.splash
 			cell.colour = Colour.Black.splash
@@ -352,12 +388,20 @@ on.load(() => {
 			drawCell(cell)
 			return
 		}
+		
+		if (down.colour === Colour.Blue.splash || down.colour === Colour.Yellow.splash) {
+			const merged = mergeCells([cell, down])
+			merged.colour = Colour.Blue.splash
+			drawCell(merged)
+		}
 
 		if (redraw) drawCell(cell)
 
 	})
 
 	const DEBUG_WORLD = (cell, redraw) => {
+		if (state.cellCount >= 16384) state.worldBuilt = true
+		if (state.worldBuilt) return
 		if (cell.colour < 111) {
 			if (redraw) drawCell(cell)
 			return
@@ -381,13 +425,13 @@ on.load(() => {
 			width = 2
 			height = 2
 		}
-		/*else {
+		else {
 			const r = cell.colour - (cell.colour % 100)
 			const gb = Random.Uint8 % 100
 			cell.colour = r + gb
 			drawCell(cell)
 			return
-		}*/
+		}
 
 		const children = splitCell(cell, width, height)
 
@@ -406,28 +450,37 @@ on.load(() => {
 		return number
 	}
 
-	const DEBUG_DRIFT = (cell) => {
+	const DRIFT_MAX = 2 ** 20
+	const DEBUG_DRIFT = (cell, redraw) => {
+
+		if (state.cellCount >= DRIFT_MAX) {
+			//if (redraw) drawCell(cell)
+			return
+		}
 
 		const width = 2
 		const height = 2
 
-		const gb = cell.colour % 100
-		let b = gb % 10
-		let r = cell.colour - gb
-		let g = gb - b
-		
-		r += oneIn(2)? 100 : -100
-		g += oneIn(2)? 10 : -10
-		b += oneIn(2)? 1 : -1
 
-		r = clamp(r, 0, 900)
-		g = clamp(g, 0, 90)
-		b = clamp(b, 0, 9)
-
-		cell.colour = r+g+b
 		
 		const children = splitCell(cell, width, height)
 		for (const child of children) {
+
+			const gb = child.colour % 100
+			let b = gb % 10
+			let r = child.colour - gb
+			let g = gb - b
+			
+			r += oneIn(2)? 100 : -100
+			g += oneIn(2)? 10 : -10
+			b += oneIn(2)? 1 : -1
+	
+			r = clamp(r, 0, 900)
+			g = clamp(g, 0, 90)
+			b = clamp(b, 0, 9)
+	
+			child.colour = r+g+b
+
 			drawCell(child)
 		}
 
