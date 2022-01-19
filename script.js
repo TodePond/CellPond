@@ -39,10 +39,11 @@ const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
 	const right = x+width
 	const top = y
 	const bottom = y+height
+	const size = width * height
 
 	const sections = []
 
-	const cell = {x, y, width, height, colour, left, right, top, bottom, sections}
+	const cell = {x, y, width, height, colour, left, right, top, bottom, sections, size}
 	return cell
 
 }
@@ -123,7 +124,7 @@ const state = {
 	},*/
 
 	speed: {
-		count: 600,
+		count: 300,
 		dynamic: false,
 		aer: 2.0,
 		redraw: 0.5,
@@ -326,7 +327,6 @@ on.load(() => {
 		const blue = splash[2]
 
 		// Draw
-		
 		const iy = canvas.width * 4
 
 		const width = right-left
@@ -473,20 +473,20 @@ on.load(() => {
 	}
 
 	const fireRandomSpotDrawEvents = () => {
-		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
+		/*const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		let redrawCount = count * state.speed.redraw
 		if (!state.worldBuilt) redrawCount = 1
 		for (let i = 0; i < redrawCount; i++) {
 			const cell = pickRandomVisibleCell()
 			drawCell(cell)
-		}
+		}*/
 	}
 
 	// this function is currently full of debug code
 	// Returns the number of cells it drew
 	const fireCellEvent = (cell, redraw) => {
 
-		if (BUILD_WORLD(cell, redraw)) return 4
+		if (BUILD_WORLD(cell, redraw)) return 1
 
 		const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
@@ -508,7 +508,6 @@ on.load(() => {
 
 		return 0
 
-		
 	}
 	
 	//===============//
@@ -668,7 +667,7 @@ on.load(() => {
 			drawCell(child)
 		}
 
-		return 4
+		return 1
 	}
 
 	const DEBUG_RED_SPLIT_NEIGHBOURS = [
@@ -720,7 +719,7 @@ on.load(() => {
 			//merged.colour = Math.max(11, Random.Uint8 % 100)
 			drawCell(merged)
 
-			return 4
+			return 1
 		}
 
 		const children = splitCell(cell, 2, 2)
@@ -740,6 +739,8 @@ on.load(() => {
 			child.colour = r+g+b
 			drawCell(child)
 		}
+
+		return 4
 
 	}
 
