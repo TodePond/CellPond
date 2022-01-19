@@ -136,7 +136,7 @@ const state = {
 		count: 32768, //with world size of 7
 		dynamic: false,
 		aer: 2.0,
-		redraw: 0.5,
+		redraw: 0.55,
 		redrawRepeatScore: 0.05,
 	},
 
