@@ -133,8 +133,8 @@ const state = {
 	},
 
 	speed: {
-		count: 1000,
-		dynamic: true,
+		count: 32768, //with world size of 7
+		dynamic: false,
 		aer: 2.0,
 		redraw: 0.5,
 		redrawRepeatScore: 0.05,
