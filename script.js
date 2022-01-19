@@ -251,21 +251,29 @@ on.load(() => {
 	}
 
 	const setCellColour = (cell, colour) => {
+		
+		// Position 
+		const scale = state.size * state.camera.scale
+		const left = Math.round(scale * cell.left)
+		if (left >= canvas.width) return
+
+		const top = Math.round(scale * cell.top)
+		if (top >= canvas.height) return
+
+		const right = Math.round(scale * cell.right)
+		if (right < 0) return
+
+		const bottom = Math.round(scale * cell.bottom)
+		if (bottom < 0) return
+
+		// Colour
 		cell.colour = colour
 		const splash = Colour.splash(cell.colour)
 		const red = splash[0]
 		const green = splash[1]
 		const blue = splash[2]
 
-		const scale = state.size * state.camera.scale
-
-		const left = Math.round(scale * cell.left)
-		const top = Math.round(scale * cell.top)
-		const right = Math.round(scale * cell.right)
-		const bottom = Math.round(scale * cell.bottom)
-
-		if (left >= canvas.width) return
-
+		// Draw
 		let id = (top*canvas.width + left) * 4
 		
 		const iy = canvas.width * 4
