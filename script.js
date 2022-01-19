@@ -97,8 +97,15 @@ const state = {
 	cellCount: 0,
 
 	ticker: () => {},
-	speed: {
+	/*speed: {
 		count: 300,
+		dynamic: true,
+		aer: 2.0,
+		redraw: 0.1,
+	},*/
+
+	speed: {
+		count: 600,
 		dynamic: false,
 		aer: 2.0,
 		redraw: 50.0,
@@ -117,6 +124,7 @@ const state = {
 
 	brush: {
 		colour: 999,
+		colour: Colour.Rose.splash,
 	},
 
 	cursor: {
@@ -241,13 +249,19 @@ on.load(() => {
 
 		context.fillStyle = Colour.Void
 
-		if (scale < 1.0) {
+		if (scale >= 1.0) {
 			context.fillRect(size, 0, canvas.width - size, canvas.height)
 			context.fillRect(0, size, canvas.width, canvas.height - size)
 		}
 		else {
+			
 			context.fillRect(size, 0, canvas.width - size, canvas.height)
 			context.fillRect(0, size, canvas.width, canvas.height - size)
+
+			const growthX = canvas.width - canvas.width * scale
+			const growthY = canvas.height - canvas.height * scale
+			context.fillRect(canvas.width - growthX, 0, growthX, canvas.height)
+			context.fillRect(0, canvas.height - growthY, canvas.width, growthY)
 		}
 
 		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
