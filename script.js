@@ -257,7 +257,7 @@ on.load(() => {
 	//===============//
 	// IMAGE + SIZES //
 	//===============//
-	const updateImage = () => {
+	const updateImageSize = () => {
 		state.image.size.base = Math.min(canvas.width, canvas.height)
 		state.image.size.view = state.image.size.base * state.camera.scale
 		
@@ -267,13 +267,18 @@ on.load(() => {
 		state.image.size.iwidth = Math.ceil(state.image.size.width)
 		state.image.size.iheight = Math.ceil(state.image.size.height)
 
+		//state.image.data = context.getImageData(0, 0, state.image.size.iwidth, state.image.size.iheight)
+	}
+
+	const updateImageData = () => {
 		state.image.data = context.getImageData(0, 0, canvas.width, canvas.height)
 	}
 
 	// Setup ImageData
 	context.fillStyle = Colour.Void
 	context.fillRect(0, 0, canvas.width, canvas.height)
-	updateImage()
+	updateImageSize()
+	updateImageData()
 
 	//======//
 	// DRAW //
@@ -281,28 +286,28 @@ on.load(() => {
 	show.resize = () => {
 		context.fillStyle = Colour.Void
 		context.fillRect(0, 0, canvas.width, canvas.height)
-		updateImage()
+		updateImageSize()
+		updateImageData()
 	}
 
 	const stampScale = (scale) => {
 
-		context.fillStyle = Colour.Void
-		context.fillRect(0, 0, canvas.width, canvas.height)
+		//context.fillStyle = Colour.Void
+		//context.fillRect(0, 0, canvas.width, canvas.height)
 		context.drawImage(canvas, 0, 0, canvas.width * scale, canvas.height * scale)
 
 		// Draw void
-
 		//context.fillRect(size, 0, canvas.width - size, canvas.height)
 		//context.fillRect(0, size, canvas.width, canvas.height - size)
 
-		if (scale < 1.0) {
+		/*if (scale < 1.0) {
 			const growthX = canvas.width - canvas.width * scale
 			const growthY = canvas.height - canvas.height * scale
 			//context.fillRect(canvas.width - growthX, 0, growthX, canvas.height)
 			//context.fillRect(0, canvas.height - growthY, canvas.width, growthY)
-		}
+		}*/
 
-		updateImage()
+		updateImageSize()
 	}
 
 	const drawCells = () => {
