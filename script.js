@@ -98,10 +98,10 @@ const state = {
 
 	ticker: () => {},
 	speed: {
-		count: 200,
-		dynamic: true,
+		count: 300,
+		dynamic: false,
 		aer: 2.0,
-		redraw: 0.3,
+		redraw: 50.0,
 	},
 
 	imageData: undefined,
@@ -116,7 +116,7 @@ const state = {
 	},
 
 	brush: {
-		colour: Colour.Yellow.splash,
+		colour: 999,
 	},
 
 	cursor: {
@@ -127,7 +127,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 4
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -231,10 +231,24 @@ on.load(() => {
 
 		//pad.context.drawImage(canvas, 0, 0, canvas.width, canvas.height)
 		
-		context.fillStyle = Colour.Void
-		context.fillRect(0, 0, canvas.width, canvas.height)
+		//context.fillStyle = Colour.Void
+		//context.fillRect(0, 0, canvas.width, canvas.height)
 		
-		//context.drawImage(pad.canvas, 0, 0, canvas.width * scale, canvas.height * scale)
+		context.drawImage(canvas, 0, 0, canvas.width * scale, canvas.height * scale)
+
+		// Draw void
+		const size = state.size * state.camera.scale
+
+		context.fillStyle = Colour.Void
+
+		if (scale < 1.0) {
+			context.fillRect(size, 0, canvas.width - size, canvas.height)
+			context.fillRect(0, size, canvas.width, canvas.height - size)
+		}
+		else {
+			context.fillRect(size, 0, canvas.width - size, canvas.height)
+			context.fillRect(0, size, canvas.width, canvas.height - size)
+		}
 
 		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
 	}
@@ -252,37 +266,40 @@ on.load(() => {
 
 	const setCellColour = (cell, colour) => {
 		
+		cell.colour = colour
+
 		// Position 
 		const scale = state.size * state.camera.scale
 		const left = Math.round(scale * cell.left)
-		if (left >= canvas.width) return 0
+		if (left > canvas.width) return 0
 
 		const top = Math.round(scale * cell.top)
-		if (top >= canvas.height) return 0
+		if (top > canvas.height) return 0
 
-		const right = Math.round(scale * cell.right)
+		let right = Math.round(scale * cell.right)
 		if (right < 0) return 0
+		if (right > canvas.width) right = canvas.width
 
-		const bottom = Math.round(scale * cell.bottom)
+		let bottom = Math.round(scale * cell.bottom)
 		if (bottom < 0) return 0
+		if (bottom > canvas.height) bottom = canvas.height
 
 		// Colour
-		cell.colour = colour
 		const splash = Colour.splash(cell.colour)
 		const red = splash[0]
 		const green = splash[1]
 		const blue = splash[2]
 
 		// Draw
-		let id = (top*canvas.width + left) * 4
 		
 		const iy = canvas.width * 4
 
 		const width = right-left
-		const sx = width * 4
+		const ix = 4
+		const sx = width * ix
 
+		let id = (top*canvas.width + left) * 4
 		const data = state.imageData.data
-
 		for (let y = top; y < bottom; y++) {
 			for (let x = left; x < right; x++) { 
 				data[id] = red
@@ -383,6 +400,7 @@ on.load(() => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		const redrawCount = count * state.speed.redraw
 		let redraw = true
+		if (!state.worldBuilt) redraw = false
 		let drawnCount = 0
 		for (let i = 0; i < count; i++) {
 			const x = Math.random()
@@ -392,13 +410,13 @@ on.load(() => {
 			if (redraw && drawnCount > redrawCount) redraw = false
 			const drawn = fireCellEvent(cell, redraw)
 			if (redraw) drawnCount += drawn
-
 		}
 	}
 
 	const fireRandomSpotDrawEvents = () => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
-		const redrawCount = count * state.speed.redraw
+		let redrawCount = count * state.speed.redraw
+		if (!state.worldBuilt) redrawCount = 1
 		for (let i = 0; i < redrawCount; i++) {
 			const x = Math.random()
 			const y = Math.random()
@@ -411,7 +429,7 @@ on.load(() => {
 	// Returns the number of cells it drew
 	const fireCellEvent = (cell, redraw) => {
 
-		if (BUILD_WORLD(cell, redraw)) return Infinity
+		if (BUILD_WORLD(cell, redraw)) return 4
 
 		const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
@@ -419,10 +437,13 @@ on.load(() => {
 			if (drawn > 0) return drawn
 		}
 
-		//DEBUG_RED_SPLIT_2(cell, redraw)
+		let drawn = 0
+		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
+
+		if (drawn > 0) return drawn
 
 		if (redraw) {
 			return drawCell(cell)
@@ -500,7 +521,7 @@ on.load(() => {
 		let failureCount = 0
 		
 		let i = 0
-		while (connections.length < cells.length) {
+		while (connections.length <= cells.length) {
 
 			const cell = tail[i]
 			const connection = connections.find(connection => isFit(cell, connection))
@@ -572,16 +593,16 @@ on.load(() => {
 	})
 
 	const BUILD_WORLD = (cell, redraw) => {
-		if (state.worldBuilt) return false
+		if (state.worldBuilt) return 0
 		if (state.cellCount >= WORLD_CELL_COUNT) {
 			state.worldBuilt = true
-			return false
+			return 0
 		}
 
 		if (cell.colour < 111) {
-			if (redraw) drawCell(cell)
-			return true
+			return 0
 		}
+
 		cell.colour -= 111
 		const width = 2
 		const height = 2
@@ -590,7 +611,7 @@ on.load(() => {
 			drawCell(child)
 		}
 
-		return true
+		return 4
 	}
 
 	const DEBUG_RED_SPLIT_NEIGHBOURS = [
@@ -610,16 +631,13 @@ on.load(() => {
 
 	const DEBUG_RED_SPLIT_2 = (cell, redraw) => {
 
-		if (!state.worldBuilt) return
+		if (!state.worldBuilt) return 0
 
 		let [red, green, blue] = getRGB(cell.colour)
 
 		if (red === 0) {
 
-			if (green === 0 && blue === 0) {
-				if (redraw) drawCell(cell)
-				return
-			}
+			if (green === 0 && blue === 0) return 0
 
 			const neighbourhood = DEBUG_RED_SPLIT_NEIGHBOURS_2[Random.Uint8 % 4]
 
@@ -628,27 +646,24 @@ on.load(() => {
 			for (const [nx, ny] of neighbourhood) {
 				const neighbour = pickNeighbour(cell, nx, ny)
 				
-				if (neighbour === undefined) return
+				if (neighbour === undefined) return 0
 
 				let [nr, ng, nb] = getRGB(neighbour.colour) 
-				if (nr !== 0 || (ng === 0 && nb === 0)) {
-					return
-				}
+				if (nr !== 0 || (ng === 0 && nb === 0)) return 0
 
 				neighbours.add(neighbour)
 			}
 
 			const ns = [...neighbours.values()]
 
-			if (!aligns([cell, ...ns]) || !fits([cell, ns[0], ns[2]]) || !fits([ns[0], ns[1]]) || !fits([ns[1], ns[2]])) return
+			if (!aligns([cell, ...ns]) || !fits([cell, ns[0], ns[2]]) || !fits([ns[0], ns[1]]) || !fits([ns[1], ns[2]])) return 0
 
 			const merged = mergeCells([cell, ...ns])
 			merged.colour = Math.max(11, Math.round((cell.colour + ns[0].colour) / 2))
 			//merged.colour = Math.max(11, Random.Uint8 % 100)
 			drawCell(merged)
 
-
-			return
+			return 4
 		}
 
 		const children = splitCell(cell, 2, 2)
