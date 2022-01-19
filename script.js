@@ -124,19 +124,20 @@ const state = {
 	time: 0,
 	maxTime: 9999999,
 
-	/*speed: {
-		count: 300,
+	speed: {
+		count: 1000,
 		dynamic: true,
 		aer: 2.0,
-		redraw: 0.05,
-	},*/
+		redraw: 0.1,
+		redrawRepeatScore: 0.05,
+	},
 
 	speed: {
 		count: 300,
 		dynamic: false,
 		aer: 2.0,
-		redraw: 1.0,
-		redrawRepeatScore: 0.2,
+		redraw: 20.0,
+		redrawRepeatScore: 0.1,
 	},
 
 
@@ -147,6 +148,8 @@ const state = {
 			view: undefined,
 			height: undefined,
 			width: undefined,
+			iheight: undefined,
+			iwidth: undefined,
 		},
 
 	},
@@ -175,7 +178,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 3
+const WORLD_SIZE = 5
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -261,6 +264,9 @@ on.load(() => {
 		state.image.size.width = Math.min(state.image.size.view, canvas.width)
 		state.image.size.height = Math.min(state.image.size.view, canvas.height)
 
+		state.image.size.iwidth = Math.ceil(state.image.size.width)
+		state.image.size.iheight = Math.ceil(state.image.size.height)
+
 		state.image.data = context.getImageData(0, 0, canvas.width, canvas.height)
 	}
 
@@ -306,13 +312,14 @@ on.load(() => {
 		}
 	}
 
-	const drawCell = (cell) => {
-		if (cell.lastDraw === state.time) return state.speed.redrawRepeatScore
-		return setCellColour(cell, cell.colour)
+	const drawCell = (cell, override) => {
+		return setCellColour(cell, cell.colour, override)
 	}
 
-	const setCellColour = (cell, colour) => {
+	const setCellColour = (cell, colour, override = false) => {
 		
+		if (!override && cell.lastDraw === state.time) return state.speed.redrawRepeatScore
+
 		cell.colour = colour
 		const size = state.image.size.view
 		const imageWidth = canvas.width
@@ -665,8 +672,8 @@ on.load(() => {
 			down.colour = Colour.Yellow.splash
 			cell.colour = Colour.Black.splash
 			let drawn = 0
-			drawn += drawCell(down)
-			drawn += drawCell(cell)
+			drawn += drawCell(down, true)
+			drawn += drawCell(cell, true)
 			return drawn
 		}
 
