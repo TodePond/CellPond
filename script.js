@@ -88,6 +88,24 @@ const pickNeighbour = (cell, dx, dy) => {
 	return neighbour
 }
 
+const pickRandomCell = () => {
+	const x = Math.random()
+	const y = Math.random()
+	const cell = pickCell(x, y)
+	return cell
+}
+
+const pickRandomVisibleCell = () => {
+
+	const entireWorldVisible = state.camera.scale <= 1.0
+	if (entireWorldVisible) return pickRandomCell()
+
+	const x = Math.random() / state.camera.scale
+	const y = Math.random() / state.camera.scale
+	const cell = pickCell(x, y)
+	return cell
+}
+
 //=======//
 // STATE //
 //=======//
@@ -108,7 +126,7 @@ const state = {
 		count: 600,
 		dynamic: false,
 		aer: 2.0,
-		redraw: 50.0,
+		redraw: 0.5,
 	},
 
 	imageData: undefined,
@@ -135,7 +153,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 4
+const WORLD_SIZE = 3
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -417,13 +435,16 @@ on.load(() => {
 		if (!state.worldBuilt) redraw = false
 		let drawnCount = 0
 		for (let i = 0; i < count; i++) {
-			const x = Math.random()
-			const y = Math.random()
-			const cell = pickCell(x, y)
+			const cell = pickRandomCell()
 			
 			if (redraw && drawnCount > redrawCount) redraw = false
 			const drawn = fireCellEvent(cell, redraw)
 			if (redraw) drawnCount += drawn
+		}
+
+		while (drawnCount < redrawCount) {
+			const cell = pickRandomVisibleCell()
+			drawnCount += drawCell(cell)
 		}
 	}
 
@@ -432,9 +453,7 @@ on.load(() => {
 		let redrawCount = count * state.speed.redraw
 		if (!state.worldBuilt) redrawCount = 1
 		for (let i = 0; i < redrawCount; i++) {
-			const x = Math.random()
-			const y = Math.random()
-			const cell = pickCell(x, y)
+			const cell = pickRandomVisibleCell()
 			drawCell(cell)
 		}
 	}
