@@ -101,7 +101,7 @@ const state = {
 		count: 200,
 		dynamic: true,
 		aer: 2.0,
-		redraw: 0.2,
+		redraw: 0.3,
 	},
 
 	imageData: undefined,
@@ -247,7 +247,7 @@ on.load(() => {
 	}
 
 	const drawCell = (cell) => {
-		setCellColour(cell, cell.colour)
+		return setCellColour(cell, cell.colour)
 	}
 
 	const setCellColour = (cell, colour) => {
@@ -255,16 +255,16 @@ on.load(() => {
 		// Position 
 		const scale = state.size * state.camera.scale
 		const left = Math.round(scale * cell.left)
-		if (left >= canvas.width) return
+		if (left >= canvas.width) return 0
 
 		const top = Math.round(scale * cell.top)
-		if (top >= canvas.height) return
+		if (top >= canvas.height) return 0
 
 		const right = Math.round(scale * cell.right)
-		if (right < 0) return
+		if (right < 0) return 0
 
 		const bottom = Math.round(scale * cell.bottom)
-		if (bottom < 0) return
+		if (bottom < 0) return 0
 
 		// Colour
 		cell.colour = colour
@@ -293,6 +293,8 @@ on.load(() => {
 			id -= sx
 			id += iy
 		}
+
+		return 1
 
 	}
 
@@ -381,12 +383,16 @@ on.load(() => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		const redrawCount = count * state.speed.redraw
 		let redraw = true
+		let drawnCount = 0
 		for (let i = 0; i < count; i++) {
-			if (redraw && i > redrawCount) redraw = false
 			const x = Math.random()
 			const y = Math.random()
 			const cell = pickCell(x, y)
-			fireCellEvent(cell, redraw)
+			
+			if (redraw && drawnCount > redrawCount) redraw = false
+			const drawn = fireCellEvent(cell, redraw)
+			if (redraw) drawnCount += drawn
+
 		}
 	}
 
@@ -402,13 +408,15 @@ on.load(() => {
 	}
 
 	// this function is currently full of debug code
+	// Returns the number of cells it drew
 	const fireCellEvent = (cell, redraw) => {
 
-		if (BUILD_WORLD(cell, redraw)) return
+		if (BUILD_WORLD(cell, redraw)) return Infinity
 
 		const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
-			return behave(cell, redraw)
+			const drawn = behave(cell, redraw)
+			if (drawn > 0) return drawn
 		}
 
 		//DEBUG_RED_SPLIT_2(cell, redraw)
@@ -416,7 +424,12 @@ on.load(() => {
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
 
-		if (redraw) drawCell(cell)
+		if (redraw) {
+			return drawCell(cell)
+		}
+
+		return 0
+
 		
 	}
 	
@@ -534,30 +547,27 @@ on.load(() => {
 	//=========//
 	// ELEMENT //
 	//=========//
+	// Behave functions must return how many cells got drawn
+
 	const BEHAVE = new Map()
 
 	BEHAVE.set(Colour.Yellow.splash, (cell, redraw) => {
 		
-		if (cell.width !== cell.height) {
-			if (redraw) drawCell(cell)
-			return
-		}
+		if (cell.width !== cell.height) return 0
 
 		const down = pickCell(cell.x + cell.width/2, cell.y + cell.height/2 + cell.height)
-		if (down === undefined) {
-			if (redraw) drawCell(cell)
-			return
-		}
+		if (down === undefined) return 0
 
 		if (down.colour === Colour.Black.splash) {
 			down.colour = Colour.Yellow.splash
 			cell.colour = Colour.Black.splash
-			drawCell(down)
-			drawCell(cell)
-			return
+			let drawn = 0
+			drawn += drawCell(down)
+			drawn += drawCell(cell)
+			return drawn
 		}
 
-		if (redraw) drawCell(cell)
+		return 0
 
 	})
 
