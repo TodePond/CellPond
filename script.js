@@ -131,6 +131,7 @@ const state = {
 
 	imageData: undefined,
 	size: 1000,
+	redrawPriority: [],
 
 	camera: {
 		position: {
@@ -138,6 +139,8 @@ const state = {
 			y: 0,
 		},
 		scale: 1.0,
+		mscale: 1.0,
+		dmscale: 0.005,
 	},
 
 	brush: {
@@ -413,18 +416,39 @@ on.load(() => {
 		e.preventDefault()
 	})
 
+	//==========//
+	// KEYBOARD //
+	//==========//
+	on.keydown(e => {
+		const keydown = KEYDOWN[e.key]
+		if (keydown !== undefined) keydown()
+	})
+
+	const KEYDOWN = {}
+	KEYDOWN.e = () => state.camera.mscale += state.camera.dmscale
+	KEYDOWN.q = () => state.camera.mscale -= state.camera.dmscale
+	KEYDOWN.r = () => state.camera.mscale = 1.0
+
+	//========//
+	// CAMERA //
+	//========//
+	const updateCamera = () => {
+		const oldScale = state.camera.scale
+		state.camera.scale *= state.camera.mscale
+		const newScale = state.camera.scale
+		const scale = newScale / oldScale
+		stampScale(scale)
+	}
+
 	//======//
 	// TICK //
 	//======//
 	drawCells()
 	show.tick = () => {
 		updateCursor()
-		if (!show.paused) {
-			fireRandomSpotEvents()
-		}
-		else {
-			fireRandomSpotDrawEvents()
-		}
+		updateCamera()
+		if (!show.paused) fireRandomSpotEvents()
+		else fireRandomSpotDrawEvents()
 		context.putImageData(state.imageData, 0, 0)
 	}
 	
