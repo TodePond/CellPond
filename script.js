@@ -125,19 +125,19 @@ const state = {
 	maxTime: 9999999,
 
 	speed: {
-		count: 1000,
-		dynamic: true,
-		aer: 2.0,
-		redraw: 0.1,
-		redrawRepeatScore: 0.05,
-	},
-
-	speed: {
 		count: 600,
 		dynamic: false,
 		aer: 2.0,
 		redraw: 20.0,
 		redrawRepeatScore: 0.1,
+	},
+
+	speed: {
+		count: 1000,
+		dynamic: true,
+		aer: 2.0,
+		redraw: 0.5,
+		redrawRepeatScore: 0.05,
 	},
 
 
@@ -172,8 +172,8 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Yellow.splash,
 		colour: Colour.Rose.splash,
+		colour: Colour.Yellow.splash,
 	},
 
 	cursor: {
@@ -184,7 +184,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 6
+const WORLD_SIZE = 7
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -300,7 +300,7 @@ on.load(() => {
 
 		//context.fillStyle = Colour.Void
 		//context.fillRect(0, 0, canvas.width, canvas.height)
-		context.drawImage(canvas, 0, 0, canvas.width * scale, canvas.height * scale)
+		//context.drawImage(canvas, 0, 0, canvas.width * scale, canvas.height * scale)
 
 
 		/*if (scale < 1.0) {
@@ -556,7 +556,7 @@ on.load(() => {
 		}
 
 		let drawn = 0
-		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
+		//drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
