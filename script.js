@@ -133,7 +133,7 @@ const state = {
 	},
 
 	speed: {
-		count: 300,
+		count: 600,
 		dynamic: false,
 		aer: 2.0,
 		redraw: 20.0,
@@ -161,7 +161,13 @@ const state = {
 		},
 		scale: 1.0,
 		mscale: 1.0,
-		dmscale: 0.005,
+		dmscale: 0.002,
+
+		mscaleTarget: 1.0,
+		mscaleTargetControl: 0.002,
+		mscaleTargetSpeed: 0.05,
+
+
 	},
 
 	brush: {
@@ -178,7 +184,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 5
+const WORLD_SIZE = 6
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -449,17 +455,29 @@ on.load(() => {
 	})
 
 	const KEYDOWN = {}
-	KEYDOWN.e = () => state.camera.mscale += state.camera.dmscale
-	KEYDOWN.q = () => state.camera.mscale -= state.camera.dmscale
-	KEYDOWN.r = () => state.camera.mscale = 1.0
+	KEYDOWN.e = () => state.camera.mscaleTarget += state.camera.mscaleTargetControl
+	KEYDOWN.q = () => state.camera.mscaleTarget -= state.camera.mscaleTargetControl
+	KEYDOWN.r = () => state.camera.mscaleTarget = 1.0
 
 	//========//
 	// CAMERA //
 	//========//
 	const updateCamera = () => {
-		if (state.camera.mscale < 1.0 + state.camera.dmscale/2 && state.camera.mscale > 1.0 - state.camera.dmscale/2) {
-			state.camera.mscale = 1.0
+		if (state.camera.mscale !== state.camera.mscaleTarget) {
+
+			const d = state.camera.mscaleTarget - state.camera.mscale
+			state.camera.mscale += d * state.camera.mscaleTargetSpeed
+
+			const sign = Math.sign(d)
+			const snap = state.camera.mscaleTarget * state.camera.mscaleTargetControl * state.camera.mscaleTargetSpeed
+			if (sign === 1 && state.camera.mscale > state.camera.mscaleTarget - snap) state.camera.mscale = state.camera.mscaleTarget
+			if (sign === -1 && state.camera.mscale < state.camera.mscaleTarget + snap) state.camera.mscale = state.camera.mscaleTarget
+
+
+
+
 		}
+
 
 		if (state.camera.mscale !== 1.0) {
 			const oldScale = state.camera.scale
