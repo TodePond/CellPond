@@ -39,11 +39,13 @@ const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
 	const right = x+width
 	const top = y
 	const bottom = y+height
+	
 	const size = width * height
 
 	const sections = []
+	const lastDraw = undefined
 
-	const cell = {x, y, width, height, colour, left, right, top, bottom, sections, size}
+	const cell = {x, y, width, height, colour, left, right, top, bottom, sections, size, lastDraw}
 	return cell
 
 }
@@ -101,8 +103,11 @@ const pickRandomVisibleCell = () => {
 	const entireWorldVisible = state.camera.scale <= 1.0
 	if (entireWorldVisible) return pickRandomCell()
 
-	const x = Math.random() / state.camera.scale
-	const y = Math.random() / state.camera.scale
+	const widthScale = state.image.size.width / state.image.size.view
+	const heightScale = state.image.size.height / state.image.size.view
+
+	const x = Math.random() * widthScale
+	const y = Math.random() * heightScale
 	const cell = pickCell(x, y)
 	return cell
 }
@@ -116,6 +121,9 @@ const state = {
 	cellCount: 0,
 
 	ticker: () => {},
+	time: 0,
+	maxTime: 9999999,
+
 	/*speed: {
 		count: 300,
 		dynamic: true,
@@ -128,18 +136,19 @@ const state = {
 		dynamic: false,
 		aer: 2.0,
 		redraw: 1.0,
+		redrawRepeatScore: 0.2,
 	},
 
-	
 
 	image: {
 		data: undefined,
 		size: {
 			base: undefined,
-			zoomed: undefined,
+			view: undefined,
 			height: undefined,
 			width: undefined,
 		},
+
 	},
 
 	camera: {
@@ -247,10 +256,10 @@ on.load(() => {
 	//===============//
 	const updateImage = () => {
 		state.image.size.base = Math.min(canvas.width, canvas.height)
-		state.image.size.zoomed = state.image.size.base * state.camera.scale
+		state.image.size.view = state.image.size.base * state.camera.scale
 		
-		state.image.size.width = Math.min(state.image.size.zoomed, canvas.width)
-		state.image.size.height = Math.min(state.image.size.zoomed, canvas.height)
+		state.image.size.width = Math.min(state.image.size.view, canvas.width)
+		state.image.size.height = Math.min(state.image.size.view, canvas.height)
 
 		state.image.data = context.getImageData(0, 0, canvas.width, canvas.height)
 	}
@@ -281,7 +290,6 @@ on.load(() => {
 		//context.fillRect(0, size, canvas.width, canvas.height - size)
 
 		if (scale < 1.0) {
-			
 			const growthX = canvas.width - canvas.width * scale
 			const growthY = canvas.height - canvas.height * scale
 			//context.fillRect(canvas.width - growthX, 0, growthX, canvas.height)
@@ -299,13 +307,14 @@ on.load(() => {
 	}
 
 	const drawCell = (cell) => {
+		if (cell.lastDraw === state.time) return state.speed.redrawRepeatScore
 		return setCellColour(cell, cell.colour)
 	}
 
 	const setCellColour = (cell, colour) => {
 		
 		cell.colour = colour
-		const size = state.image.size.zoomed
+		const size = state.image.size.view
 		const imageWidth = canvas.width
 
 		// Position 
@@ -336,6 +345,7 @@ on.load(() => {
 		const ix = 4
 		const sx = width * ix
 
+		//let pixelCount = 0
 		let id = (top*canvas.width + left) * 4
 		const data = state.image.data.data
 		for (let y = top; y < bottom; y++) {
@@ -344,11 +354,13 @@ on.load(() => {
 				data[id+1] = green
 				data[id+2] = blue
 				id += 4
+				//pixelCount++
 			}
 			id -= sx
 			id += iy
 		}
 
+		cell.lastDraw = state.time
 		return 1
 
 	}
@@ -374,7 +386,7 @@ on.load(() => {
 			return
 		}
 
-		const size = state.image.size.zoomed
+		const size = state.image.size.view
 
 		x /= size
 		y /= size
@@ -436,6 +448,10 @@ on.load(() => {
 	// CAMERA //
 	//========//
 	const updateCamera = () => {
+		if (state.camera.mscale < 1.0 + state.camera.dmscale/2 && state.camera.mscale > 1.0 - state.camera.dmscale/2) {
+			state.camera.mscale = 1.0
+		}
+
 		if (state.camera.mscale !== 1.0) {
 			const oldScale = state.camera.scale
 			state.camera.scale *= state.camera.mscale
@@ -450,13 +466,18 @@ on.load(() => {
 	//======//
 	drawCells()
 	show.tick = () => {
+		
 		updateCursor()
 		updateCamera()
 		if (!show.paused) fireRandomSpotEvents()
 		else fireRandomSpotDrawEvents()
 		context.putImageData(state.image.data, 0, 0)
+
+		state.time++
+		if (state.time > state.maxTime) state.time = 0
+
 	}
-	
+
 	const fireRandomSpotEvents = () => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		const redrawCount = count * state.speed.redraw
