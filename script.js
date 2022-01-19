@@ -120,19 +120,27 @@ const state = {
 		count: 300,
 		dynamic: true,
 		aer: 2.0,
-		redraw: 0.1,
+		redraw: 0.05,
 	},*/
 
 	speed: {
 		count: 300,
 		dynamic: false,
 		aer: 2.0,
-		redraw: 0.5,
+		redraw: 1.0,
 	},
 
-	imageData: undefined,
-	size: 1000,
-	redrawPriority: [],
+	
+
+	image: {
+		data: undefined,
+		size: {
+			base: undefined,
+			zoomed: undefined,
+			height: undefined,
+			width: undefined,
+		},
+	},
 
 	camera: {
 		position: {
@@ -146,6 +154,7 @@ const state = {
 
 	brush: {
 		colour: 999,
+		colour: Colour.Yellow.splash,
 		colour: Colour.Rose.splash,
 	},
 
@@ -228,65 +237,58 @@ addCell(world)
 
 on.load(() => {
 
+	
 	// Setup Show
 	const show = Show.start({paused: true})
 	const {context, canvas, pad} = show
-	state.size = Math.min(canvas.width, canvas.height)
 	
+	//===============//
+	// IMAGE + SIZES //
+	//===============//
+	const updateImage = () => {
+		state.image.size.base = Math.min(canvas.width, canvas.height)
+		state.image.size.zoomed = state.image.size.base * state.camera.scale
+		
+		state.image.size.width = Math.min(state.image.size.zoomed, canvas.width)
+		state.image.size.height = Math.min(state.image.size.zoomed, canvas.height)
+
+		state.image.data = context.getImageData(0, 0, canvas.width, canvas.height)
+	}
+
 	// Setup ImageData
 	context.fillStyle = Colour.Void
 	context.fillRect(0, 0, canvas.width, canvas.height)
-	state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
-	for (let i = 3; i < state.imageData.data.length; i += 4) {
-		state.imageData.data[i] = 255
-	}
+	updateImage()
 
 	//======//
 	// DRAW //
 	//======//
 	show.resize = () => {
-
-		const oldSize = state.size
-		const newSize = Math.min(canvas.width, canvas.height)
-		const scale = newSize / oldSize
-		state.size = newSize
-
 		context.fillStyle = Colour.Void
 		context.fillRect(0, 0, canvas.width, canvas.height)
-		//context.drawImage(image, 0, 0, image.width * scale, image.height * scale)
-		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+		updateImage()
 	}
 
 	const stampScale = (scale) => {
 
-		//pad.context.drawImage(canvas, 0, 0, canvas.width, canvas.height)
-		
-		//context.fillStyle = Colour.Void
-		//context.fillRect(0, 0, canvas.width, canvas.height)
-		
+		context.fillStyle = Colour.Void
+		context.fillRect(0, 0, canvas.width, canvas.height)
 		context.drawImage(canvas, 0, 0, canvas.width * scale, canvas.height * scale)
 
 		// Draw void
-		const size = state.size * state.camera.scale
 
-		context.fillStyle = Colour.Void
+		//context.fillRect(size, 0, canvas.width - size, canvas.height)
+		//context.fillRect(0, size, canvas.width, canvas.height - size)
 
-		if (scale >= 1.0) {
-			context.fillRect(size, 0, canvas.width - size, canvas.height)
-			context.fillRect(0, size, canvas.width, canvas.height - size)
-		}
-		else {
+		if (scale < 1.0) {
 			
-			context.fillRect(size, 0, canvas.width - size, canvas.height)
-			context.fillRect(0, size, canvas.width, canvas.height - size)
-
 			const growthX = canvas.width - canvas.width * scale
 			const growthY = canvas.height - canvas.height * scale
-			context.fillRect(canvas.width - growthX, 0, growthX, canvas.height)
-			context.fillRect(0, canvas.height - growthY, canvas.width, growthY)
+			//context.fillRect(canvas.width - growthX, 0, growthX, canvas.height)
+			//context.fillRect(0, canvas.height - growthY, canvas.width, growthY)
 		}
 
-		state.imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+		updateImage()
 	}
 
 	const drawCells = () => {
@@ -303,20 +305,21 @@ on.load(() => {
 	const setCellColour = (cell, colour) => {
 		
 		cell.colour = colour
+		const size = state.image.size.zoomed
+		const imageWidth = canvas.width
 
 		// Position 
-		const scale = state.size * state.camera.scale
-		const left = Math.round(scale * cell.left)
+		const left = Math.round(size * cell.left)
 		if (left > canvas.width) return 0
 
-		const top = Math.round(scale * cell.top)
+		const top = Math.round(size * cell.top)
 		if (top > canvas.height) return 0
 
-		let right = Math.round(scale * cell.right)
+		let right = Math.round(size * cell.right)
 		if (right < 0) return 0
 		if (right > canvas.width) right = canvas.width
 
-		let bottom = Math.round(scale * cell.bottom)
+		let bottom = Math.round(size * cell.bottom)
 		if (bottom < 0) return 0
 		if (bottom > canvas.height) bottom = canvas.height
 
@@ -327,14 +330,14 @@ on.load(() => {
 		const blue = splash[2]
 
 		// Draw
-		const iy = canvas.width * 4
+		const iy = imageWidth * 4
 
 		const width = right-left
 		const ix = 4
 		const sx = width * ix
 
 		let id = (top*canvas.width + left) * 4
-		const data = state.imageData.data
+		const data = state.image.data.data
 		for (let y = top; y < bottom; y++) {
 			for (let x = left; x < right; x++) { 
 				data[id] = red
@@ -371,10 +374,10 @@ on.load(() => {
 			return
 		}
 
-		const scale = state.size * state.camera.scale
+		const size = state.image.size.zoomed
 
-		x /= scale
-		y /= scale
+		x /= size
+		y /= size
 
 		const cell = pickCell(x, y)
 		if (cell === undefined) return
@@ -433,11 +436,13 @@ on.load(() => {
 	// CAMERA //
 	//========//
 	const updateCamera = () => {
-		const oldScale = state.camera.scale
-		state.camera.scale *= state.camera.mscale
-		const newScale = state.camera.scale
-		const scale = newScale / oldScale
-		stampScale(scale)
+		if (state.camera.mscale !== 1.0) {
+			const oldScale = state.camera.scale
+			state.camera.scale *= state.camera.mscale
+			const newScale = state.camera.scale
+			const scale = newScale / oldScale
+			stampScale(scale)
+		}
 	}
 
 	//======//
@@ -449,7 +454,7 @@ on.load(() => {
 		updateCamera()
 		if (!show.paused) fireRandomSpotEvents()
 		else fireRandomSpotDrawEvents()
-		context.putImageData(state.imageData, 0, 0)
+		context.putImageData(state.image.data, 0, 0)
 	}
 	
 	const fireRandomSpotEvents = () => {
@@ -473,13 +478,13 @@ on.load(() => {
 	}
 
 	const fireRandomSpotDrawEvents = () => {
-		/*const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
+		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		let redrawCount = count * state.speed.redraw
 		if (!state.worldBuilt) redrawCount = 1
 		for (let i = 0; i < redrawCount; i++) {
 			const cell = pickRandomVisibleCell()
 			drawCell(cell)
-		}*/
+		}
 	}
 
 	// this function is currently full of debug code
