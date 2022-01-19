@@ -296,9 +296,6 @@ on.load(() => {
 		//context.fillRect(0, 0, canvas.width, canvas.height)
 		context.drawImage(canvas, 0, 0, canvas.width * scale, canvas.height * scale)
 
-		// Draw void
-		//context.fillRect(size, 0, canvas.width - size, canvas.height)
-		//context.fillRect(0, size, canvas.width, canvas.height - size)
 
 		/*if (scale < 1.0) {
 			const growthX = canvas.width - canvas.width * scale
@@ -484,6 +481,14 @@ on.load(() => {
 		if (!show.paused) fireRandomSpotEvents()
 		else fireRandomSpotDrawEvents()
 		context.putImageData(state.image.data, 0, 0)
+
+		// Draw void
+		if (state.image.size.view < canvas.width) {
+			context.clearRect(state.image.size.width, 0, canvas.width - state.image.size.width, canvas.height)
+		}
+		if (state.image.size.view < canvas.height) {
+			context.clearRect(0, state.image.size.height, canvas.width, canvas.height - state.image.size.height)
+		}
 
 		state.time++
 		if (state.time > state.maxTime) state.time = 0
