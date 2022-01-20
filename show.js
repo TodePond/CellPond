@@ -70,7 +70,7 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 	
 		const now = performance.now()
 		const interval = now - time
-		print(interval)
+		//print(interval)
 		time = now
 		requestAnimationFrame(wrappedTick)
 	}

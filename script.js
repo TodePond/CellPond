@@ -694,15 +694,25 @@ on.load(() => {
 		if (cell.width !== cell.height) return 0
 
 		const down = pickCell(cell.x + cell.width/2, cell.y + cell.height/2 + cell.height)
-		if (down === undefined) return 0
 
-		if (down.colour === Colour.Black.splash) {
+		if (down !== undefined && down.colour === Colour.Black.splash) {
 			down.colour = Colour.Yellow.splash
 			cell.colour = Colour.Black.splash
 			let drawn = 0
 			drawn += drawCell(down, true)
 			drawn += drawCell(cell, true)
 			return drawn
+		} else {
+
+			const slide = pickNeighbour(cell, oneIn(2)? 1 : -1, 1)
+			if (slide === undefined) return 0
+			if (slide.colour === Colour.Black.splash) {
+				let drawn = 0
+				drawn += setCellColour(cell, Colour.Black.splash, true)
+				drawn += setCellColour(slide, Colour.Yellow.splash, true)
+				return drawn
+			}
+
 		}
 
 		return 0
