@@ -98,7 +98,6 @@ const pickRandomCell = () => {
 	return cell
 }
 
-// TODO: fix for pan
 const pickRandomVisibleCell = () => {
 
 	if (!state.view.visible) return undefined
@@ -361,11 +360,13 @@ on.load(() => {
 		const panY = state.camera.position.y * state.camera.scale
 
 		// Position 
-		const left = Math.round(size * cell.left + panX)
+		let left = Math.round(size * cell.left + panX)
 		if (left > canvas.width) return 0
+		if (left < 0) left = 0
 
-		const top = Math.round(size * cell.top + panY)
+		let top = Math.round(size * cell.top + panY)
 		if (top > canvas.height) return 0
+		if (top < 0) top = 0
 
 		let right = Math.round(size * cell.right + panX)
 		if (right < 0) return 0
@@ -448,8 +449,9 @@ on.load(() => {
 		const {x: px, y: py} = state.cursor.previous
 		if (px === undefined || py === undefined) return
 		const [dx, dy] = [x - px, y - py]
-		state.camera.position.x += dx
-		state.camera.position.y += dy
+		state.camera.position.x += dx / state.camera.scale
+		state.camera.position.y += dy / state.camera.scale
+		updateImageSize()
 	}
 
 	const ZOOM = 0.05
@@ -527,21 +529,10 @@ on.load(() => {
 		context.putImageData(state.image.data, 0, 0)
 
 		// Draw void
-		// TODO: also draw the left and top voids
-		// TODO: fix for pans
-		/*if (state.image.size < canvas.width) {
-
-			// Right
-			context.clearRect(state.view.width, 0, canvas.width - state.view.width, canvas.height)
-
-		}
-
-		if (state.image.size < canvas.height) {
-
-			// Bottom
-			context.clearRect(0, state.view.height, canvas.width, canvas.height - state.view.height)
-
-		}*/
+		context.clearRect(0, 0, state.view.left, state.view.bottom)
+		context.clearRect(state.view.left, 0, canvas.width, state.view.top)
+		context.clearRect(state.view.right, state.view.top, canvas.width, canvas.height)
+		context.clearRect(0, state.view.bottom, canvas.width, canvas.height)
 
 		state.time++
 		if (state.time > state.maxTime) state.time = 0
@@ -562,6 +553,7 @@ on.load(() => {
 			if (redraw) drawnCount += drawn
 		}
 
+		if (!state.view.visible) return
 		while (drawnCount < redrawCount) {
 			const cell = pickRandomVisibleCell()
 			if (cell === undefined) break
@@ -570,6 +562,7 @@ on.load(() => {
 	}
 
 	const fireRandomSpotDrawEvents = () => {
+		if (!state.view.visible) return
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		let redrawCount = count * state.speed.redraw
 		if (!state.worldBuilt) redrawCount = 1
@@ -789,7 +782,6 @@ on.load(() => {
 		[ 0,-1],
 	]
 
-	// TODO: make it check for a 2x2 area to merge with
 	const DEBUG_RED_SPLIT_NEIGHBOURS_2 = [
 		[[ 1, 0], [ 1, 1], [ 0, 1]],
 		[[-1, 0], [-1, 1], [ 0, 1]],
