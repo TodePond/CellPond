@@ -274,13 +274,18 @@ on.load(() => {
 		state.image.baseSize = Math.min(canvas.width, canvas.height)
 		state.image.size = state.image.baseSize * state.camera.scale
 
-		/*state.image.position.left = state.camera.position.x * state.camera.scale
-		state.image.position.top = state.camera.position.y * state.camera.scale
+		state.image.left = state.camera.position.x * state.camera.scale
+		state.image.top = state.camera.position.y * state.camera.scale
+		state.image.right = state.image.left + state.image.size
+		state.image.bottom = state.image.top + state.image.size
 
-		state.image.position.right = state.image.position.left + state*/
+		state.view.left = Math.max(0, state.image.left)
+		state.view.top = Math.max(0, state.image.top)
+		state.view.right = Math.min(canvas.width, state.image.right)
+		state.view.bottom = Math.min(canvas.height, state.image.bottom)
 		
-		state.view.width = Math.min(state.image.size, canvas.width)
-		state.view.height = Math.min(state.image.size, canvas.height)
+		state.view.width = state.view.right - state.view.left
+		state.view.height = state.view.bottom - state.view.top
 
 		state.view.iwidth = Math.ceil(state.view.width)
 		state.view.iheight = Math.ceil(state.view.height)
@@ -373,7 +378,7 @@ on.load(() => {
 		const sx = width * ix
 
 		//let pixelCount = 0
-		let id = (top*canvas.width + left) * 4
+		let id = (top*imageWidth + left) * 4
 		const data = state.image.data.data
 		for (let y = top; y < bottom; y++) {
 			for (let x = left; x < right; x++) { 
