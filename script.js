@@ -98,7 +98,10 @@ const pickRandomCell = () => {
 	return cell
 }
 
+// TODO: fix for pan
 const pickRandomVisibleCell = () => {
+
+	if (!state.view.visible) return undefined
 
 	const entireWorldVisible = state.camera.scale <= 1.0
 	if (entireWorldVisible) return pickRandomCell()
@@ -160,6 +163,8 @@ const state = {
 		right: undefined,
 		top: undefined,
 		bottom: undefined,
+
+		visible: true,
 
 	},
 
@@ -288,6 +293,8 @@ on.load(() => {
 		state.view.width = state.view.right - state.view.left
 		state.view.height = state.view.bottom - state.view.top
 
+		state.view.visible = state.view.width > 0 && state.view.height > 0
+
 		state.view.iwidth = Math.ceil(state.view.width)
 		state.view.iheight = Math.ceil(state.view.height)
 
@@ -350,18 +357,21 @@ on.load(() => {
 		const size = state.image.size
 		const imageWidth = canvas.width
 
+		const panX = state.camera.position.x * state.camera.scale
+		const panY = state.camera.position.y * state.camera.scale
+
 		// Position 
-		const left = Math.round(size * cell.left)
+		const left = Math.round(size * cell.left + panX)
 		if (left > canvas.width) return 0
 
-		const top = Math.round(size * cell.top)
+		const top = Math.round(size * cell.top + panY)
 		if (top > canvas.height) return 0
 
-		let right = Math.round(size * cell.right)
+		let right = Math.round(size * cell.right + panX)
 		if (right < 0) return 0
 		if (right > canvas.width) right = canvas.width
 
-		let bottom = Math.round(size * cell.bottom)
+		let bottom = Math.round(size * cell.bottom + panY)
 		if (bottom < 0) return 0
 		if (bottom > canvas.height) bottom = canvas.height
 
@@ -412,6 +422,7 @@ on.load(() => {
 		
 	}
 
+	// TODO: fix for pan
 	const updateBrush = () => {
 		if (!Mouse.Left) return
 		let [x, y] = Mouse.position
@@ -517,6 +528,7 @@ on.load(() => {
 
 		// Draw void
 		// TODO: also draw the left and top voids
+		// TODO: fix for pans
 		/*if (state.image.size < canvas.width) {
 
 			// Right
@@ -552,6 +564,7 @@ on.load(() => {
 
 		while (drawnCount < redrawCount) {
 			const cell = pickRandomVisibleCell()
+			if (cell === undefined) break
 			drawnCount += drawCell(cell)
 		}
 	}
@@ -562,6 +575,7 @@ on.load(() => {
 		if (!state.worldBuilt) redrawCount = 1
 		for (let i = 0; i < redrawCount; i++) {
 			const cell = pickRandomVisibleCell()
+			if (cell === undefined) break
 			drawCell(cell)
 		}
 	}
