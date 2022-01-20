@@ -124,13 +124,6 @@ const state = {
 	time: 0,
 	maxTime: 9999999,
 
-	speed: {
-		count: 600,
-		dynamic: false,
-		aer: 2.0,
-		redraw: 20.0,
-		redrawRepeatScore: 0.1,
-	},
 
 	speed: {
 		count: 32768/1, //with world size of 7
@@ -138,6 +131,14 @@ const state = {
 		aer: 2.0,
 		redraw: 0.55,
 		redrawRepeatScore: 0.05,
+	},
+
+	speed: {
+		count: 600,
+		dynamic: false,
+		aer: 2.0,
+		redraw: 20.0,
+		redrawRepeatScore: 0.1,
 	},
 
 	image: {
@@ -179,8 +180,8 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
+		colour: Colour.Rose.splash,
 	},
 
 	cursor: {
@@ -191,7 +192,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 4
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -516,7 +517,7 @@ on.load(() => {
 
 		// Draw void
 		// TODO: also draw the left and top voids
-		if (state.image.size < canvas.width) {
+		/*if (state.image.size < canvas.width) {
 
 			// Right
 			context.clearRect(state.view.width, 0, canvas.width - state.view.width, canvas.height)
@@ -528,7 +529,7 @@ on.load(() => {
 			// Bottom
 			context.clearRect(0, state.view.height, canvas.width, canvas.height - state.view.height)
 
-		}
+		}*/
 
 		state.time++
 		if (state.time > state.maxTime) state.time = 0
@@ -578,7 +579,7 @@ on.load(() => {
 		}
 
 		let drawn = 0
-		//drawn += DEBUG_RED_SPLIT_2(cell, redraw)
+		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
@@ -739,6 +740,10 @@ on.load(() => {
 
 		return 0
 
+	})
+
+	BEHAVE.set(Colour.Black.splash, (cell, redraw) => {
+		return setCellColour(cell, Colour.Rose.splash)
 	})
 
 	const BUILD_WORLD = (cell, redraw) => {
