@@ -103,8 +103,8 @@ const pickRandomVisibleCell = () => {
 	const entireWorldVisible = state.camera.scale <= 1.0
 	if (entireWorldVisible) return pickRandomCell()
 
-	const widthScale = state.image.size.width / state.image.size.view
-	const heightScale = state.image.size.height / state.image.size.view
+	const widthScale = state.view.width / state.image.size
+	const heightScale = state.view.height / state.image.size
 
 	const x = Math.random() * widthScale
 	const y = Math.random() * heightScale
@@ -140,17 +140,25 @@ const state = {
 		redrawRepeatScore: 0.05,
 	},
 
-
 	image: {
+
 		data: undefined,
-		size: {
-			base: undefined,
-			view: undefined,
-			height: undefined,
-			width: undefined,
-			iheight: undefined,
-			iwidth: undefined,
-		},
+		size: undefined,
+		baseSize: undefined,
+
+	},
+
+	view: {
+
+		height: undefined,
+		width: undefined,
+		iheight: undefined,
+		iwidth: undefined,
+		
+		left: undefined,
+		right: undefined,
+		top: undefined,
+		bottom: undefined,
 
 	},
 
@@ -166,7 +174,6 @@ const state = {
 		mscaleTarget: 1.0,
 		mscaleTargetControl: 0.002,
 		mscaleTargetSpeed: 0.05,
-
 
 	},
 
@@ -264,14 +271,19 @@ on.load(() => {
 	// IMAGE + SIZES //
 	//===============//
 	const updateImageSize = () => {
-		state.image.size.base = Math.min(canvas.width, canvas.height)
-		state.image.size.view = state.image.size.base * state.camera.scale
-		
-		state.image.size.width = Math.min(state.image.size.view, canvas.width)
-		state.image.size.height = Math.min(state.image.size.view, canvas.height)
+		state.image.baseSize = Math.min(canvas.width, canvas.height)
+		state.image.size = state.image.baseSize * state.camera.scale
 
-		state.image.size.iwidth = Math.ceil(state.image.size.width)
-		state.image.size.iheight = Math.ceil(state.image.size.height)
+		/*state.image.position.left = state.camera.position.x * state.camera.scale
+		state.image.position.top = state.camera.position.y * state.camera.scale
+
+		state.image.position.right = state.image.position.left + state*/
+		
+		state.view.width = Math.min(state.image.size, canvas.width)
+		state.view.height = Math.min(state.image.size, canvas.height)
+
+		state.view.iwidth = Math.ceil(state.view.width)
+		state.view.iheight = Math.ceil(state.view.height)
 
 		//state.image.data = context.getImageData(0, 0, state.image.size.iwidth, state.image.size.iheight)
 	}
@@ -329,7 +341,7 @@ on.load(() => {
 		if (!override && cell.lastDraw === state.time) return state.speed.redrawRepeatScore
 
 		cell.colour = colour
-		const size = state.image.size.view
+		const size = state.image.size
 		const imageWidth = canvas.width
 
 		// Position 
@@ -401,7 +413,7 @@ on.load(() => {
 			return
 		}
 
-		const size = state.image.size.view
+		const size = state.image.size
 
 		x /= size
 		y /= size
@@ -473,9 +485,6 @@ on.load(() => {
 			if (sign === 1 && state.camera.mscale > state.camera.mscaleTarget - snap) state.camera.mscale = state.camera.mscaleTarget
 			if (sign === -1 && state.camera.mscale < state.camera.mscaleTarget + snap) state.camera.mscale = state.camera.mscaleTarget
 
-
-
-
 		}
 
 
@@ -501,11 +510,19 @@ on.load(() => {
 		context.putImageData(state.image.data, 0, 0)
 
 		// Draw void
-		if (state.image.size.view < canvas.width) {
-			context.clearRect(state.image.size.width, 0, canvas.width - state.image.size.width, canvas.height)
+		// TODO: also draw the left and top voids
+		if (state.image.size < canvas.width) {
+
+			// Right
+			context.clearRect(state.view.width, 0, canvas.width - state.view.width, canvas.height)
+
 		}
-		if (state.image.size.view < canvas.height) {
-			context.clearRect(0, state.image.size.height, canvas.width, canvas.height - state.image.size.height)
+
+		if (state.image.size < canvas.height) {
+
+			// Bottom
+			context.clearRect(0, state.view.height, canvas.width, canvas.height - state.view.height)
+
 		}
 
 		state.time++
