@@ -129,22 +129,22 @@ const state = {
 	time: 0,
 	maxTime: 9999999,
 
-
-
-	speed: {
-		count: 400,
-		dynamic: false,
-		aer: 2.0,
-		redraw: 40.0,
-		redrawRepeatScore: 0.5,
-		redrawRepeatPenalty: 0.0,
-	},
 	
 	speed: {
 		count: 32768/1, //with world size of 7
 		dynamic: false,
 		aer: 2.0,
 		redraw: 0.55,
+		redrawRepeatScore: 1.0,
+		redrawRepeatPenalty: 0.0,
+	},
+
+
+	speed: {
+		count: 400,
+		dynamic: false,
+		aer: 2.0,
+		redraw: 30.0,
 		redrawRepeatScore: 1.0,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -209,10 +209,10 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
 		colour: Colour.Purple.splash,
-		size: 1,
+		colour: Colour.Rose.splash,
+		size: 0,
 	},
 
 	cursor: {
@@ -223,7 +223,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 4
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -546,7 +546,7 @@ on.load(() => {
 
 		return [x, y]
 	}
-	
+
 	const brush = (x, y) => {
 		const cell = pickCell(x, y)
 		if (cell === undefined) return
@@ -677,7 +677,17 @@ on.load(() => {
 			state.camera.scale *= state.camera.mscale
 			const newScale = state.camera.scale
 			const scale = newScale / oldScale
-			stampScale(scale)
+
+			let centerX = Mouse.position[0]
+			let centerY = Mouse.position[1]
+
+			if (centerX === undefined) centerX = canvas.width/2
+			if (centerY === undefined) centerY = canvas.height/2
+
+			state.camera.x += (1-scale) * centerX/newScale
+			state.camera.y += (1-scale) * centerY/newScale
+
+			updateImageSize()
 		}
 	}
 
@@ -743,14 +753,14 @@ on.load(() => {
 
 		if (BUILD_WORLD(cell, redraw)) return 1
 
-		const behave = BEHAVE.get(cell.colour)
+		/*const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
 			const drawn = behave(cell, redraw)
 			if (drawn > 0) return drawn
-		}
+		}*/
 
 		let drawn = 0
-		//drawn += DEBUG_RED_SPLIT_2(cell, redraw)
+		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
