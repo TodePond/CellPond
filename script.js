@@ -475,23 +475,70 @@ on.load(() => {
 
 	const updateBrush = () => {
 		if (!Mouse.Left) return
-		let [x, y] = Mouse.position
+		let [x, y] = getCursorView(...Mouse.position)
 		if (x === undefined || y === undefined) {
 			return
 		}
+		
+		let [px, py] = getCursorView(state.cursor.previous.x, state.cursor.previous.y)
+		
+		const size = state.brush.size * WORLD_CELL_SIZE
 
+		const dx = x - px
+		const dy = y - py
+
+		const sx = Math.sign(dx)
+		const sy = Math.sign(dy)
+
+		const ax = Math.abs(dx)
+		const ay = Math.abs(dy)
+
+		const biggest = Math.max(ax, ay)
+
+		let ix = 0
+		let iy = 0
+
+		if (ax === biggest) {
+			iy = (WORLD_CELL_SIZE * sy) * (ay / ax)
+			ix = WORLD_CELL_SIZE * sx
+		} else {
+			ix = (WORLD_CELL_SIZE * sx) * (ax / ay)
+			iy = WORLD_CELL_SIZE * sy
+		}
+
+		const points = new Set()
+
+		const length = biggest / WORLD_CELL_SIZE
+		for (let i = 0; i <= length; i++) {
+			
+			const X = px + ix * i
+			const Y = py + iy * i
+
+			for (let dx = -size; dx <= size; dx += WORLD_CELL_SIZE) {
+				for (let dy = -size; dy <= size; dy += WORLD_CELL_SIZE) {
+					points.add([X + dx, Y + dy])
+				}
+			}
+
+		}
+
+		for (const point of points.values()) {
+			brush(point[0], point[1])
+		}
+		
+	}
+
+	const getCursorView = (x, y) => {
 		x -= state.camera.x * state.camera.scale
 		y -= state.camera.y * state.camera.scale
 
-		const size = state.image.size
-		x /= size
-		y /= size
+		x /= state.image.size
+		y /= state.image.size
 
-		for (let dx = -state.brush.size * WORLD_CELL_SIZE; dx <= state.brush.size * WORLD_CELL_SIZE; dx += WORLD_CELL_SIZE) {
-			for (let dy = -state.brush.size * WORLD_CELL_SIZE; dy <= state.brush.size * WORLD_CELL_SIZE; dy += WORLD_CELL_SIZE) {
-				brush(x + dx, y + dy)
-			}
-		}
+		return [x, y]
+	}
+
+	const brushAtCursor = (x, y) => {
 		
 	}
 
