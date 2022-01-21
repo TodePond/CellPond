@@ -445,7 +445,6 @@ on.load(() => {
 		
 	}
 
-	// TODO: fix for pan
 	const updateBrush = () => {
 		if (!Mouse.Left) return
 		let [x, y] = Mouse.position
@@ -453,8 +452,10 @@ on.load(() => {
 			return
 		}
 
-		const size = state.image.size
+		x -= state.camera.position.x * state.camera.scale
+		y -= state.camera.position.y * state.camera.scale
 
+		const size = state.image.size
 		x /= size
 		y /= size
 
