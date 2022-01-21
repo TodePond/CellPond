@@ -211,6 +211,7 @@ const state = {
 		colour: 999,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
+		size: 1,
 	},
 
 	cursor: {
@@ -486,6 +487,15 @@ on.load(() => {
 		x /= size
 		y /= size
 
+		for (let dx = -state.brush.size * WORLD_CELL_SIZE; dx <= state.brush.size * WORLD_CELL_SIZE; dx += WORLD_CELL_SIZE) {
+			for (let dy = -state.brush.size * WORLD_CELL_SIZE; dy <= state.brush.size * WORLD_CELL_SIZE; dy += WORLD_CELL_SIZE) {
+				brush(x + dx, y + dy)
+			}
+		}
+		
+	}
+
+	const brush = (x, y) => {
 		const cell = pickCell(x, y)
 		if (cell === undefined) return
 		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
