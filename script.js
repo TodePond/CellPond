@@ -546,11 +546,7 @@ on.load(() => {
 
 		return [x, y]
 	}
-
-	const brushAtCursor = (x, y) => {
-		
-	}
-
+	
 	const brush = (x, y) => {
 		const cell = pickCell(x, y)
 		if (cell === undefined) return
@@ -576,17 +572,31 @@ on.load(() => {
 		const sign = -Math.sign(dy)
 		const d = Math.abs(dy)
 
-		const oldScale = state.camera.scale
 
 		for (let i = 0; i < d; i++) {
+
+			const oldScale = state.camera.scale
 			const zoom = ZOOM * state.camera.scale
-			state.camera.scale += zoom * sign
+
+			const szoom = zoom * sign
+			state.camera.scale += szoom
+
+			const newScale = state.camera.scale
+			const scale = newScale / oldScale
+
+			const centerX = Mouse.position[0]
+			const centerY = Mouse.position[1]
+
+			state.camera.x += (1-scale) * centerX/newScale
+			state.camera.y += (1-scale) * centerY/newScale
+
 		}
 
-		const newScale = state.camera.scale
-		const scale = newScale / oldScale
+		//const newScale = state.camera.scale
+		//const scale = newScale / oldScale
+		//stampScale(scale)
 
-		stampScale(scale)
+		updateImageSize()
 	})
 
 	on.contextmenu((e) => {
