@@ -130,22 +130,23 @@ const state = {
 	maxTime: 9999999,
 
 
+
+	speed: {
+		count: 400,
+		dynamic: false,
+		aer: 2.0,
+		redraw: 40.0,
+		redrawRepeatScore: 0.5,
+		redrawRepeatPenalty: 0.0,
+	},
+	
 	speed: {
 		count: 32768/1, //with world size of 7
 		dynamic: false,
 		aer: 2.0,
 		redraw: 0.55,
-		redrawRepeatScore: 0.05,
+		redrawRepeatScore: 1.0,
 		redrawRepeatPenalty: 0.0,
-	},
-
-	speed: {
-		count: 700,
-		dynamic: false,
-		aer: 2.0,
-		redraw: 30.0,
-		redrawRepeatScore: 0.4,
-		redrawRepeatPenalty: 0.1,
 	},
 
 	image: {
@@ -185,10 +186,17 @@ const state = {
 	},
 
 	camera: {
-		position: {
-			x: 0,
-			y: 0,
-		},
+		x: 0,
+		y: 0,
+
+		dx: 0,
+		dy: 0,
+
+		dxTarget: 0,
+		dyTarget: 0,
+		dsControl: 1,
+		dsTargetSpeed: 0.05,
+
 		scale: 1.0,
 		mscale: 1.0,
 		dmscale: 0.002,
@@ -201,8 +209,8 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Yellow.splash,
 		colour: Colour.Rose.splash,
+		colour: Colour.Yellow.splash,
 	},
 
 	cursor: {
@@ -213,7 +221,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 4
+const WORLD_SIZE = 7
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -296,8 +304,8 @@ on.load(() => {
 		state.image.baseSize = Math.min(canvas.width, canvas.height)
 		state.image.size = state.image.baseSize * state.camera.scale
 
-		state.image.left = state.camera.position.x * state.camera.scale
-		state.image.top = state.camera.position.y * state.camera.scale
+		state.image.left = state.camera.x * state.camera.scale
+		state.image.top = state.camera.y * state.camera.scale
 		state.image.right = state.image.left + state.image.size
 		state.image.bottom = state.image.top + state.image.size
 
@@ -395,8 +403,8 @@ on.load(() => {
 		const size = state.image.size
 		const imageWidth = canvas.width
 
-		const panX = state.camera.position.x * state.camera.scale
-		const panY = state.camera.position.y * state.camera.scale
+		const panX = state.camera.x * state.camera.scale
+		const panY = state.camera.y * state.camera.scale
 
 		// Position 
 		let left = Math.round(size * cell.left + panX)
@@ -471,8 +479,8 @@ on.load(() => {
 			return
 		}
 
-		x -= state.camera.position.x * state.camera.scale
-		y -= state.camera.position.y * state.camera.scale
+		x -= state.camera.x * state.camera.scale
+		y -= state.camera.y * state.camera.scale
 
 		const size = state.image.size
 		x /= size
@@ -491,8 +499,8 @@ on.load(() => {
 		const {x: px, y: py} = state.cursor.previous
 		if (px === undefined || py === undefined) return
 		const [dx, dy] = [x - px, y - py]
-		state.camera.position.x += dx / state.camera.scale
-		state.camera.position.y += dy / state.camera.scale
+		state.camera.x += dx / state.camera.scale
+		state.camera.y += dy / state.camera.scale
 		updateImageSize()
 	}
 
@@ -530,7 +538,17 @@ on.load(() => {
 	const KEYDOWN = {}
 	KEYDOWN.e = () => state.camera.mscaleTarget += state.camera.mscaleTargetControl
 	KEYDOWN.q = () => state.camera.mscaleTarget -= state.camera.mscaleTargetControl
-	KEYDOWN.r = () => state.camera.mscaleTarget = 1.0
+	
+	KEYDOWN.w = () => state.camera.dyTarget += state.camera.dsControl
+	KEYDOWN.s = () => state.camera.dyTarget -= state.camera.dsControl
+	KEYDOWN.a = () => state.camera.dxTarget += state.camera.dsControl
+	KEYDOWN.d = () => state.camera.dxTarget -= state.camera.dsControl
+
+	KEYDOWN.r = () => {
+		state.camera.mscaleTarget = 1.0
+		state.camera.dxTarget = 0.0
+		state.camera.dyTarget = 0.0
+	}
 
 	//========//
 	// CAMERA //
@@ -548,6 +566,35 @@ on.load(() => {
 
 		}
 
+		if (state.camera.dx !== state.camera.dxTarget) {
+
+			const d = state.camera.dxTarget - state.camera.dx
+			state.camera.dx += d * state.camera.dsTargetSpeed
+
+			const sign = Math.sign(d)
+			const snap = state.camera.dxTarget * state.camera.dsControl * state.camera.dsTargetSpeed
+			if (sign === 1 && state.camera.dx > state.camera.dxTarget - snap) state.camera.dx = state.camera.dxTarget
+			if (sign === -1 && state.camera.dx < state.camera.dxTarget + snap) state.camera.dx = state.camera.dxTarget
+
+		}
+
+		if (state.camera.dy !== state.camera.dyTarget) {
+
+			const d = state.camera.dyTarget - state.camera.dy
+			state.camera.dy += d * state.camera.dsTargetSpeed
+
+			const sign = Math.sign(d)
+			const snap = state.camera.dyTarget * state.camera.dsControl * state.camera.dsTargetSpeed
+			if (sign === 1 && state.camera.dy > state.camera.dyTarget - snap) state.camera.dy = state.camera.dyTarget
+			if (sign === -1 && state.camera.dy < state.camera.dyTarget + snap) state.camera.dy = state.camera.dyTarget
+
+		}
+
+		if (state.camera.dx !== 0.0 || state.camera.dy !== 0.0) {
+			state.camera.x += state.camera.dx
+			state.camera.y += state.camera.dy
+			updateImageSize()
+		}
 
 		if (state.camera.mscale !== 1.0) {
 			const oldScale = state.camera.scale
@@ -627,7 +674,7 @@ on.load(() => {
 		}
 
 		let drawn = 0
-		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
+		//drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
 		//DEBUG_DRIFT(cell, redraw)
@@ -858,7 +905,6 @@ on.load(() => {
 
 			for (const [nx, ny] of neighbourhood) {
 				
-				//drawn += 20
 				const neighbour = pickNeighbour(cell, nx, ny)
 				
 				if (neighbour === undefined) return 0
@@ -871,7 +917,6 @@ on.load(() => {
 
 			const ns = [...neighbours.values()]
 
-			//drawn += 20
 			if (!aligns([cell, ...ns]) || !fits([cell, ns[0], ns[2]]) || !fits([ns[0], ns[1]]) || !fits([ns[1], ns[2]])) return 0
 
 			const merged = mergeCells([cell, ...ns])
@@ -880,7 +925,8 @@ on.load(() => {
 			if (redraw) drawn += drawCell(merged)
 			
 
-			return drawn
+			return 5
+
 		}
 
 		const children = splitCell(cell, 2, 2)
@@ -901,7 +947,7 @@ on.load(() => {
 			if (redraw) drawn += drawCell(child)
 		}
 
-		return drawn
+		return 5
 
 	}
 
