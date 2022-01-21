@@ -30,6 +30,12 @@ const getRGB = (splash) => {
 	return [r, g, b]
 }
 
+const clamp = (number, min, max) => {
+	if (number < min) return min
+	if (number > max) return max
+	return number
+}
+
 //======//
 // CELL //
 //======//
@@ -99,17 +105,12 @@ const pickRandomCell = () => {
 }
 
 const pickRandomVisibleCell = () => {
-
+	
 	if (!state.view.visible) return undefined
-
-	const entireWorldVisible = state.camera.scale <= 1.0
-	if (entireWorldVisible) return pickRandomCell()
-
-	const widthScale = state.view.width / state.image.size
-	const heightScale = state.view.height / state.image.size
-
-	const x = Math.random() * widthScale
-	const y = Math.random() * heightScale
+	if (state.view.fullyVisible) return pickRandomCell()
+	
+	const x = state.region.left + Math.random() * state.region.width
+	const y = state.region.top + Math.random() * state.region.height
 	const cell = pickCell(x, y)
 	return cell
 }
@@ -136,10 +137,10 @@ const state = {
 	},
 
 	speed: {
-		count: 600,
+		count: 700,
 		dynamic: false,
 		aer: 2.0,
-		redraw: 20.0,
+		redraw: 30.0,
 		redrawRepeatScore: 0.1,
 	},
 
@@ -164,7 +165,19 @@ const state = {
 		bottom: undefined,
 
 		visible: true,
+		fullyVisible: true,
 
+
+	},
+
+	region: {
+		left: 0.0,
+		right: 1.0,
+		top: 0.0,
+		bottom: 1.0,
+
+		width: 1.0,
+		height: 1.0,
 	},
 
 	camera: {
@@ -177,7 +190,7 @@ const state = {
 		dmscale: 0.002,
 
 		mscaleTarget: 1.0,
-		mscaleTargetControl: 0.002,
+		mscaleTargetControl: 0.001,
 		mscaleTargetSpeed: 0.05,
 
 	},
@@ -284,18 +297,27 @@ on.load(() => {
 		state.image.right = state.image.left + state.image.size
 		state.image.bottom = state.image.top + state.image.size
 
-		state.view.left = Math.max(0, state.image.left)
-		state.view.top = Math.max(0, state.image.top)
-		state.view.right = Math.min(canvas.width, state.image.right)
-		state.view.bottom = Math.min(canvas.height, state.image.bottom)
+		state.view.left = clamp(state.image.left, 0, canvas.width)
+		state.view.top = clamp(state.image.top, 0, canvas.height)
+		state.view.right = clamp(state.image.right, 0, canvas.width)
+		state.view.bottom = clamp(state.image.bottom, 0, canvas.height)
 		
 		state.view.width = state.view.right - state.view.left
 		state.view.height = state.view.bottom - state.view.top
 
 		state.view.visible = state.view.width > 0 && state.view.height > 0
-
+		state.view.fullyVisible = state.view.left === state.image.left && state.view.right === state.image.right && state.view.top === state.image.top && state.view.bottom === state.image.bottom
+		
 		state.view.iwidth = Math.ceil(state.view.width)
 		state.view.iheight = Math.ceil(state.view.height)
+
+		state.region.left = (state.view.left - state.image.left) / state.image.size
+		state.region.right = 1.0 + (state.view.right - state.image.right) / state.image.size
+		state.region.top = (state.view.top - state.image.top) / state.image.size
+		state.region.bottom = 1.0 + (state.view.bottom - state.image.bottom) / state.image.size
+
+		state.region.width = state.region.right - state.region.left
+		state.region.height = state.region.bottom - state.region.top
 
 		//state.image.data = context.getImageData(0, 0, state.image.size.iwidth, state.image.size.iheight)
 	}
@@ -749,9 +771,9 @@ on.load(() => {
 
 	})
 
-	BEHAVE.set(Colour.Black.splash, (cell, redraw) => {
+	/*BEHAVE.set(Colour.Black.splash, (cell, redraw) => {
 		return setCellColour(cell, Colour.Rose.splash)
-	})
+	})*/
 
 	const BUILD_WORLD = (cell, redraw) => {
 		if (state.worldBuilt) return 0
@@ -936,12 +958,6 @@ on.load(() => {
 			setCellColour(child, r+gb)
 		}
 
-	}
-
-	const clamp = (number, min, max) => {
-		if (number < min) return min
-		if (number > max) return max
-		return number
 	}
 
 	const DRIFT_MAX = 2 ** 20
