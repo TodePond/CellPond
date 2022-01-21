@@ -211,6 +211,7 @@ const state = {
 		colour: 999,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
+		colour: Colour.Purple.splash,
 		size: 1,
 	},
 
@@ -900,6 +901,207 @@ on.load(() => {
 
 		return 0
 
+	})
+
+	BEHAVE.set(Colour.Purple.splash, (cell, redraw) => {
+
+		const [left, right] = splitCell(cell, 2, 1)
+		let drawn = 0
+		drawn += setCellColour(left, Colour.Cyan.splash)
+		drawn += setCellColour(right, Colour.Blue.splash)
+
+		return drawn
+
+	})
+
+	BEHAVE.set(Colour.Cyan.splash, (cell, redraw) => {
+
+
+		// @#
+		const right = pickNeighbour(cell, 1, 0)
+		if (right !== undefined && aligns([cell, right])) {
+
+			// Fall
+			if (right.colour === Colour.Blue.splash || right.colour === Colour.Cyan.splash) {
+				const below = pickNeighbour(cell, 0, 1)
+				if (below !== undefined && below.colour === Colour.Black.splash) {
+					if (below.width === cell.width*2 && below.left === cell.left) {
+						const merged = mergeCells([cell, right])
+						const [fallenLeft, fallenRight] = splitCell(below, 2, 1)
+						let drawn = 0
+						drawn += setCellColour(merged, Colour.Black.splash)
+						drawn += setCellColour(fallenLeft, cell.colour)
+						drawn += setCellColour(fallenRight, right.colour)
+						return drawn
+					}
+				}
+			}
+
+			// Slide
+			if (right.colour === Colour.Blue.splash) {
+				const head = pickNeighbour(right, 1, 0)
+				if (head !== undefined && head.colour === Colour.Black.splash && head.width === cell.width*2 && head.left === right.right && head.top === cell.top) {
+					const merged = mergeCells([cell, right])
+					const [splitLeft, splitRight] = splitCell(head, 2, 1)
+					let drawn = 0
+					drawn += setCellColour(merged, Colour.Black.splash)
+					drawn += setCellColour(splitLeft, cell.colour)
+					drawn += setCellColour(splitRight, right.colour)
+					return drawn
+				}
+			}
+			
+			// Bounce
+			if (right.colour === Colour.Cyan.splash || right.colour === Colour.Blue.splash) {
+				let drawn = 0
+				drawn += setCellColour(cell, Colour.Blue.splash)
+				drawn += setCellColour(right, Colour.Cyan.splash)
+				return drawn
+			}
+
+		}
+		
+		// #@
+		const left = pickNeighbour(cell, -1, 0)
+		if (left !== undefined && aligns([cell, left])) {
+			
+			// Fall
+			if (left.colour === Colour.Blue.splash || left.colour === Colour.Cyan.splash) {
+				const below = pickNeighbour(cell, 0, 1)
+				if (below !== undefined && below.colour === Colour.Black.splash) {
+					if (below.width === cell.width*2 && below.right === cell.right) {
+						const merged = mergeCells([cell, left])
+						const [fallenLeft, fallenRight] = splitCell(below, 2, 1)
+						let drawn = 0
+						drawn += setCellColour(merged, Colour.Black.splash)
+						drawn += setCellColour(fallenLeft, left.colour)
+						drawn += setCellColour(fallenRight, cell.colour)
+						return drawn
+					}
+				}
+			}
+
+			// Slide
+			if (left.colour === Colour.Blue.splash) {
+				const head = pickNeighbour(left, -1, 0)
+				if (head !== undefined && head.colour === Colour.Black.splash && head.width === cell.width*2 && head.right === left.left && head.top === cell.top) {
+					const merged = mergeCells([cell, left])
+					const [splitLeft, splitRight] = splitCell(head, 2, 1)
+					let drawn = 0
+					drawn += setCellColour(merged, Colour.Black.splash)
+					drawn += setCellColour(splitLeft, left.colour)
+					drawn += setCellColour(splitRight, cell.colour)
+					return drawn
+				}
+			}
+
+			// Bounce
+			if (left.colour === Colour.Cyan.splash || left.colour === Colour.Blue.splash) {
+				let drawn = 0
+				drawn += setCellColour(cell, Colour.Blue.splash)
+				drawn += setCellColour(left, Colour.Cyan.splash)
+				return drawn
+			}
+
+		}
+
+		return 0
+
+	})
+
+	BEHAVE.set(Colour.Blue.splash, (cell, redraw) => {
+		// @#
+		const right = pickNeighbour(cell, 1, 0)
+		if (right !== undefined && aligns([cell, right])) {
+
+			// Fall
+			if (right.colour === Colour.Blue.splash || right.colour === Colour.Cyan.splash) {
+				const below = pickNeighbour(cell, 0, 1)
+				if (below !== undefined && below.colour === Colour.Black.splash) {
+					if (below.width === cell.width*2 && below.left === cell.left) {
+						const merged = mergeCells([cell, right])
+						const [fallenLeft, fallenRight] = splitCell(below, 2, 1)
+						let drawn = 0
+						drawn += setCellColour(merged, Colour.Black.splash)
+						drawn += setCellColour(fallenLeft, cell.colour)
+						drawn += setCellColour(fallenRight, right.colour)
+						return drawn
+					}
+				}
+			}
+
+			// Slide
+			if (right.colour === Colour.Cyan.splash) {
+				const head = pickNeighbour(cell, -1, 0)
+				if (head !== undefined && head.colour === Colour.Black.splash && head.width === cell.width*2 && head.right === cell.left && head.top === cell.top) {
+					const merged = mergeCells([cell, right])
+					const [splitLeft, splitRight] = splitCell(head, 2, 1)
+					let drawn = 0
+					drawn += setCellColour(merged, Colour.Black.splash)
+					drawn += setCellColour(splitLeft, cell.colour)
+					drawn += setCellColour(splitRight, right.colour)
+					return drawn
+				}
+			}
+			
+			
+			// Bounce
+			if (right.colour === Colour.Cyan.splash || right.colour === Colour.Blue.splash) {
+				let drawn = 0
+				drawn += setCellColour(cell, Colour.Cyan.splash)
+				drawn += setCellColour(right, Colour.Blue.splash)
+				return drawn
+			}
+
+		}
+		
+		// #@
+		const left = pickNeighbour(cell, -1, 0)
+		if (left !== undefined && aligns([cell, left])) {
+			
+			// Fall
+			if (left.colour === Colour.Blue.splash || left.colour === Colour.Cyan.splash) {
+				const below = pickNeighbour(cell, 0, 1)
+				if (below !== undefined && below.colour === Colour.Black.splash) {
+					if (below.width === cell.width*2 && below.right === cell.right) {
+						const merged = mergeCells([cell, left])
+						const [fallenLeft, fallenRight] = splitCell(below, 2, 1)
+						let drawn = 0
+						drawn += setCellColour(merged, Colour.Black.splash)
+						drawn += setCellColour(fallenLeft, left.colour)
+						drawn += setCellColour(fallenRight, cell.colour)
+						return drawn
+					}
+				}
+			}
+			
+
+			// Slide
+			if (left.colour === Colour.Cyan.splash) {
+				const head = pickNeighbour(cell, 1, 0)
+				if (head !== undefined && head.colour === Colour.Black.splash && head.width === cell.width*2 && head.left === cell.right && head.top === cell.top) {
+					const merged = mergeCells([cell, left])
+					const [splitLeft, splitRight] = splitCell(head, 2, 1)
+					let drawn = 0
+					drawn += setCellColour(merged, Colour.Black.splash)
+					drawn += setCellColour(splitLeft, left.colour)
+					drawn += setCellColour(splitRight, cell.colour)
+					return drawn
+				}
+			}
+
+			// Bounce
+			if (left.colour === Colour.Cyan.splash || left.colour === Colour.Blue.splash) {
+				let drawn = 0
+				drawn += setCellColour(cell, Colour.Cyan.splash)
+				drawn += setCellColour(left, Colour.Blue.splash)
+				return drawn
+			}
+
+
+		}
+
+		return 0
 	})
 
 	BEHAVE.set(Colour.Rose.splash, (cell, redraw) => {
