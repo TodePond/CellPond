@@ -50,8 +50,10 @@ const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
 
 	const sections = []
 	const lastDraw = undefined
+	//const lastDrawCount = 1
+	const lastDrawRepeat = 0
 
-	const cell = {x, y, width, height, colour, left, right, top, bottom, sections, size, lastDraw}
+	const cell = {x, y, width, height, colour, left, right, top, bottom, sections, size, lastDraw, lastDrawRepeat}
 	return cell
 
 }
@@ -134,6 +136,7 @@ const state = {
 		aer: 2.0,
 		redraw: 0.55,
 		redrawRepeatScore: 0.05,
+		redrawRepeatPenalty: 0.0,
 	},
 
 	speed: {
@@ -141,7 +144,8 @@ const state = {
 		dynamic: false,
 		aer: 2.0,
 		redraw: 30.0,
-		redrawRepeatScore: 0.1,
+		redrawRepeatScore: 0.4,
+		redrawRepeatPenalty: 0.1,
 	},
 
 	image: {
@@ -370,11 +374,24 @@ on.load(() => {
 		return setCellColour(cell, cell.colour, override)
 	}
 
+	const isCellVisible = (cell) => {
+		if (cell.right <= state.region.left) return false
+		if (cell.left >= state.region.right) return false
+		if (cell.bottom <= state.region.top) return false
+		if (cell.top >= state.region.bottom) return false
+		return true
+	}
+
 	const setCellColour = (cell, colour, override = false) => {
 		
-		if (!override && cell.lastDraw === state.time) return state.speed.redrawRepeatScore
-
 		cell.colour = colour
+		if (!isCellVisible(cell)) return 0
+		
+		if (!override && cell.lastDraw === state.time) {
+			cell.lastDrawRepeat += state.speed.redrawRepeatPenalty
+			return state.speed.redrawRepeatScore * cell.lastDrawRepeat
+		}
+
 		const size = state.image.size
 		const imageWidth = canvas.width
 
@@ -427,6 +444,8 @@ on.load(() => {
 		}
 
 		cell.lastDraw = state.time
+		//cell.lastDrawCount = pixelCount
+		cell.lastDrawRepeat = 1
 		return 1
 
 	}
@@ -571,15 +590,14 @@ on.load(() => {
 		for (let i = 0; i < count; i++) {
 			const cell = pickRandomCell()
 			
-			if (redraw && drawnCount > redrawCount) redraw = false
+			if (redraw && drawnCount >= redrawCount) redraw = false
 			const drawn = fireCellEvent(cell, redraw)
-			if (redraw) drawnCount += drawn
+			drawnCount += drawn
 		}
 
 		if (!state.view.visible) return
 		while (drawnCount < redrawCount) {
 			const cell = pickRandomVisibleCell()
-			if (cell === undefined) break
 			drawnCount += drawCell(cell)
 		}
 	}
@@ -589,10 +607,10 @@ on.load(() => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		let redrawCount = count * state.speed.redraw
 		if (!state.worldBuilt) redrawCount = 1
+		let drawnCount = 0
 		for (let i = 0; i < redrawCount; i++) {
 			const cell = pickRandomVisibleCell()
-			if (cell === undefined) break
-			drawCell(cell)
+			drawnCount += drawCell(cell)
 		}
 	}
 
@@ -772,6 +790,17 @@ on.load(() => {
 
 	})
 
+	BEHAVE.set(Colour.Rose.splash, (cell, redraw) => {
+		const [nx, ny] = DEBUG_RED_SPLIT_NEIGHBOURS[Random.Uint8 % 4]
+		const neighbour = pickNeighbour(cell, nx, ny)
+		if (neighbour === undefined) return 0
+		if (neighbour.width !== cell.width) return 0
+		if (neighbour.height !== cell.height) return 0
+		let drawn = 0
+		drawn += setCellColour(neighbour, Colour.Rose.splash)
+		return drawn
+	})
+
 	/*BEHAVE.set(Colour.Black.splash, (cell, redraw) => {
 		return setCellColour(cell, Colour.Rose.splash)
 	})*/
@@ -818,6 +847,7 @@ on.load(() => {
 
 		let [red, green, blue] = getRGB(cell.colour)
 
+		let drawn = 0
 		if (red === 0) {
 
 			if (green === 0 && blue === 0) return 0
@@ -827,6 +857,8 @@ on.load(() => {
 			const neighbours = new Set()
 
 			for (const [nx, ny] of neighbourhood) {
+				
+				//drawn += 20
 				const neighbour = pickNeighbour(cell, nx, ny)
 				
 				if (neighbour === undefined) return 0
@@ -839,14 +871,16 @@ on.load(() => {
 
 			const ns = [...neighbours.values()]
 
+			//drawn += 20
 			if (!aligns([cell, ...ns]) || !fits([cell, ns[0], ns[2]]) || !fits([ns[0], ns[1]]) || !fits([ns[1], ns[2]])) return 0
 
 			const merged = mergeCells([cell, ...ns])
 			merged.colour = Math.max(11, Math.round((cell.colour + ns[0].colour) / 2))
 			//merged.colour = Math.max(11, Random.Uint8 % 100)
-			drawCell(merged)
+			if (redraw) drawn += drawCell(merged)
+			
 
-			return 1
+			return drawn
 		}
 
 		const children = splitCell(cell, 2, 2)
@@ -864,10 +898,10 @@ on.load(() => {
 			b = clamp(b, 0, 9)
 
 			child.colour = r+g+b
-			drawCell(child)
+			if (redraw) drawn += drawCell(child)
 		}
 
-		return 4
+		return drawn
 
 	}
 
