@@ -509,7 +509,15 @@ on.load(() => {
 		const points = new Set()
 
 		const length = biggest / WORLD_CELL_SIZE
-		for (let i = 0; i <= length; i++) {
+
+		if (dx === 0 && dy === 0) {
+			for (let dx = -size; dx <= size; dx += WORLD_CELL_SIZE) {
+				for (let dy = -size; dy <= size; dy += WORLD_CELL_SIZE) {
+					points.add([x + dx, y + dy])
+				}
+			}
+		}
+		else for (let i = 0; i <= length; i++) {
 			
 			const X = px + ix * i
 			const Y = py + iy * i
