@@ -1420,7 +1420,9 @@ on.load(() => {
 		}
 
 		const makeArrayFromSplash = (splash) => {
-			const [r, g, b] = getRGB(splash)
+			let [r, g, b] = getRGB(splash)
+			r /= 100
+			g /= 10
 			const redValues = [false, false, false, false, false, false, false, false, false, false]
 			const greenValues = [false, false, false, false, false, false, false, false, false, false]
 			const blueValues = [false, false, false, false, false, false, false, false, false, false]
@@ -1428,8 +1430,8 @@ on.load(() => {
 			greenValues[g] = true
 			blueValues[b] = true
 			const red = makeNumber({values: redValues, channel: 0})
-			const green = makeNumber({values: redValues, channel: 1})
-			const blue = makeNumber({values: redValues, channel: 2})
+			const green = makeNumber({values: greenValues, channel: 1})
+			const blue = makeNumber({values: blueValues, channel: 2})
 
 			const array = makeArray({channels: [red, green, blue]})
 			return array
@@ -1610,6 +1612,13 @@ on.load(() => {
 		//================//
 		const GREY = makeArrayFromSplash(Colour.Grey.splash)
 		const BLACK = makeArrayFromSplash(Colour.Black.splash)
+		let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
+		RED_R /= 100
+		RED_G /= 10
+		BLACK.channels[0].values[RED_R] = true
+		BLACK.channels[1].values[RED_G] = true
+		BLACK.channels[2].values[RED_B] = true
+
 		const FALL_DIAGRAM = makeDiagram({
 			left: [
 				makeDiagramCell({x: 0, y: 0, content: GREY}),
