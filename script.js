@@ -1473,7 +1473,7 @@ on.load(() => {
 		// DRAGON - RULE //
 		//===============//
 		const makeRule = ({steps = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
-			return {steps, transformations, locked, behaveFuncs: []}
+			return {steps, transformations, locked}
 		}
 
 		//==========================//
@@ -1524,21 +1524,23 @@ on.load(() => {
 
 		const getTransformedDiagram = (diagram, transformation) => {
 
-			const transformedLeft = []
-			const transformedRight = []
-
 			const {left, right} = diagram
+
+			const transformedLeft = []
+			const transformedRight = right === undefined? undefined : []
+
 			const length = left.length
 			for (let i = 0; i < length; i++) {
 
 				const leftCell = left[i]
-				const rightCell = right[i]
-
 				const transformedLeftCell = getTransformedCell(leftCell, transformation)
-				const transformedRightCell = getTransformedCell(rightCell, transformation)
-
 				transformedLeft.push(transformedLeftCell)
-				transformedRight.push(transformedRightCell)
+				
+				if (right !== undefined) {
+					const rightCell = right[i]
+					const transformedRightCell = getTransformedCell(rightCell, transformation)
+					transformedRight.push(transformedRightCell)
+				}
 			}
 
 			const transformedDiagram = makeDiagram({left: transformedLeft, right: transformedRight})
@@ -1579,12 +1581,12 @@ on.load(() => {
 				redundantRules.push(..._redundantRules)
 			}
 
-			// Expand Numbers in Arrays!
+			// Make behave functions!!!
 			for (const redundantRule of redundantRules.d) {
-				const expandedRules = getExpandedRules(redundantRule)
+				const behaveFunction = makeBehaveFunction(redundantRule)
 			}
 
-			
+
 		}
 
 		// For one rule, we could take its 'origin' as any of the cells in the first step
@@ -1603,8 +1605,19 @@ on.load(() => {
 			
 		}
 
-		const getExpandedRules = (rule) => {
+		const makeBehaveFunction = (rule) => {
 
+			const lines = []
+
+			for (const step of rule.steps) {
+
+				const condition = makeConditionFunction(step.left)
+			}
+
+		}
+
+		const makeConditionFunction = (diagram) => {
+			
 		}
 
 		//================//
@@ -1630,9 +1643,32 @@ on.load(() => {
 			],
 		})
 
-		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		
+		const CYAN = makeArrayFromSplash(Colour.Cyan.splash)
+		const BLUE = makeArrayFromSplash(Colour.Blue.splash)
+		const WATER_RIGHT = makeDiagram({
+			left: [
+				makeDiagramCell({x: 0, y: 0, content: CYAN}),
+				makeDiagramCell({x: 1, y: 0, content: BLUE}),
+			],
+		})
 
-		registerRule(FALL_RULE)
+		const WATER_RIGHT_FALL_DIAGRAM = makeDiagram({
+			left: [
+				makeDiagramCell({x: 0, y: 0, content: WATER_RIGHT}),
+				makeDiagramCell({x: 0, y: 1, content: BLACK}),
+			],
+			right: [
+				makeDiagramCell({x: 0, y: 0, content: BLACK}),
+				makeDiagramCell({x: 0, y: 1, content: WATER_RIGHT}),
+			],
+		})
+
+		//const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+
+		registerRule(WATER_RIGHT_FALL_RULE)
+		//registerRule(FALL_RULE)
 
 	}
 
