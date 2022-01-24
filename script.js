@@ -1362,4 +1362,54 @@ on.load(() => {
 
 	}
 
+	//========//
+	// DRAGON //
+	//========//
+	{
+		//=================//
+		// DRAGON - NUMBER //
+		//=================//
+		// Values[10] - what values this number could represent
+		// Channels[3] - what colour channels this number could represent
+		// Operations[] - any operations that this number includes
+		const makeNumber = ({values, channels, operations = []} = {}) => {
+			if (values === undefined) values = [false, false, false, false, false, false, false, false, false, false]
+			if (channels === undefined) channels = [false, false, false]
+			return {values, channels, operations}
+		}
+
+		const DRAGON_NUMBER_OPERATOR = {
+			ADD: (left, right) => Math.min(left + right, 9),
+			SUBTRACT: (left, right) => Math.max(left - right, 0),
+			MULTIPLY: (left, right) => Math.min(left * right, 9),
+			DIVIDE: (left, right) => right === 0? 9 : Math.round(left / right),
+		}
+
+		const makeOperation = (operator, number) => {
+			return {operator, number}
+		}
+
+		// Evaluates all .channels and .operations into .values (based on a target dragon array, and target channel)
+		const evaluateNumber = (number, array, channel) => {
+			// TODO: evaluate references
+			// TODO: evaluate operations
+			return array
+		}
+
+		//================//
+		// DRAGON - ARRAY //
+		//================//
+		
+
+		//==================//
+		// DRAGON - DIAGRAM //
+		//==================//
+
+		//===============//
+		// DRAGON - RULE //
+		//===============//
+	}
+
+	
+
 })
