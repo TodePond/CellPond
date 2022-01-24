@@ -1453,8 +1453,8 @@ on.load(() => {
 		//===============//
 		// DRAGON - RULE //
 		//===============//
-		const makeRule = ({diagrams = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
-			return {diagrams, transformations, locked, behaveFuncs: []}
+		const makeRule = ({steps = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
+			return {steps, transformations, locked, behaveFuncs: []}
 		}
 
 		//==========================//
@@ -1498,8 +1498,8 @@ on.load(() => {
 		}
 
 		const getTransformedRule = (rule, transformation) => {
-			const diagrams = rule.diagrams.map(diagram => getTransformedDiagram(diagram, transformation))
-			const transformedRule = makeRule({diagrams, transformations: DRAGON_TRANSFORMATIONS.NONE, locked: rule.locked})
+			const steps = rule.steps.map(step => getTransformedDiagram(step, transformation))
+			const transformedRule = makeRule({steps, transformations: DRAGON_TRANSFORMATIONS.NONE, locked: rule.locked})
 			return transformedRule
 		}
 
@@ -1508,17 +1508,18 @@ on.load(() => {
 			const transformedLeft = []
 			const transformedRight = []
 
-			const length = diagram.left.length
+			const {left, right} = diagram
+			const length = left.length
 			for (let i = 0; i < length; i++) {
-				const leftCell = diagram.left[i]
-				const rightCell = diagram.right[i]
+
+				const leftCell = left[i]
+				const rightCell = right[i]
 
 				const transformedLeftCell = getTransformedCell(leftCell, transformation)
 				const transformedRightCell = getTransformedCell(rightCell, transformation)
 
 				transformedLeft.push(transformedLeftCell)
 				transformedRight.push(transformedRightCell)
-
 			}
 
 			const transformedDiagram = makeDiagram({left: transformedLeft, right: transformedRight})
@@ -1527,9 +1528,9 @@ on.load(() => {
 
 		const getTransformedCell = (cell, transformation) => {
 			const [x, y] = transformation(cell.x, cell.y)
-			if (!cell.content.isDiagram) return makeCell({x, y, content: cell.content})
+			if (!cell.content.isDiagram) return makeDiagramCell({x, y, content: cell.content})
 			const content = getTransformedDiagram(cell.content, transformation)
-			return makeCell({x, y, content})
+			return makeDiagramCell({x, y, content})
 		}
 
 		//=================//
@@ -1544,10 +1545,47 @@ on.load(() => {
 		// eg: If it is a locked-in rule or not
 		// Or if the left side matches the shape of the right side
 		const registerRule = (rule) => {
-			const transformedRules = rule.transformations.map(transformation => getTransformedRule(rule, transformation))
-			for (const transformedRule of transformedRules) {
-				const expandedRules = getExpandedRules(rule)
+
+			// Apply Symmetry!
+			const transformedRules = []
+			for (const transformation of rule.transformations) {
+				const transformedRule = getTransformedRule(rule, transformation)
+				transformedRules.push(transformedRule)
 			}
+
+			// Get Redundant Rules!
+			const redundantRules = []
+			for (const transformedRule of transformedRules) {
+				const _redundantRules = getRedundantRules(transformedRule)
+				redundantRules.push(..._redundantRules)
+			}
+
+			// Expand Numbers in Arrays!
+			for (const redundantRule of redundantRules) {
+				const expandedRules = getExpandedRules(redundantRule)
+			}
+
+			
+		}
+
+		// For one rule, we could take its 'origin' as any of the cells in the first step
+		// This function gets all those redundant variations
+		const getRedundantRules = (rule) => {
+			
+			const redundantRules = []
+			const head = rule.steps[0]
+			for (const cell of head.left) {
+				const transformation = (x, y) => [x - cell.x, y - cell.y]
+				const redundantRule = getTransformedRule(rule, transformation)
+				redundantRules.push(redundantRule)
+			}
+
+			return redundantRules
+			
+		}
+
+		const getExpandedRules = (rule) => {
+
 		}
 
 		//================//
@@ -1566,7 +1604,7 @@ on.load(() => {
 			],
 		})
 
-		const FALL_RULE = makeRule({diagrams: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.R})
+		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM, FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 
 		registerRule(FALL_RULE)
 
