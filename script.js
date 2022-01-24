@@ -1377,12 +1377,11 @@ on.load(() => {
 		// DRAGON - NUMBER //
 		//=================//
 		// Values[10] - what values this number could represent
-		// Channels[3] - what colour channels this number could represent
+		// Channel - what colour channel this number uses as its base (0, 1 or 2)
 		// Operations[] - any operations that this number includes
-		const makeNumber = ({values, channels, operations = []} = {}) => {
+		const makeNumber = ({values, channel = 0, operations = []} = {}) => {
 			if (values === undefined) values = [false, false, false, false, false, false, false, false, false, false]
-			if (channels === undefined) channels = [false, false, false]
-			return {values, channels, operations}
+			return {values, channel, operations}
 		}
 
 		const DRAGON_NUMBER_OPERATOR = {
@@ -1397,8 +1396,9 @@ on.load(() => {
 		}
 
 		// Evaluates all .channels and .operations into .values (based on a target dragon array, and target channel)
-		const evaluateNumber = (number, array, channel) => {
-			// TODO: evaluate references
+		const evaluateNumber = (number, array) => {
+
+			// TODO: evaluate channel
 			// TODO: evaluate operations
 			return array
 		}
