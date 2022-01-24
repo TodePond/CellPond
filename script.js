@@ -130,14 +130,6 @@ const state = {
 	maxTime: 9999999,
 
 	
-	speed: {
-		count: 32768/1, //with world size of 7
-		dynamic: false,
-		aer: 2.0,
-		redraw: 0.55,
-		redrawRepeatScore: 1.0,
-		redrawRepeatPenalty: 0.0,
-	},
 
 
 	speed: {
@@ -146,6 +138,15 @@ const state = {
 		aer: 2.0,
 		redraw: 30.0,
 		redrawRepeatScore: 1.0,
+		redrawRepeatPenalty: 0.0,
+	},
+	
+	speed: {
+		count: 32768/1, //with world size of 7
+		dynamic: true,
+		aer: 2.0,
+		redraw: 0.55,
+		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
 
@@ -228,7 +229,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 4
+const WORLD_SIZE = 7
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
 
@@ -1418,6 +1419,22 @@ on.load(() => {
 			return {channels, stamp}
 		}
 
+		const makeArrayFromSplash = (splash) => {
+			const [r, g, b] = getRGB(splash)
+			const redValues = [false, false, false, false, false, false, false, false, false, false]
+			const greenValues = [false, false, false, false, false, false, false, false, false, false]
+			const blueValues = [false, false, false, false, false, false, false, false, false, false]
+			redValues[r] = true
+			greenValues[g] = true
+			blueValues[b] = true
+			const red = makeNumber({values: redValues, channel: 0})
+			const green = makeNumber({values: redValues, channel: 1})
+			const blue = makeNumber({values: redValues, channel: 2})
+
+			const array = makeArray({channels: [red, green, blue]})
+			return array
+		}
+
 		//================//
 		// DRAGON - SHAPE //
 		//================//
@@ -1561,7 +1578,7 @@ on.load(() => {
 			}
 
 			// Expand Numbers in Arrays!
-			for (const redundantRule of redundantRules) {
+			for (const redundantRule of redundantRules.d) {
 				const expandedRules = getExpandedRules(redundantRule)
 			}
 
@@ -1591,8 +1608,8 @@ on.load(() => {
 		//================//
 		// DRAGON - DEBUG //
 		//================//
-		const GREY = makeArray({channels: Colour.Grey})
-		const BLACK = makeArray({channels: Colour.Black})
+		const GREY = makeArrayFromSplash(Colour.Grey.splash)
+		const BLACK = makeArrayFromSplash(Colour.Black.splash)
 		const FALL_DIAGRAM = makeDiagram({
 			left: [
 				makeDiagramCell({x: 0, y: 0, content: GREY}),
@@ -1604,7 +1621,7 @@ on.load(() => {
 			],
 		})
 
-		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM, FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 
 		registerRule(FALL_RULE)
 
