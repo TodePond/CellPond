@@ -1399,7 +1399,23 @@ on.load(() => {
 		//================//
 		// DRAGON - ARRAY //
 		//================//
-		
+		// Channels[3] - what dragon numbers are in each colour channel (or undefined for a partial array)
+		// Stamp - what shape of stamp the channel has (or undefined for no stamp)
+		const makeArray = ({channels, stamp}) => {
+			if (channels === undefined) channels = [undefined, undefined, undefined]
+			return {channels}
+		}
+
+		//================//
+		// DRAGON - SHAPE //
+		//================//
+		// TODO: these should probably be functions for how to draw them or something? or probably objects with various funcs in, including: drawing, collision testing
+		const DRAGON_SHAPE = {
+			SQUARE: {},
+			CIRCLE: {},
+			TRIANGLE: {},
+			RECTANGLE: {},
+		}
 
 		//==================//
 		// DRAGON - DIAGRAM //
