@@ -212,6 +212,7 @@ const state = {
 		colour: Colour.Yellow.splash,
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
+		colour: Colour.Grey.splash,
 		size: 0,
 	},
 
@@ -220,6 +221,10 @@ const state = {
 			x: undefined,
 			y: undefined,
 		},
+	},
+
+	dragon: {
+		rules: []
 	}
 }
 
@@ -753,13 +758,15 @@ on.load(() => {
 
 		if (BUILD_WORLD(cell, redraw)) return 1
 
+		return 0
+
 		/*const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
 			const drawn = behave(cell, redraw)
 			if (drawn > 0) return drawn
 		}*/
 
-		let drawn = 0
+		/*let drawn = 0
 		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
@@ -771,7 +778,7 @@ on.load(() => {
 			return drawCell(cell)
 		}
 
-		return 0
+		return 0*/
 
 	}
 	
@@ -1455,6 +1462,32 @@ on.load(() => {
 		const makeSymmetry = ({x = false, y = false, r = false} = {}) => {
 			return {x, y, r}
 		}
+
+		//=================//
+		// DRAGON - BEHAVE //
+		//=================//
+		// From a rule, make 'behave' functions that get used to 
+		//const makeRuleBehaves = 
+
+		//================//
+		// DRAGON - DEBUG //
+		//================//
+		const GREY = makeArray({channels: Colour.Grey})
+		const BLACK = makeArray({channels: Colour.Black})
+		const FALL_DIAGRAM = makeDiagram({
+			left: makeDiagramSide({
+				cells: [
+					makeDiagramCell({x: 0, y: 0, array: GREY}),
+					makeDiagramCell({x: 0, y: 1, array: BLACK}),
+				],
+			}),
+			right: makeDiagramSide({
+				cells: [
+					makeDiagramCell({x: 0, y: 0, array: BLACK}),
+					makeDiagramCell({x: 0, y: 1, array: GREY}),
+				],
+			}),
+		}).d
 
 	}
 
