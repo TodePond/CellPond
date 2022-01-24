@@ -224,7 +224,7 @@ const state = {
 	},
 
 	dragon: {
-		rules: []
+		behaves: [],
 	}
 }
 
@@ -1399,6 +1399,8 @@ on.load(() => {
 		const evaluateNumber = (number, array) => {
 
 			// TODO: evaluate channel
+			const source = array.channels[number.channel]
+
 			// TODO: evaluate operations
 			return array
 		}
@@ -1416,12 +1418,11 @@ on.load(() => {
 		//================//
 		// DRAGON - SHAPE //
 		//================//
-		const makeShape = ({draw = ()=>{}, overlaps = ()=>{}} = {}) => {
-			return {draw, overlaps}
+		// TODO: something
+		const makeShape = () => {
+			return {}
 		}
 
-		// TODO: make draw functions for shapes
-		// TODO: make collision detection functions for shapes
 		const DRAGON_SHAPE = {
 			SQUARE: makeShape(),
 			CIRCLE: makeShape(),
@@ -1437,37 +1438,86 @@ on.load(() => {
 		// or you can make an invalid side by giving it two cells in the same place
 
 		// Right can be undefined to represent a single-sided diagram
-		const makeDiagram = ({left = makeDiagramSide(), right} = {}) => {
+		const makeDiagram = ({left = [], right} = {}) => {
 			return {left, right}
 		}
 
-		const makeDiagramSide = ({cells = []} = {}) => {
-			return {cells}
-		}
-
-		const makeDiagramCell = ({x = 0, y = 0, array = makeArray()} = {}) => {
-			return {x, y, array}
+		// Content can be a dragon-array or another dragon-diagram
+		const makeDiagramCell = ({x = 0, y = 0, content = makeArray()} = {}) => {
+			return {x, y, content}
 		}
 
 		//===============//
 		// DRAGON - RULE //
 		//===============//
-		const makeRule = ({diagrams = [], symmetry = makeSymmetry(), locked = true} = {}) => {
-			return {diagrams, symmetry, locked}
+		const makeRule = ({diagrams = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
+			return {diagrams, transformations, locked, behaveFuncs: []}
 		}
 
-		//===================//
-		// DRAGON - SYMMETRY //
-		//===================//
-		const makeSymmetry = ({x = false, y = false, r = false} = {}) => {
-			return {x, y, r}
+		//==========================//
+		// DRAGON - TRANSFORMATIONS //
+		//==========================//
+		const DRAGON_TRANSFORMATIONS = {
+			NONE: [
+				(x, y) => [ x, y],
+			],
+			X: [
+				(x, y) => [ x, y],
+				(x, y) => [-x, y],
+			],
+			Y: [
+				(x, y) => [ x, y],
+				(x, y) => [ x,-y],
+			],
+			XY: [
+				(x, y) => [ x, y],
+				(x, y) => [-x, y],
+				(x, y) => [ x,-y],
+				(x, y) => [-x,-y],
+			],
+			R: [
+				(x, y) => [ x, y],
+				(x, y) => [-y, x],
+				(x, y) => [-x,-y],
+				(x, y) => [ y,-x],
+			],
+			XYR: [
+				(x, y) => [ x, y],
+				(x, y) => [-y, x],
+				(x, y) => [-x,-y],
+				(x, y) => [ y,-x],
+				
+				(x, y) => [-x, y],
+				(x, y) => [-y,-x],
+				(x, y) => [ x,-y],
+				(x, y) => [ y, x],
+			]
+		}
+
+		const getTransformedRule = (rule, transformation) => {
+			const diagrams = rule.diagrams.map(diagram => getTransformedDiagram(diagram, transformation))
+			const transformedRule = makeRule({diagrams, transformations: DRAGON_TRANSFORMATIONS.NONE, locked: rule.locked})
+			return transformedRule
+		}
+
+		const getTransformedDiagram = (diagram, transformation) => {
+			const length = diagram.left.length
 		}
 
 		//=================//
 		// DRAGON - BEHAVE //
 		//=================//
-		// From a rule, make 'behave' functions that get used to 
-		//const makeRuleBehaves = 
+		for (let i = 0; i < 1000; i++) {
+			state.dragon.behaves[i] = []
+		}
+
+		// From a rule, register 'behave' functions that get used to implement the rules in the engine
+		// Note: This function doesn't check for safety
+		// eg: If it is a locked-in rule or not
+		// Or if the left side matches the shape of the right side
+		const registerRule = (rule) => {
+			const transformedRules = rule.transformations.map(transformation => getTransformedRule(rule, transformation))
+		}
 
 		//================//
 		// DRAGON - DEBUG //
@@ -1475,19 +1525,19 @@ on.load(() => {
 		const GREY = makeArray({channels: Colour.Grey})
 		const BLACK = makeArray({channels: Colour.Black})
 		const FALL_DIAGRAM = makeDiagram({
-			left: makeDiagramSide({
-				cells: [
-					makeDiagramCell({x: 0, y: 0, array: GREY}),
-					makeDiagramCell({x: 0, y: 1, array: BLACK}),
-				],
-			}),
-			right: makeDiagramSide({
-				cells: [
-					makeDiagramCell({x: 0, y: 0, array: BLACK}),
-					makeDiagramCell({x: 0, y: 1, array: GREY}),
-				],
-			}),
-		}).d
+			left: [
+				makeDiagramCell({x: 0, y: 0, content: GREY}),
+				makeDiagramCell({x: 0, y: 1, content: BLACK}),
+			],
+			right: [
+				makeDiagramCell({x: 0, y: 0, content: BLACK}),
+				makeDiagramCell({x: 0, y: 1, content: GREY}),
+			],
+		})
+
+		const FALL_RULE = makeRule({diagrams: [FALL_DIAGRAM]})
+
+		registerRule(FALL_RULE)
 
 	}
 
