@@ -1396,6 +1396,9 @@ on.load(() => {
 		}
 
 		// Evaluates all .channels and .operations into .values (based on a target dragon array, and target channel)
+		// I'm not actually sure when this would be used, or if it would be used at all
+		// So don't bother making it yet, because it might be useless
+		// Cos like... surely this stuff would be PRE-calculated anyway?????
 		const evaluateNumber = (number, array) => {
 
 			// TODO: evaluate channel
@@ -1439,7 +1442,7 @@ on.load(() => {
 
 		// Right can be undefined to represent a single-sided diagram
 		const makeDiagram = ({left = [], right} = {}) => {
-			return {left, right}
+			return {left, right, isDiagram: true}
 		}
 
 		// Content can be a dragon-array or another dragon-diagram
@@ -1501,7 +1504,32 @@ on.load(() => {
 		}
 
 		const getTransformedDiagram = (diagram, transformation) => {
+
+			const transformedLeft = []
+			const transformedRight = []
+
 			const length = diagram.left.length
+			for (let i = 0; i < length; i++) {
+				const leftCell = diagram.left[i]
+				const rightCell = diagram.right[i]
+
+				const transformedLeftCell = getTransformedCell(leftCell, transformation)
+				const transformedRightCell = getTransformedCell(rightCell, transformation)
+
+				transformedLeft.push(transformedLeftCell)
+				transformedRight.push(transformedRightCell)
+
+			}
+
+			const transformedDiagram = makeDiagram({left: transformedLeft, right: transformedRight})
+			return transformedDiagram
+		}
+
+		const getTransformedCell = (cell, transformation) => {
+			const [x, y] = transformation(cell.x, cell.y)
+			if (!cell.content.isDiagram) return makeCell({x, y, content: cell.content})
+			const content = getTransformedDiagram(cell.content, transformation)
+			return makeCell({x, y, content})
 		}
 
 		//=================//
@@ -1517,6 +1545,9 @@ on.load(() => {
 		// Or if the left side matches the shape of the right side
 		const registerRule = (rule) => {
 			const transformedRules = rule.transformations.map(transformation => getTransformedRule(rule, transformation))
+			for (const transformedRule of transformedRules) {
+				const expandedRules = getExpandedRules(rule)
+			}
 		}
 
 		//================//
@@ -1535,7 +1566,7 @@ on.load(() => {
 			],
 		})
 
-		const FALL_RULE = makeRule({diagrams: [FALL_DIAGRAM]})
+		const FALL_RULE = makeRule({diagrams: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.R})
 
 		registerRule(FALL_RULE)
 
