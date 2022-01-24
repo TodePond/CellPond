@@ -1401,29 +1401,52 @@ on.load(() => {
 		//================//
 		// Channels[3] - what dragon numbers are in each colour channel (or undefined for a partial array)
 		// Stamp - what shape of stamp the channel has (or undefined for no stamp)
-		const makeArray = ({channels, stamp}) => {
+		const makeArray = ({channels, stamp} = {}) => {
 			if (channels === undefined) channels = [undefined, undefined, undefined]
-			return {channels}
+			return {channels, stamp}
 		}
 
 		//================//
 		// DRAGON - SHAPE //
 		//================//
-		// TODO: these should probably be functions for how to draw them or something? or probably objects with various funcs in, including: drawing, collision testing
+		const makeShape = ({draw = ()=>{}, overlaps = ()=>{}} = {}) => {
+			return {draw, overlaps}
+		}
+
+		// TODO: make draw functions for shapes
+		// TODO: make collision detection functions for shapes
 		const DRAGON_SHAPE = {
-			SQUARE: {},
-			CIRCLE: {},
-			TRIANGLE: {},
-			RECTANGLE: {},
+			SQUARE: makeShape(),
+			CIRCLE: makeShape(),
+			TRIANGLE: makeShape(),
+			RECTANGLE: makeShape(),
 		}
 
 		//==================//
 		// DRAGON - DIAGRAM //
 		//==================//
+		// Note: these functions don't check for safety at all
+		// for example, you can make an invalid diagram by having the left and right sides not match
+		// or you can make an invalid side by giving it two cells in the same place
+
+		// Right can be undefined to represent a single-sided diagram
+		const makeDiagram = ({left = makeDiagramSide(), right} = {}) => {
+			return {left, right}
+		}
+
+		const makeDiagramSide = ({cells = []} = {}) => {
+			return {cells}
+		}
+
+		const makeDiagramCell = ({x = 0, y = 0, array = makeArray()} = {}) => {
+			return {x, y, array}
+		}
 
 		//===============//
 		// DRAGON - RULE //
 		//===============//
+		
+
 	}
 
 	
