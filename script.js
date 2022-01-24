@@ -1445,7 +1445,16 @@ on.load(() => {
 		//===============//
 		// DRAGON - RULE //
 		//===============//
-		
+		const makeRule = ({diagrams = [], symmetry = makeSymmetry(), locked = true} = {}) => {
+			return {diagrams, symmetry, locked}
+		}
+
+		//===================//
+		// DRAGON - SYMMETRY //
+		//===================//
+		const makeSymmetry = ({x = false, y = false, r = false} = {}) => {
+			return {x, y, r}
+		}
 
 	}
 
