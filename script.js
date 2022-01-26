@@ -147,8 +147,8 @@ const state = {
 	speed: {
 		count: 32768/1, //with world size of 7
 		dynamic: true,
-		aer: 2.0,
-		redraw: 0.55,
+		aer: 0.5,
+		redraw: 1.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -213,15 +213,15 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Yellow.splash,
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Grey.splash,
-		size: 0,
+		colour: Colour.Yellow.splash,
+		size: 1,
 	},
 
 	cursor: {
-		previous: {
+		previous: { 
 			x: undefined,
 			y: undefined,
 		},
@@ -708,6 +708,7 @@ on.load(() => {
 		
 		updateCursor()
 		updateCamera()
+		//state.dragon.behaves.shuffle()
 		if (!show.paused) fireRandomSpotEvents()
 		else fireRandomSpotDrawEvents()
 		context.putImageData(state.image.data, 0, 0)
@@ -760,14 +761,26 @@ on.load(() => {
 	// Returns the number of cells it drew
 	const fireCellEvent = (cell, redraw) => {
 
-		if (BUILD_WORLD(cell, redraw)) return 1
+		if (BUILD_WORLD(cell, redraw) !== undefined) return 1
 
+		state.dragon.behaves.shuffle()
 		for (const behave of state.dragon.behaves) {
 			const result = behave(cell, redraw)
 			if (result !== 0) return result
 		}
-
 		return 0
+
+		/*for (let i = 0; i < state.dragon.behaves.length; i++) {
+			const b = Random.Uint32 % state.dragon.behaves.length
+			const behave = state.dragon.behaves[b]
+			const result = behave(cell, redraw)
+			if (result !== 0) return result
+		}*/
+
+		/*const b = Random.Uint32 % state.dragon.behaves.length
+		const behave = state.dragon.behaves[b]
+		const result = behave(cell, redraw)
+		return result*/
 
 		/*const behave = BEHAVE.get(cell.colour)
 		if (behave !== undefined) {
@@ -1156,10 +1169,10 @@ on.load(() => {
 	})*/
 
 	const BUILD_WORLD = (cell, redraw) => {
-		if (state.worldBuilt) return 0
+		if (state.worldBuilt) return undefined
 		if (state.cellCount >= WORLD_CELL_COUNT) {
 			state.worldBuilt = true
-			return 0
+			return undefined
 		}
 
 		if (cell.colour < 111) {
@@ -1444,6 +1457,54 @@ on.load(() => {
 			const array = makeArray({channels: [red, green, blue]})
 			return array
 		}
+		
+		const getSplashesSetFromArray = (array) => {
+
+			const splashes = new Set()
+			const [reds, greens, blues] = array.channels
+
+			for (let r = 0; r < reds.values.length; r++) {
+				const red = reds.values[r]
+				if (!red) continue
+				for (let g = 0; g < greens.values.length; g++) {
+					const green = greens.values[g]
+					if (!green) continue
+					for (let b = 0; b < blues.values.length; b++) {
+						const blue = blues.values[b]
+						if (!blue) continue
+						const splash = r*100 + g*10 + b*1
+						splashes.add(splash)
+					}
+				}
+			}
+
+			return splashes
+		}
+		
+		const getSplashesArrayFromArray = (array) => {
+
+			const splashes = []
+			const [reds, greens, blues] = array.channels
+
+			for (let r = 0; r < reds.values.length; r++) {
+				const red = reds.values[r]
+				if (!red) continue
+				for (let g = 0; g < greens.values.length; g++) {
+					const green = greens.values[g]
+					if (!green) continue
+					for (let b = 0; b < blues.values.length; b++) {
+						const blue = blues.values[b]
+						if (!blue) continue
+						const splash = r*100 + g*10 + b*1
+						splashes.push(splash)
+					}
+				}
+			}
+
+			return splashes
+		}
+
+		
 
 		//================//
 		// DRAGON - SHAPE //
@@ -1660,7 +1721,7 @@ on.load(() => {
 				return 0
 			}
 
-			return behaveFunction.d
+			return behaveFunction
 
 		}
 
@@ -1669,15 +1730,26 @@ on.load(() => {
 			const conditions = []
 
 			for (const cell of diagram.left) {
+
+				const splashes = getSplashesSetFromArray(cell.content)
 				
 				const condition = (origin) => {
 					
 					const x = origin.x + cell.x*origin.width
 					const y = origin.y + cell.y*origin.height
 
-					// Debug
-					return pickNeighbour(origin, 0, 0)
+					const centerX = x + cell.width*origin.width/2
+					const centerY = y + cell.height*origin.height/2
+
+
+					const neighbour = pickCell(centerX, centerY)
+
+					if (neighbour === undefined) return undefined
+					if (neighbour.width !== cell.width*origin.width) return undefined
+					if (neighbour.height !== cell.height*origin.height) return undefined
+					if (!splashes.has(neighbour.colour)) return undefined
 					
+					return neighbour
 				}
 
 				conditions.push(condition)
@@ -1692,6 +1764,7 @@ on.load(() => {
 					if (neighbour === undefined) return
 					neighbours.push(neighbour)
 				}
+
 
 				return neighbours
 			}
@@ -1708,12 +1781,12 @@ on.load(() => {
 
 
 				// Colour
-				const debugColour = 090
-
-				const result = (neighbour, redraw) => {					
-					if (redraw) return setCellColour(neighbour, debugColour)
+				const splashes = getSplashesArrayFromArray(cell.content)
+				const result = (neighbour, redraw) => {		
+					const colour = splashes[Random.Uint32 % splashes.length]
+					if (redraw) return setCellColour(neighbour, colour, true)
 					else {
-						neighbour.colour = debugColour
+						neighbour.colour = colour
 						return 0
 					}
 				}
@@ -1743,15 +1816,6 @@ on.load(() => {
 			return resultFunction
 		}
 
-		//==================//
-		// DRAGON - RUNTIME //
-		//==================//
-		const getNeighbour = (origin, dx, dy, sw, sh) => {
-
-
-
-		}
-
 		//=================//
 		// DRAGON - ORIGIN //
 		//=================//
@@ -1776,6 +1840,9 @@ on.load(() => {
 
 		const GREY = makeArrayFromSplash(Colour.Grey.splash)
 		const BLACK = makeArrayFromSplash(Colour.Black.splash)
+		const CYAN = makeArrayFromSplash(Colour.Cyan.splash)
+		const BLUE = makeArrayFromSplash(Colour.Blue.splash)
+		const YELLOW = makeArrayFromSplash(Colour.Yellow.splash)
 		let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
 		RED_R /= 100
 		RED_G /= 10
@@ -1783,7 +1850,7 @@ on.load(() => {
 		BLACK.channels[1].values[RED_G] = true
 		BLACK.channels[2].values[RED_B] = true*/
 
-		const FALL_DIAGRAM = makeDiagram({
+		const ROCK_FALL_DIAGRAM = makeDiagram({
 			left: [
 				makeDiagramCell({x: 0, y: 0, content: GREY}),
 				makeDiagramCell({x: 0, y: 1, content: BLACK}),
@@ -1793,10 +1860,29 @@ on.load(() => {
 				makeDiagramCell({x: 0, y: 1, content: GREY}),
 			],
 		})
-
 		
-		const CYAN = makeArrayFromSplash(Colour.Cyan.splash)
-		const BLUE = makeArrayFromSplash(Colour.Blue.splash)
+		const SAND_FALL_DIAGRAM = makeDiagram({
+			left: [
+				makeDiagramCell({x: 0, y: 0, content: YELLOW}),
+				makeDiagramCell({x: 0, y: 1, content: BLACK}),
+			],
+			right: [
+				makeDiagramCell({x: 0, y: 0, content: BLACK}),
+				makeDiagramCell({x: 0, y: 1, content: YELLOW}),
+			],
+		})
+		
+		const SAND_SLIDE_DIAGRAM = makeDiagram({
+			left: [
+				makeDiagramCell({x: 0, y: 0, content: YELLOW}),
+				makeDiagramCell({x: 1, y: 1, content: BLACK}),
+			],
+			right: [
+				makeDiagramCell({x: 0, y: 0, content: BLACK}),
+				makeDiagramCell({x: 1, y: 1, content: YELLOW}),
+			],
+		})
+
 		const WATER_RIGHT = makeDiagram({
 			left: [
 				makeDiagramCell({x: 0, y: 0, content: CYAN}),
@@ -1821,8 +1907,11 @@ on.load(() => {
 		//registerRule(WATER_RIGHT_FALL_RULE)
 
 		
-		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-		registerRule(FALL_RULE)
+		const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		registerRule(ROCK_FALL_RULE)
+		registerRule(SAND_FALL_RULE)
+		registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	}
 
