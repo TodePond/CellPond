@@ -1778,42 +1778,70 @@ on.load(() => {
 		const makeResultFunction = (diagram) => {
 			const results = []
 			for (const cell of diagram.right) {
-
-
-				// Colour
+				
 				const splashes = getSplashesArrayFromArray(cell.content)
-				const result = (neighbour, redraw) => {		
+
+				const result = (neighbour, redraw) => {	
+
 					const colour = splashes[Random.Uint32 % splashes.length]
+
 					if (redraw) return setCellColour(neighbour, colour, true)
-					else {
-						neighbour.colour = colour
-						return 0
-					}
+					
+					neighbour.colour = colour
+					return 0
 				}
-
-				// Merge
-				//TODO
-
-				// Split
-				//TODO
 
 				results.push(result)
 			}
+
+			let splitOrMergeNeeded = false
+			if (diagram.right.length !== diagram.left.length) {
+				splitOrMergeNeeded = true
+			}
+			else for (let i = 0; i < diagram.right.length; i++) {
+				const r = diagram.right[i]
+				const l = diagram.left[i]
+				if (r.x !== r.x || l.y !== r.y || l.width !== r.width || l.height !== r.height) {
+					splitOrMergeNeeded = true
+					break
+				}
+			}
 			
-			const resultFunction = (neighbours, redraw) => {
+			if (!splitOrMergeNeeded) return (neighbours, redraw) => {
 
 				let drawn = 0
 
 				for (let i = 0; i < results.length; i++) {
-					const neighbour = neighbours[i]
 					const result = results[i]
+					const neighbour = neighbours[i]
 					drawn += result(neighbour, redraw)
 				}
 
 				return drawn
 			}
 
-			return resultFunction
+			return undefined
+		}
+
+		const isDiagramCellFullyInside = (cell, target) => {
+
+			const cleft = cell.x
+			const ctop = cell.top
+			const cright = cell.x + cell.width
+			const cbottom = cell.top + cell.height
+
+			const tleft = target.x
+			const ttop = target.top
+			const tright = target.x + target.width
+			const tbottom = target.top + target.height
+
+			if (cleft < tleft) return false
+			if (ctop < ttop) return false
+			if (cbottom > tbottom) return false
+			if (cright > tright) return false
+
+			return true
+
 		}
 
 		//=================//
@@ -1909,8 +1937,8 @@ on.load(() => {
 				makeDiagramCell({x: 0, y: 0, content: PURPLE}),
 			],
 			right: [
-				makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
 				makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
+				makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
 			],
 		})
 
@@ -1921,9 +1949,9 @@ on.load(() => {
 		const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 		const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 		registerRule(ROCK_FALL_RULE)
-		registerRule(SAND_FALL_RULE)
-		registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-		registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+		//registerRule(SAND_FALL_RULE)
+		//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+		//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	}
 
