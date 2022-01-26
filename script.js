@@ -762,6 +762,11 @@ on.load(() => {
 
 		if (BUILD_WORLD(cell, redraw)) return 1
 
+		for (const behave of state.dragon.behaves) {
+			const result = behave(cell, redraw)
+			if (result !== 0) return result
+		}
+
 		return 0
 
 		/*const behave = BEHAVE.get(cell.colour)
@@ -1571,10 +1576,6 @@ on.load(() => {
 		//=================//
 		// DRAGON - BEHAVE //
 		//=================//
-		for (let i = 0; i < 1000; i++) {
-			state.dragon.behaves[i] = []
-		}
-
 		// From a rule, register 'behave' functions that get used to implement the rules in the engine
 		// Note: This function doesn't check for safety
 		// eg: If it is a locked-in rule or not
@@ -1598,6 +1599,7 @@ on.load(() => {
 			// Make behave functions!!!
 			for (const redundantRule of redundantRules) {
 				const behaveFunction = makeBehaveFunction(redundantRule)
+				state.dragon.behaves.push(behaveFunction)
 			}
 
 		}
@@ -1631,12 +1633,34 @@ on.load(() => {
 
 		const makeBehaveFunction = (rule) => {
 
-			const lines = []
+			const stepFunctions = []
 
 			for (const step of rule.steps) {
 
-				const condition = makeConditionFunction(step)
+				const conditionFunction = makeConditionFunction(step)
+				const resultFunction = makeResultFunction(step)
+
+				const stepFunction = (origin, redraw) => {
+					const neighbours = conditionFunction(origin)
+					if (neighbours === undefined) return
+					return resultFunction(neighbours, redraw)
+				}
+
+				stepFunctions.push(stepFunction)
+
 			}
+
+			const behaveFunction = (origin, redraw) => {
+
+				for (const stepFunction of stepFunctions) {
+					const drawn = stepFunction(origin, redraw)
+					if (drawn !== undefined) return drawn
+				}
+
+				return 0
+			}
+
+			return behaveFunction.d
 
 		}
 
@@ -1644,14 +1668,79 @@ on.load(() => {
 
 			const conditions = []
 
-			const diagramOrigin = getOriginOfDiagram(diagram)
-			for (const diagramCell of diagram.left) {
-				if (diagramCell === diagramOrigin) continue
-				//diagramCell.d
+			for (const cell of diagram.left) {
+				
 				const condition = (origin) => {
+					
+					const x = origin.x + cell.x*origin.width
+					const y = origin.y + cell.y*origin.height
 
+					// Debug
+					return pickNeighbour(origin, 0, 0)
+					
 				}
+
+				conditions.push(condition)
 			}
+
+			const conditionFunction = (origin) => {
+
+				const neighbours = []
+
+				for (const condition of conditions) {
+					const neighbour = condition(origin)
+					if (neighbour === undefined) return
+					neighbours.push(neighbour)
+				}
+
+				return neighbours
+			}
+
+			return conditionFunction
+		}
+
+		// TODO: also support Merging (with some funky backend syntax if needed)
+		// TODO: also support Splitting (with some funky backend syntax if needed)
+		// this funky syntax could include dummy cells on the right
+		const makeResultFunction = (diagram) => {
+			const results = []
+			for (const cell of diagram.right) {
+
+
+				// Colour
+				const debugColour = 090
+
+				const result = (neighbour, redraw) => {					
+					if (redraw) return setCellColour(neighbour, debugColour)
+					else {
+						neighbour.colour = debugColour
+						return 0
+					}
+				}
+
+				// Merge
+				//TODO
+
+				// Split
+				//TODO
+
+				results.push(result)
+			}
+			
+			const resultFunction = (neighbours, redraw) => {
+
+				let drawn = 0
+
+				for (let i = 0; i < results.length; i++) {
+					const neighbour = neighbours[i]
+					const result = results[i]
+					drawn += result(neighbour, redraw)
+				}
+
+				return drawn
+			}
+
+			return resultFunction
 		}
 
 		//==================//
@@ -1690,9 +1779,9 @@ on.load(() => {
 		let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
 		RED_R /= 100
 		RED_G /= 10
-		BLACK.channels[0].values[RED_R] = true
+		/*BLACK.channels[0].values[RED_R] = true
 		BLACK.channels[1].values[RED_G] = true
-		BLACK.channels[2].values[RED_B] = true
+		BLACK.channels[2].values[RED_B] = true*/
 
 		const FALL_DIAGRAM = makeDiagram({
 			left: [
@@ -1728,11 +1817,12 @@ on.load(() => {
 			],
 		})
 
-		//const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-		const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		//const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		//registerRule(WATER_RIGHT_FALL_RULE)
 
-		registerRule(WATER_RIGHT_FALL_RULE)
-		//registerRule(FALL_RULE)
+		
+		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		registerRule(FALL_RULE)
 
 	}
 
