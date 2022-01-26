@@ -217,7 +217,7 @@ const state = {
 		colour: Colour.Grey.splash,
 		colour: Colour.Yellow.splash,
 		colour: Colour.Purple.splash,
-		size: 0,
+		size: 2,
 	},
 
 	cursor: {
@@ -1467,9 +1467,11 @@ on.load(() => {
 	// Values[10] - what values this number could represent
 	// Channel - what colour channel this number uses as its base (0, 1 or 2)
 	// Operations[] - any operations that this number includes
-	const makeNumber = ({values, channel = 0, operations = []} = {}) => {
-		if (values === undefined) values = [false, false, false, false, false, false, false, false, false, false]
-		return {values, channel, operations}
+	makeNumber = ({values, channel = 0, operations = []} = {}) => {
+		let numberValues = undefined
+		if (typeof values === "function") numberValues = [false, false, false, false, false, false, false, false, false, false]
+		else numberValues = values
+		return {values: numberValues, channel, operations}
 	}
 
 	const DRAGON_NUMBER_OPERATOR = {
@@ -1997,7 +1999,7 @@ on.load(() => {
 			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
 		],
 	})
-
+	
 	const WATER_RIGHT_SPAWN_DIAGRAM = makeDiagram({
 		left: [
 			makeDiagramCell({x: 0, y: 0, content: PURPLE}),
@@ -2021,7 +2023,39 @@ on.load(() => {
 
 	state.brush.colour = WATER_RIGHT
 
+	const RAINBOW = makeArray()
+	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
+	for (let c = 0; c < 3; c++) {
+		const channel = RAINBOW.channels[c]
+		for (let i = 0; i < 10; i++) {
+			if (c === 0 & i > 0) continue
+			channel.values[i] = true
+		}
+	}
 
+	RAINBOW_DIAGRAM = makeDiagram({
+		left: [
+			makeDiagramCell({content: RAINBOW})
+		]
+	})
+
+	const RAINBOW2 = makeArray()
+	RAINBOW2.channels = [makeNumber(), makeNumber(), makeNumber()]
+	for (let c = 0; c < 3; c++) {
+		const channel = RAINBOW2.channels[c]
+		for (let i = 0; i < 10; i++) {
+			if (c === 1 & i > 0) continue
+			//if (c === 2 & i > 0) continue
+			channel.values[i] = true
+		}
+	}
 	
+	RAINBOW_DIAGRAM_2 = makeDiagram({
+		left: [
+			makeDiagramCell({content: RAINBOW2})
+		]
+	})
+
+	state.brush.colour = RAINBOW_DIAGRAM
 
 })
