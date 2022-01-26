@@ -135,14 +135,6 @@ const state = {
 	
 
 
-	speed: {
-		count: 400,
-		dynamic: false,
-		aer: 2.0,
-		redraw: 30.0,
-		redrawRepeatScore: 1.0,
-		redrawRepeatPenalty: 0.0,
-	},
 	
 	speed: {
 		count: 32768/1, //with world size of 7
@@ -150,6 +142,15 @@ const state = {
 		aer: 0.5,
 		redraw: 1.0,
 		redrawRepeatScore: 0.9,
+		redrawRepeatPenalty: 0.0,
+	},
+	
+	speed: {
+		count: 100,
+		dynamic: false,
+		aer: 2.0,
+		redraw: 300.0,
+		redrawRepeatScore: 1.0,
 		redrawRepeatPenalty: 0.0,
 	},
 
@@ -213,11 +214,11 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Rose.splash,
 		colour: Colour.Grey.splash,
 		colour: Colour.Yellow.splash,
 		colour: Colour.Purple.splash,
-		size: 2,
+		colour: Colour.Rose.splash,
+		size: 1,
 	},
 
 	cursor: {
@@ -232,9 +233,10 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 5
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
-const WORLD_CELL_SIZE = 1 / Math.sqrt(WORLD_CELL_COUNT)
+const WORLD_DIMENSION = 2 ** WORLD_SIZE
+const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
 
 const addCell = (cell) => {
 	cacheCell(cell)
@@ -262,6 +264,7 @@ const getCells = () => {
 // The grid is basically the screen cut up into smaller sections
 // It helps to speed up cell lookup because it gives us a smaller area to search through
 // Note: Cells can be in multiple sections if they are big enough :)
+// NOTE: GRID_SIZE MUST BE BIG ENOUGH SO THAT SECTIONS ARE SMALLER OR EQUAL TO WORLD CELLS
 const GRID_SIZE = 256
 for (let x = 0; x < GRID_SIZE; x++) {
 	for (let y = 0; y < GRID_SIZE; y++) {
@@ -557,22 +560,63 @@ on.load(() => {
 	}
 
 	const brush = (x, y) => {
-		const cell = pickCell(x, y)
+		let cell = pickCell(x, y)
 		if (cell === undefined) return
 
 		// TODO: this should just merge it together!
-		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) return
+		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) {
+			const worldCells = getWorldCellsSet(x, y)
+			if (worldCells === undefined) return
+			const merged = mergeCells([...worldCells])
+			cell = merged
+		}
 
 		if (typeof state.brush.colour === "number") {
 			cell.colour = state.brush.colour
 			drawCell(cell)
+			return
 		}
 
 		const children = splitCellToDiagram(cell, state.brush.colour)
 
 		for (const child of children) {
-			//drawCell(child)
+			drawCell(child)
 		}
+
+	}
+
+
+	const getWorldCellsSet = (x, y) => {
+
+		const snappedX = Math.floor(x*WORLD_DIMENSION) / WORLD_DIMENSION
+		const snappedY = Math.floor(y*WORLD_DIMENSION) / WORLD_DIMENSION
+
+		const sectionSizeScale = GRID_SIZE / WORLD_DIMENSION
+
+		const sections = new Set()
+		for (let wx = 0; wx < sectionSizeScale; wx++) {
+			const gridX = Math.floor((snappedX + wx * WORLD_CELL_SIZE / sectionSizeScale) * GRID_SIZE)
+			for (let wy = 0; wy < sectionSizeScale; wy++) {
+				const gridY = Math.floor((snappedY + wy * WORLD_CELL_SIZE / sectionSizeScale) * GRID_SIZE)
+				const sectionId = gridX*GRID_SIZE + gridY
+				const section = state.grid[sectionId]
+				sections.add(section)
+			}
+		}
+
+		const worldCells = new Set()
+
+		// Check if any cells in these sections overlap with an outer section
+		for (const section of sections.values()) {
+			for (const cell of section.values()) {
+				for (const cellSection of cell.sections) {
+					if (!sections.has(cellSection)) return undefined
+				}
+				worldCells.add(cell)
+			}
+		}
+
+		return worldCells
 
 	}
 
@@ -775,12 +819,12 @@ on.load(() => {
 
 		if (BUILD_WORLD(cell, redraw) !== undefined) return 1
 
-		state.dragon.behaves.shuffle()
+		/*state.dragon.behaves.shuffle()
 		for (const behave of state.dragon.behaves) {
 			const result = behave(cell, redraw)
 			if (result !== 0) return result
 		}
-		return 0
+		return 0*/
 
 		/*for (let i = 0; i < state.dragon.behaves.length; i++) {
 			const b = Random.Uint32 % state.dragon.behaves.length
@@ -800,7 +844,7 @@ on.load(() => {
 			if (drawn > 0) return drawn
 		}*/
 
-		/*let drawn = 0
+		let drawn = 0
 		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
@@ -812,7 +856,7 @@ on.load(() => {
 			return drawCell(cell)
 		}
 
-		return 0*/
+		return 0
 
 	}
 	
@@ -1301,7 +1345,10 @@ on.load(() => {
 				neighbours.add(neighbour)
 			}
 
-			const ns = [...neighbours.values()]
+			cell.colour = Math.max(11, Math.round(cell.colour))
+			if (redraw) drawn += drawCell(cell)
+
+			/*const ns = [...neighbours.values()]
 
 			if (!aligns([cell, ...ns]) || !fits([cell, ns[0], ns[2]]) || !fits([ns[0], ns[1]]) || !fits([ns[1], ns[2]])) return 0
 
@@ -1309,7 +1356,7 @@ on.load(() => {
 			merged.colour = Math.max(11, Math.round((cell.colour + ns[0].colour) / 2))
 			//merged.colour = Math.max(11, Random.Uint8 % 100)
 			if (redraw) drawn += drawCell(merged)
-			
+			*/
 
 			return 5
 
@@ -2021,7 +2068,6 @@ on.load(() => {
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
-	state.brush.colour = WATER_RIGHT
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2056,6 +2102,8 @@ on.load(() => {
 		]
 	})
 
-	state.brush.colour = RAINBOW_DIAGRAM
+	//state.brush.colour = RAINBOW_DIAGRAM
+	
+	//state.brush.colour = WATER_RIGHT
 
 })
