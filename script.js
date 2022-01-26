@@ -1440,6 +1440,10 @@ on.load(() => {
 		//================//
 		// DRAGON - SHAPE //
 		//================//
+		const makeStamp = (shape) => {
+			return {shape}
+		}
+
 		// TODO: something
 		const makeShape = () => {
 			return {}
@@ -1465,8 +1469,8 @@ on.load(() => {
 		}
 
 		// Content can be a dragon-array or another dragon-diagram
-		const makeDiagramCell = ({x = 0, y = 0, content = makeArray()} = {}) => {
-			return {x, y, content}
+		const makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray()} = {}) => {
+			return {x, y, width, height, content}
 		}
 
 		//===============//
@@ -1516,13 +1520,13 @@ on.load(() => {
 			]
 		}
 
-		const getTransformedRule = (rule, transformation) => {
-			const steps = rule.steps.map(step => getTransformedDiagram(step, transformation))
-			const transformedRule = makeRule({steps, transformations: DRAGON_TRANSFORMATIONS.NONE, locked: rule.locked})
+		const getTransformedRule = (rule, transformation, filter = () => true) => {
+			const steps = rule.steps.map(step => getTransformedDiagram(step, transformation, filter))
+			const transformedRule = makeRule({steps, transformations: rule.transformations, locked: rule.locked})
 			return transformedRule
 		}
 
-		const getTransformedDiagram = (diagram, transformation) => {
+		const getTransformedDiagram = (diagram, transformation, filter = () => true) => {
 
 			const {left, right} = diagram
 
@@ -1548,10 +1552,17 @@ on.load(() => {
 		}
 
 		const getTransformedCell = (cell, transformation) => {
-			const [x, y] = transformation(cell.x, cell.y)
-			if (!cell.content.isDiagram) return makeDiagramCell({x, y, content: cell.content})
+			let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height)
+			
+			if (x === undefined) x = cell.x
+			if (y === undefined) y = cell.y
+			if (width === undefined) width = cell.width
+			if (height === undefined) height = cell.height
+			
+			if (!cell.content.isDiagram) return makeDiagramCell({x, y, width, height, content: cell.content})
+			
 			const content = getTransformedDiagram(cell.content, transformation)
-			return makeDiagramCell({x, y, content})
+			return makeDiagramCell({x, y, width, height, content})
 		}
 
 		//=================//
@@ -1582,10 +1593,9 @@ on.load(() => {
 			}
 
 			// Make behave functions!!!
-			for (const redundantRule of redundantRules.d) {
+			for (const redundantRule of redundantRules) {
 				const behaveFunction = makeBehaveFunction(redundantRule)
 			}
-
 
 		}
 
@@ -1594,7 +1604,8 @@ on.load(() => {
 		const getRedundantRules = (rule) => {
 			
 			const redundantRules = []
-			const head = rule.steps[0]
+			const [head] = rule.steps
+
 			for (const cell of head.left) {
 				const transformation = (x, y) => [x - cell.x, y - cell.y]
 				const redundantRule = getTransformedRule(rule, transformation)
@@ -1620,9 +1631,28 @@ on.load(() => {
 			
 		}
 
+		//=================//
+		// DRAGON - ORIGIN //
+		//=================//
+		// The origin is the cell at (0,0) of the first step of a rule
+		// It is the cell/colour that triggers the rule 
+		const getOriginOfRule = (rule) => {
+			const head = rule.steps[0]
+			return getOriginOfDiagram(head)
+		}
+
+		const getOriginOfDiagram = (diagram) => {
+
+			for (const cell of diagram.left) {
+				if (cell.x === 0 && cell.y === 0) return cell
+			}
+
+		}
+
 		//================//
 		// DRAGON - DEBUG //
 		//================//
+
 		const GREY = makeArrayFromSplash(Colour.Grey.splash)
 		const BLACK = makeArrayFromSplash(Colour.Black.splash)
 		let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
@@ -1655,20 +1685,22 @@ on.load(() => {
 
 		const WATER_RIGHT_FALL_DIAGRAM = makeDiagram({
 			left: [
-				makeDiagramCell({x: 0, y: 0, content: WATER_RIGHT}),
+				makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
+				makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
 				makeDiagramCell({x: 0, y: 1, content: BLACK}),
 			],
 			right: [
 				makeDiagramCell({x: 0, y: 0, content: BLACK}),
-				makeDiagramCell({x: 0, y: 1, content: WATER_RIGHT}),
+				makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN}),
+				makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
 			],
 		})
 
-		//const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-		const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		//const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 
-		registerRule(WATER_RIGHT_FALL_RULE)
-		//registerRule(FALL_RULE)
+		//registerRule(WATER_RIGHT_FALL_RULE)
+		registerRule(FALL_RULE)
 
 	}
 
