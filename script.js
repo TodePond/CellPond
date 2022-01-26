@@ -48,12 +48,15 @@ const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
 	
 	const size = width * height
 
+	const centerX = left + width/2
+	const centerY = top + height/2
+
 	const sections = []
 	const lastDraw = undefined
 	//const lastDrawCount = 1
 	const lastDrawRepeat = 0
 
-	const cell = {x, y, width, height, colour, left, right, top, bottom, sections, size, lastDraw, lastDrawRepeat}
+	const cell = {x, y, width, height, colour, left, right, top, bottom, centerX, centerY, sections, size, lastDraw, lastDrawRepeat}
 	return cell
 
 }
@@ -1607,7 +1610,17 @@ on.load(() => {
 			const [head] = rule.steps
 
 			for (const cell of head.left) {
-				const transformation = (x, y) => [x - cell.x, y - cell.y]
+				const transformation = (x, y, width, height) => {
+
+					const newWidth = width / cell.width
+					const newHeight = height / cell.height
+
+					const newX = (x - cell.x) * 1/cell.width
+					const newY = (y - cell.y) * 1/cell.height
+
+					return [newX, newY, newWidth, newHeight]
+
+				}
 				const redundantRule = getTransformedRule(rule, transformation)
 				redundantRules.push(redundantRule)
 			}
@@ -1622,13 +1635,32 @@ on.load(() => {
 
 			for (const step of rule.steps) {
 
-				const condition = makeConditionFunction(step.left)
+				const condition = makeConditionFunction(step)
 			}
 
 		}
 
 		const makeConditionFunction = (diagram) => {
-			
+
+			const conditions = []
+
+			const diagramOrigin = getOriginOfDiagram(diagram)
+			for (const diagramCell of diagram.left) {
+				if (diagramCell === diagramOrigin) continue
+				//diagramCell.d
+				const condition = (origin) => {
+
+				}
+			}
+		}
+
+		//==================//
+		// DRAGON - RUNTIME //
+		//==================//
+		const getNeighbour = (origin, dx, dy, sw, sh) => {
+
+
+
 		}
 
 		//=================//
@@ -1696,11 +1728,11 @@ on.load(() => {
 			],
 		})
 
-		const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-		//const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		//const FALL_RULE = makeRule({steps: [FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 
-		//registerRule(WATER_RIGHT_FALL_RULE)
-		registerRule(FALL_RULE)
+		registerRule(WATER_RIGHT_FALL_RULE)
+		//registerRule(FALL_RULE)
 
 	}
 
