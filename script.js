@@ -213,10 +213,10 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Grey.splash,
 		colour: Colour.Yellow.splash,
+		colour: Colour.Purple.splash,
 		size: 1,
 	},
 
@@ -1843,6 +1843,7 @@ on.load(() => {
 		const CYAN = makeArrayFromSplash(Colour.Cyan.splash)
 		const BLUE = makeArrayFromSplash(Colour.Blue.splash)
 		const YELLOW = makeArrayFromSplash(Colour.Yellow.splash)
+		const PURPLE = makeArrayFromSplash(Colour.Purple.splash)
 		let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
 		RED_R /= 100
 		RED_G /= 10
@@ -1903,7 +1904,17 @@ on.load(() => {
 			],
 		})
 
-		//const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+		const WATER_RIGHT_SPAWN_DIAGRAM = makeDiagram({
+			left: [
+				makeDiagramCell({x: 0, y: 0, content: PURPLE}),
+			],
+			right: [
+				makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+				makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
+			],
+		})
+
+		const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 		//registerRule(WATER_RIGHT_FALL_RULE)
 
 		
@@ -1912,6 +1923,7 @@ on.load(() => {
 		registerRule(ROCK_FALL_RULE)
 		registerRule(SAND_FALL_RULE)
 		registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+		registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	}
 
