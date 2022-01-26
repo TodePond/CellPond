@@ -2102,7 +2102,7 @@ on.load(() => {
 		]
 	})
 
-	//state.brush.colour = RAINBOW_DIAGRAM
+	state.brush.colour = RAINBOW_DIAGRAM_2
 	
 	//state.brush.colour = WATER_RIGHT
 
