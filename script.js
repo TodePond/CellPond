@@ -1717,13 +1717,13 @@ on.load(() => {
 		]
 	}
 
-	const getTransformedRule = (rule, transformation, filter = () => true) => {
-		const steps = rule.steps.map(step => getTransformedDiagram(step, transformation, filter))
+	const getTransformedRule = (rule, transformation, isTranslation = false) => {
+		const steps = rule.steps.map(step => getTransformedDiagram(step, transformation, isTranslation))
 		const transformedRule = makeRule({steps, transformations: rule.transformations, locked: rule.locked})
 		return transformedRule
 	}
 
-	const getTransformedDiagram = (diagram, transformation, filter = () => true) => {
+	const getTransformedDiagram = (diagram, transformation, isTranslation = false) => {
 
 		const {left, right} = diagram
 
@@ -1732,13 +1732,13 @@ on.load(() => {
 
 		for (let i = 0; i < left.length; i++) {
 			const leftCell = left[i]
-			const transformedLeftCell = getTransformedCell(leftCell, transformation)
+			const transformedLeftCell = getTransformedCell(leftCell, transformation, isTranslation)
 			transformedLeft.push(transformedLeftCell)
 		}
 
 		for (let i = 0; i < right.length; i++) {
 			const rightCell = right[i]
-			const transformedRightCell = getTransformedCell(rightCell, transformation)
+			const transformedRightCell = getTransformedCell(rightCell, transformation, isTranslation)
 			transformedRight.push(transformedRightCell)
 		}
 
@@ -1746,10 +1746,15 @@ on.load(() => {
 		return transformedDiagram
 	}
 
-	const getTransformedCell = (cell, transformation) => {
+	const getTransformedCell = (cell, transformation, isTranslation = false) => {
 		let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height)
 		
-		let [splitX, splitY] = transformation(cell.splitX, cell.splitY)
+		let {splitX, splitY} = cell
+		if (!isTranslation) {
+			const [newSplitX, newSplitY] = transformation(cell.splitX, cell.splitY)
+			splitX = newSplitX
+			splitY = newSplitY
+		}
 
 		if (x === undefined) x = cell.x
 		if (y === undefined) y = cell.y
@@ -1811,7 +1816,7 @@ on.load(() => {
 				return [newX, newY, newWidth, newHeight]
 
 			}
-			const redundantRule = getTransformedRule(rule, transformation)
+			const redundantRule = getTransformedRule(rule, transformation, true)
 			redundantRules.push(redundantRule)
 		}
 
@@ -2107,7 +2112,7 @@ on.load(() => {
 	})
 
 	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	//registerRule(WATER_RIGHT_FALL_RULE)
+	registerRule(WATER_RIGHT_FALL_RULE)
 
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
@@ -2152,7 +2157,7 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
+	state.brush.colour = WATER_RIGHT
 
 })
