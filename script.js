@@ -1795,6 +1795,8 @@ on.load(() => {
 			state.dragon.behaves.push(behaveFunction)
 		}
 
+		return redundantRules
+
 	}
 
 	// For one rule, we could take its 'origin' as any of the cells in the first step
@@ -2096,8 +2098,9 @@ on.load(() => {
 		right: [
 			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
 			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
-			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
-			makeDiagramCell({x: 0.5, y: 1, width: 1.0, content: BLUE}),
+			/*makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),*/
+			makeDiagramCell({x: 0.5, y: 0, width: 1.0, content: RED}),
 		],
 	})
 	
@@ -2111,16 +2114,16 @@ on.load(() => {
 		],
 	})
 
-	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	registerRule(WATER_RIGHT_FALL_RULE)
+	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
+	registerRule(WATER_RIGHT_FALL_RULE).d
 
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
 	//registerRule(ROCK_FALL_RULE)
-	//registerRule(SAND_FALL_RULE)
-	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.R}))
+	registerRule(SAND_FALL_RULE)
+	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2157,7 +2160,8 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = Colour.Purple.splash
 	state.brush.colour = WATER_RIGHT
+	state.brush.colour = Colour.Yellow.splash
+	state.brush.colour = Colour.Purple.splash
 
 })
