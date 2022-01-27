@@ -1654,8 +1654,8 @@ on.load(() => {
 	}
 
 	// Content can be a dragon-array or another dragon-diagram
-	const makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray()} = {}) => {
-		return {x, y, width, height, content}
+	const makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray(), instruction = DRAGON_INSTRUCTION.recolour} = {}) => {
+		return {x, y, width, height, content, instruction}
 	}
 
 	//===============//
@@ -1895,22 +1895,13 @@ on.load(() => {
 		const results = []
 		for (const cell of diagram.right) {
 			
-			const splashes = getSplashesArrayFromArray(cell.content)
-
-			const result = (neighbour, redraw) => {	
-
-				const colour = splashes[Random.Uint32 % splashes.length]
-
-				if (redraw) return setCellColour(neighbour, colour, true)
-				
-				neighbour.colour = colour
-				return 0
-			}
+			const result = DRAGON_INSTRUCTION.recolour(cell)
 
 			results.push(result)
 		}
 
-		let splitOrMergeNeeded = false
+		// Check if left matches right
+		/*let splitOrMergeNeeded = false
 		if (diagram.right.length !== diagram.left.length) {
 			splitOrMergeNeeded = true
 		}
@@ -1921,9 +1912,9 @@ on.load(() => {
 				splitOrMergeNeeded = true
 				break
 			}
-		}
+		}*/
 		
-		if (!splitOrMergeNeeded) return (neighbours, redraw) => {
+		return (neighbours, redraw) => {
 
 			let drawn = 0
 
@@ -1958,6 +1949,29 @@ on.load(() => {
 
 		return true
 
+	}
+
+	//======================//
+	// DRAGON - INSTRUCTION //
+	//======================//
+	// These are the different types of instructions available for the right-hand-side of rules
+	// Default is recolour
+	const DRAGON_INSTRUCTION = {}
+	DRAGON_INSTRUCTION.recolour = (cell) => {
+
+		const splashes = getSplashesArrayFromArray(cell.content)
+		
+		const instruction = (neighbour, redraw) => {	
+
+			const colour = splashes[Random.Uint32 % splashes.length]
+
+			if (redraw) return setCellColour(neighbour, colour, true)
+			
+			neighbour.colour = colour
+			return 0
+		}
+
+		return instruction
 	}
 
 	//=================//
@@ -2054,7 +2068,7 @@ on.load(() => {
 		],
 		right: [
 			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
-			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.recolour}),
 		],
 	})
 
@@ -2064,10 +2078,10 @@ on.load(() => {
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	//registerRule(ROCK_FALL_RULE)
+	registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2104,6 +2118,6 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = Colour.Purple.splash
+	state.brush.colour = Colour.Grey.splash
 
 })
