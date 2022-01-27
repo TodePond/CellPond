@@ -879,19 +879,19 @@ on.load(() => {
 		const children = []
 
 		const xStart = wSign === 1? cell.x : cell.right-childWidth
-		const YStart = hSign === 1? cell.y : cell.bottom-childHeight
-		const xEnd = wSign === 1? cell.right : cell.x-childWidth
-		const yEnd = hSign === 1? cell.bottom : cell.y-childHeight
+		const yStart = hSign === 1? cell.y : cell.bottom-childHeight
 		const dx = wSign * childWidth
 		const dy = hSign * childHeight
 		
-		for (let x = xStart; x !== xEnd; x += dx) {
-			for (let y = YStart; y !== yEnd; y += dy) {
+		for (let ix = 0; ix < width; ix++) {
+			const x = xStart + dx*ix
+			for (let iy = 0; iy < height; iy++) {
+				const y = yStart + dy*iy
 				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
 				children.push(child)
 			}
 		}
-		
+
 		deleteCell(cell)
 		for (const child of children) {
 			addCell(child)
@@ -1993,6 +1993,8 @@ on.load(() => {
 			const children = splitCell(target, cell.splitX, cell.splitY)
 			const [head, ...tail] = children
 
+			//print(children)
+
 			const colour = splashes[Random.Uint32 % splashes.length]
 			let drawn = 0
 			if (redraw) drawn += setCellColour(head, colour, true)
@@ -2032,6 +2034,7 @@ on.load(() => {
 	const BLUE = makeArrayFromSplash(Colour.Blue.splash)
 	const YELLOW = makeArrayFromSplash(Colour.Yellow.splash)
 	const PURPLE = makeArrayFromSplash(Colour.Purple.splash)
+	const RED = makeArrayFromSplash(Colour.Red.splash)
 	let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
 	RED_R /= 100
 	RED_G /= 10
@@ -2086,9 +2089,10 @@ on.load(() => {
 			makeDiagramCell({x: 0, y: 1, content: BLACK}),
 		],
 		right: [
-			makeDiagramCell({x: 0, y: 0, content: BLACK}),
-			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN}),
-			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
+			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 1, width: 1.0, content: BLUE}),
 		],
 	})
 	
@@ -2111,7 +2115,7 @@ on.load(() => {
 	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.R}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2148,6 +2152,7 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
+	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
 
 })
