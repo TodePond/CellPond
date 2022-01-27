@@ -866,17 +866,29 @@ on.load(() => {
 	//===============//
 	const splitCell = (cell, width, height) => {
 
+
+		const wSign = Math.sign(width)
+		const hSign = Math.sign(height)
+
+		width = Math.abs(width)
+		height = Math.abs(height)
+
 		const childWidth = cell.width / width
 		const childHeight = cell.height / height
 
 		const children = []
 
-		let i = 0
-		for (let x = cell.x; x < cell.right; x += childWidth) {
-			for (let y = cell.y; y < cell.bottom; y += childHeight) {
+		const xStart = wSign === 1? cell.x : cell.right-childWidth
+		const YStart = hSign === 1? cell.y : cell.bottom-childHeight
+		const xEnd = wSign === 1? cell.right : cell.x-childWidth
+		const yEnd = hSign === 1? cell.bottom : cell.y-childHeight
+		const dx = wSign * childWidth
+		const dy = hSign * childHeight
+		
+		for (let x = xStart; x !== xEnd; x += dx) {
+			for (let y = YStart; y !== yEnd; y += dy) {
 				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
 				children.push(child)
-				i++
 			}
 		}
 		
@@ -2099,7 +2111,7 @@ on.load(() => {
 	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
