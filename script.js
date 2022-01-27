@@ -136,14 +136,6 @@ const state = {
 
 
 	
-	speed: {
-		count: 32768/1, //with world size of 7
-		dynamic: true,
-		aer: 0.5,
-		redraw: 1.0,
-		redrawRepeatScore: 0.9,
-		redrawRepeatPenalty: 0.0,
-	},
 	
 	speed: {
 		count: 100,
@@ -151,6 +143,15 @@ const state = {
 		aer: 2.0,
 		redraw: 300.0,
 		redrawRepeatScore: 1.0,
+		redrawRepeatPenalty: 0.0,
+	},
+
+	speed: {
+		//count: 32768/1,
+		dynamic: true,
+		aer: 0.5,
+		redraw: 1.0,
+		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
 
@@ -215,10 +216,10 @@ const state = {
 	brush: {
 		colour: 999,
 		colour: Colour.Grey.splash,
-		colour: Colour.Yellow.splash,
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
-		size: 1,
+		colour: Colour.Yellow.splash,
+		size: 0,
 	},
 
 	cursor: {
@@ -233,7 +234,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 5
+const WORLD_SIZE = 7
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_DIMENSION = 2 ** WORLD_SIZE
 const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
@@ -819,12 +820,12 @@ on.load(() => {
 
 		if (BUILD_WORLD(cell, redraw) !== undefined) return 1
 
-		/*state.dragon.behaves.shuffle()
+		state.dragon.behaves.shuffle()
 		for (const behave of state.dragon.behaves) {
 			const result = behave(cell, redraw)
 			if (result !== 0) return result
 		}
-		return 0*/
+		return 0
 
 		/*for (let i = 0; i < state.dragon.behaves.length; i++) {
 			const b = Random.Uint32 % state.dragon.behaves.length
@@ -844,7 +845,7 @@ on.load(() => {
 			if (drawn > 0) return drawn
 		}*/
 
-		let drawn = 0
+		/*let drawn = 0
 		drawn += DEBUG_RED_SPLIT_2(cell, redraw)
 		//DEBUG_RED_SPLIT(cell, redraw)
 		//DEBUG_FIZZ(cell, redraw)
@@ -856,7 +857,7 @@ on.load(() => {
 			return drawCell(cell)
 		}
 
-		return 0
+		return 0*/
 
 	}
 	
@@ -2102,8 +2103,8 @@ on.load(() => {
 		]
 	})
 
-	state.brush.colour = RAINBOW_DIAGRAM_2
+	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	//state.brush.colour = WATER_RIGHT
+	state.brush.colour = WATER_RIGHT
 
 })
