@@ -2067,8 +2067,7 @@ on.load(() => {
 	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2105,6 +2104,6 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = WATER_RIGHT
+	state.brush.colour = Colour.Purple.splash
 
 })
