@@ -1654,8 +1654,8 @@ on.load(() => {
 	}
 
 	// Content can be a dragon-array or another dragon-diagram
-	const makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray(), instruction = DRAGON_INSTRUCTION.recolour} = {}) => {
-		return {x, y, width, height, content, instruction}
+	const makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray(), instruction = DRAGON_INSTRUCTION.recolour, splitX = 1, splitY = 1} = {}) => {
+		return {x, y, width, height, content, instruction, splitX, splitY}
 	}
 
 	//===============//
@@ -1718,18 +1718,16 @@ on.load(() => {
 		const transformedLeft = []
 		const transformedRight = right === undefined? undefined : []
 
-		const length = left.length
-		for (let i = 0; i < length; i++) {
-
+		for (let i = 0; i < left.length; i++) {
 			const leftCell = left[i]
 			const transformedLeftCell = getTransformedCell(leftCell, transformation)
 			transformedLeft.push(transformedLeftCell)
-			
-			if (right !== undefined) {
-				const rightCell = right[i]
-				const transformedRightCell = getTransformedCell(rightCell, transformation)
-				transformedRight.push(transformedRightCell)
-			}
+		}
+
+		for (let i = 0; i < right.length; i++) {
+			const rightCell = right[i]
+			const transformedRightCell = getTransformedCell(rightCell, transformation)
+			transformedRight.push(transformedRightCell)
 		}
 
 		const transformedDiagram = makeDiagram({left: transformedLeft, right: transformedRight})
@@ -1739,15 +1737,16 @@ on.load(() => {
 	const getTransformedCell = (cell, transformation) => {
 		let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height)
 		
+		let [splitX, splitY] = transformation(cell.splitX, cell.splitY)
+
 		if (x === undefined) x = cell.x
 		if (y === undefined) y = cell.y
 		if (width === undefined) width = cell.width
 		if (height === undefined) height = cell.height
 		
-		if (!cell.content.isDiagram) return makeDiagramCell({x, y, width, height, content: cell.content})
-		
-		const content = getTransformedDiagram(cell.content, transformation)
-		return makeDiagramCell({x, y, width, height, content})
+		const content = cell.content.isDiagram? getTransformedDiagram(cell.content, transformation) : cell.content
+
+		return makeDiagramCell({x, y, splitX, splitY, width, height, content, instruction: cell.instruction})
 	}
 
 	//=================//
@@ -1789,7 +1788,7 @@ on.load(() => {
 		const [head] = rule.steps
 
 		for (const cell of head.left) {
-			const transformation = (x, y, width, height) => {
+			const transformation = (x, y, width = 1, height = 1) => {
 
 				const newWidth = width / cell.width
 				const newHeight = height / cell.height
@@ -1895,33 +1894,31 @@ on.load(() => {
 		const results = []
 		for (const cell of diagram.right) {
 			
-			const result = DRAGON_INSTRUCTION.recolour(cell)
+			const result = cell.instruction(cell)
 
 			results.push(result)
 		}
 
-		// Check if left matches right
-		/*let splitOrMergeNeeded = false
-		if (diagram.right.length !== diagram.left.length) {
-			splitOrMergeNeeded = true
-		}
-		else for (let i = 0; i < diagram.right.length; i++) {
-			const r = diagram.right[i]
-			const l = diagram.left[i]
-			if (r.x !== r.x || l.y !== r.y || l.width !== r.width || l.height !== r.height) {
-				splitOrMergeNeeded = true
-				break
-			}
-		}*/
+
 		
 		return (neighbours, redraw) => {
 
 			let drawn = 0
+			let neighbourId = 0
+			const bonusTargets = []
 
-			for (let i = 0; i < results.length; i++) {
-				const result = results[i]
-				const neighbour = neighbours[i]
-				drawn += result(neighbour, redraw)
+			for (const instruction of results) {
+				const target = bonusTargets.length > 0? bonusTargets.pop() : neighbours[neighbourId]
+				const result = instruction(target, redraw)
+				const {drawn: resultDrawn, bonusTargets: resultBonusTargets} = result
+				drawn += resultDrawn
+				if (resultBonusTargets !== undefined) {
+					bonusTargets.push(...resultBonusTargets)
+				}
+				
+				if (bonusTargets.length === 0) {
+					neighbourId++
+				}
 			}
 
 			return drawn
@@ -1960,18 +1957,40 @@ on.load(() => {
 	DRAGON_INSTRUCTION.recolour = (cell) => {
 
 		const splashes = getSplashesArrayFromArray(cell.content)
-		
-		const instruction = (neighbour, redraw) => {	
+
+		const instruction = (target, redraw) => {
 
 			const colour = splashes[Random.Uint32 % splashes.length]
 
-			if (redraw) return setCellColour(neighbour, colour, true)
-			
-			neighbour.colour = colour
-			return 0
+			let drawn = 0
+			if (redraw) drawn += setCellColour(target, colour, true)
+			else target.colour = colour
+
+			return {drawn}
 		}
 
 		return instruction
+	}
+
+	DRAGON_INSTRUCTION.split = (cell) => {
+
+		const splashes = getSplashesArrayFromArray(cell.content)
+
+		const instruction = (target, redraw) => {
+			
+			const children = splitCell(target, cell.splitX, cell.splitY)
+			const [head, ...tail] = children
+
+			const colour = splashes[Random.Uint32 % splashes.length]
+			let drawn = 0
+			if (redraw) drawn += setCellColour(head, colour, true)
+			else head.colour = colour
+
+			return {drawn, bonusTargets: tail}
+
+		}
+		return instruction
+
 	}
 
 	//=================//
@@ -1985,7 +2004,6 @@ on.load(() => {
 	}
 
 	const getOriginOfDiagram = (diagram) => {
-
 		for (const cell of diagram.left) {
 			if (cell.x === 0 && cell.y === 0) return cell
 		}
@@ -2067,7 +2085,7 @@ on.load(() => {
 			makeDiagramCell({x: 0, y: 0, content: PURPLE}),
 		],
 		right: [
-			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.recolour}),
 		],
 	})
@@ -2078,10 +2096,10 @@ on.load(() => {
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	registerRule(ROCK_FALL_RULE)
+	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2118,6 +2136,6 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = Colour.Grey.splash
+	state.brush.colour = Colour.Purple.splash
 
 })
