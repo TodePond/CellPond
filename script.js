@@ -1682,38 +1682,38 @@ on.load(() => {
 	//==========================//
 	const DRAGON_TRANSFORMATIONS = {
 		NONE: [
-			(x, y) => [ x, y],
+			(x, y, w, h, W, H) => [x, y],
 		],
 		X: [
-			(x, y) => [ x, y],
-			(x, y) => [-x, y],
+			(x, y, w, h, W, H) => [   x, y],
+			(x, y, w, h, fw, fh) => [-x-w + fw, y],
 		],
 		Y: [
-			(x, y) => [ x, y],
-			(x, y) => [ x,-y],
+			(x, y, w, h, W, H) => [x,  y],
+			(x, y, w, h, W, H) => [x, -y-h],
 		],
 		XY: [
-			(x, y) => [ x, y],
-			(x, y) => [-x, y],
-			(x, y) => [ x,-y],
-			(x, y) => [-x,-y],
+			(x, y, w, h, W, H) => [   x,  y],
+			(x, y, w, h, W, H) => [-x-w,  y],
+			(x, y, w, h, W, H) => [   x, -y-h],
+			(x, y, w, h, W, H) => [-x-w, -y-h],
 		],
 		R: [
-			(x, y) => [ x, y],
-			(x, y) => [-y, x],
-			(x, y) => [-x,-y],
-			(x, y) => [ y,-x],
+			(x, y, w, h, W, H) => [   x,    y],
+			(x, y, w, h, W, H) => [-y-h,    x],
+			(x, y, w, h, W, H) => [-x-w, -y-h],
+			(x, y, w, h, W, H) => [ y-h, -x-w],
 		],
 		XYR: [
-			(x, y) => [ x, y],
-			(x, y) => [-y, x],
-			(x, y) => [-x,-y],
-			(x, y) => [ y,-x],
+			(x, y, w, h, W, H) => [   x,    y],
+			(x, y, w, h, W, H) => [-y-h,    x],
+			(x, y, w, h, W, H) => [-x-w, -y-h],
+			(x, y, w, h, W, H) => [   y, -x-w],
 			
-			(x, y) => [-x, y],
-			(x, y) => [-y,-x],
-			(x, y) => [ x,-y],
-			(x, y) => [ y, x],
+			(x, y, w, h, W, H) => [-x-w,    y],
+			(x, y, w, h, W, H) => [-y-h, -x-w],
+			(x, y, w, h, W, H) => [   x, -y-h],
+			(x, y, w, h, W, H) => [   y,    x],
 		]
 	}
 
@@ -1726,19 +1726,20 @@ on.load(() => {
 	const getTransformedDiagram = (diagram, transformation, isTranslation = false) => {
 
 		const {left, right} = diagram
+		const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
 
 		const transformedLeft = []
 		const transformedRight = right === undefined? undefined : []
 
 		for (let i = 0; i < left.length; i++) {
 			const leftCell = left[i]
-			const transformedLeftCell = getTransformedCell(leftCell, transformation, isTranslation)
+			const transformedLeftCell = getTransformedCell(leftCell, transformation, diagramWidth, diagramHeight, isTranslation)
 			transformedLeft.push(transformedLeftCell)
 		}
 
 		for (let i = 0; i < right.length; i++) {
 			const rightCell = right[i]
-			const transformedRightCell = getTransformedCell(rightCell, transformation, isTranslation)
+			const transformedRightCell = getTransformedCell(rightCell, transformation, diagramWidth, diagramHeight, isTranslation)
 			transformedRight.push(transformedRightCell)
 		}
 
@@ -1746,8 +1747,9 @@ on.load(() => {
 		return transformedDiagram
 	}
 
-	const getTransformedCell = (cell, transformation, isTranslation = false) => {
-		let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height)
+	const getTransformedCell = (cell, transformation, diagramWidth, diagramHeight, isTranslation = false) => {
+
+		let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height, diagramWidth, diagramHeight)
 		
 		let {splitX, splitY} = cell
 		if (!isTranslation) {
@@ -1795,7 +1797,7 @@ on.load(() => {
 			state.dragon.behaves.push(behaveFunction)
 		}
 
-		return redundantRules
+		return [redundantRules, transformedRules]
 
 	}
 
@@ -2098,9 +2100,10 @@ on.load(() => {
 		right: [
 			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
 			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 1, width: 1.0, content: RED}),
+			
 			/*makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),*/
-			makeDiagramCell({x: 0.5, y: 0, width: 1.0, content: RED}),
 		],
 	})
 	
@@ -2115,7 +2118,22 @@ on.load(() => {
 	})
 
 	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
-	registerRule(WATER_RIGHT_FALL_RULE).d
+	const [debugged, transformed] = registerRule(WATER_RIGHT_FALL_RULE)
+	for (const rule of debugged) {
+		print("REDUNDANT RULE")
+		const step = rule.steps[0]
+		for (const cell of step.left) {
+			cell.d
+		}
+	}
+	print("")
+	for (const rule of transformed) {
+		print("TRANSFORMED RULE")
+		const step = rule.steps[0]
+		for (const cell of step.left) {
+			cell.d
+		}
+	}
 
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
@@ -2123,7 +2141,22 @@ on.load(() => {
 	//registerRule(ROCK_FALL_RULE)
 	registerRule(SAND_FALL_RULE)
 	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	/*const [debugged, transformed] = registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.Y}))
+	for (const rule of debugged) {
+		print("REDUNDANT RULE")
+		const step = rule.steps[0]
+		for (const cell of step.left) {
+			cell.d
+		}
+	}
+	print("")
+	for (const rule of transformed) {
+		print("TRANSFORMED RULE")
+		const step = rule.steps[0]
+		for (const cell of step.left) {
+			cell.d
+		}
+	}*/
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2160,8 +2193,8 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Yellow.splash
 	state.brush.colour = Colour.Purple.splash
+	state.brush.colour = WATER_RIGHT
 
 })
