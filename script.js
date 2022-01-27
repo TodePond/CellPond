@@ -1685,35 +1685,35 @@ on.load(() => {
 			(x, y, w, h, W, H) => [x, y],
 		],
 		X: [
-			(x, y, w, h, W, H) => [   x, y],
-			(x, y, w, h, fw, fh) => [-x-w + fw, y],
+			(x, y, w, h, W, H) => [      x, y],
+			(x, y, w, h, W, fh) => [-x-w+W, y],
 		],
 		Y: [
-			(x, y, w, h, W, H) => [x,  y],
-			(x, y, w, h, W, H) => [x, -y-h],
+			(x, y, w, h, W, H) => [x,      y],
+			(x, y, w, h, W, H) => [x, -y-h+H],
 		],
 		XY: [
-			(x, y, w, h, W, H) => [   x,  y],
-			(x, y, w, h, W, H) => [-x-w,  y],
-			(x, y, w, h, W, H) => [   x, -y-h],
-			(x, y, w, h, W, H) => [-x-w, -y-h],
+			(x, y, w, h, W, H) => [     x,      y],
+			(x, y, w, h, W, H) => [-x-w+W,      y],
+			(x, y, w, h, W, H) => [     x, -y-h+H],
+			(x, y, w, h, W, H) => [-x-w+W, -y-h+H],
 		],
 		R: [
-			(x, y, w, h, W, H) => [   x,    y],
-			(x, y, w, h, W, H) => [-y-h,    x],
-			(x, y, w, h, W, H) => [-x-w, -y-h],
-			(x, y, w, h, W, H) => [ y-h, -x-w],
+			(x, y, w, h, W, H) => [     x,      y],
+			(x, y, w, h, W, H) => [-y-h+H,      x],
+			(x, y, w, h, W, H) => [-x-w+W, -y-h+H],
+			(x, y, w, h, W, H) => [   y-h, -x-w+W],
 		],
 		XYR: [
-			(x, y, w, h, W, H) => [   x,    y],
-			(x, y, w, h, W, H) => [-y-h,    x],
-			(x, y, w, h, W, H) => [-x-w, -y-h],
-			(x, y, w, h, W, H) => [   y, -x-w],
+			(x, y, w, h, W, H) => [     x,     y],
+			(x, y, w, h, W, H) => [-y-h+H,     x],
+			(x, y, w, h, W, H) => [-x-w+W, -y-h+H],
+			(x, y, w, h, W, H) => [     y, -x-w+W],
 			
-			(x, y, w, h, W, H) => [-x-w,    y],
-			(x, y, w, h, W, H) => [-y-h, -x-w],
-			(x, y, w, h, W, H) => [   x, -y-h],
-			(x, y, w, h, W, H) => [   y,    x],
+			(x, y, w, h, W, H) => [-x-w+W,      y],
+			(x, y, w, h, W, H) => [-y-h+H, -x-w+W],
+			(x, y, w, h, W, H) => [     x, -y-h+H],
+			(x, y, w, h, W, H) => [     y,      x],
 		]
 	}
 
@@ -1753,7 +1753,7 @@ on.load(() => {
 		
 		let {splitX, splitY} = cell
 		if (!isTranslation) {
-			const [newSplitX, newSplitY] = transformation(cell.splitX, cell.splitY)
+			const [newSplitX, newSplitY] = transformation(cell.splitX, cell.splitY, 1, 1, 1, 1)
 			splitX = newSplitX
 			splitY = newSplitY
 		}
@@ -2002,8 +2002,6 @@ on.load(() => {
 			const children = splitCell(target, cell.splitX, cell.splitY)
 			const [head, ...tail] = children
 
-			//print(children)
-
 			const colour = splashes[Random.Uint32 % splashes.length]
 			let drawn = 0
 			if (redraw) drawn += setCellColour(head, colour, true)
@@ -2119,21 +2117,7 @@ on.load(() => {
 
 	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
 	const [debugged, transformed] = registerRule(WATER_RIGHT_FALL_RULE)
-	for (const rule of debugged) {
-		print("REDUNDANT RULE")
-		const step = rule.steps[0]
-		for (const cell of step.left) {
-			cell.d
-		}
-	}
-	print("")
-	for (const rule of transformed) {
-		print("TRANSFORMED RULE")
-		const step = rule.steps[0]
-		for (const cell of step.left) {
-			cell.d
-		}
-	}
+	
 
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
@@ -2141,11 +2125,11 @@ on.load(() => {
 	//registerRule(ROCK_FALL_RULE)
 	registerRule(SAND_FALL_RULE)
 	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	/*const [debugged, transformed] = registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.Y}))
-	for (const rule of debugged) {
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	/*for (const rule of debugged) {
 		print("REDUNDANT RULE")
 		const step = rule.steps[0]
-		for (const cell of step.left) {
+		for (const cell of step.right) {
 			cell.d
 		}
 	}
@@ -2153,7 +2137,7 @@ on.load(() => {
 	for (const rule of transformed) {
 		print("TRANSFORMED RULE")
 		const step = rule.steps[0]
-		for (const cell of step.left) {
+		for (const cell of step.right) {
 			cell.d
 		}
 	}*/
@@ -2194,7 +2178,7 @@ on.load(() => {
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
 	state.brush.colour = Colour.Yellow.splash
-	state.brush.colour = Colour.Purple.splash
 	state.brush.colour = WATER_RIGHT
+	state.brush.colour = Colour.Purple.splash
 
 })
