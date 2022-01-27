@@ -626,6 +626,7 @@ on.load(() => {
 		const [x, y] = Mouse.position
 		const {x: px, y: py} = state.cursor.previous
 		if (px === undefined || py === undefined) return
+		if (x === undefined || y === undefined) return
 		const [dx, dy] = [x - px, y - py]
 		state.camera.x += dx / state.camera.scale
 		state.camera.y += dy / state.camera.scale
@@ -1883,6 +1884,8 @@ on.load(() => {
 				if (neighbour === undefined) return undefined
 				if (neighbour.width !== cell.width*origin.width) return undefined
 				if (neighbour.height !== cell.height*origin.height) return undefined
+				if (neighbour.left !== x) return undefined
+				if (neighbour.top !== y) return undefined
 				if (!splashes.has(neighbour.colour)) return undefined
 				
 				return neighbour
@@ -2034,6 +2037,34 @@ on.load(() => {
 	//================//
 	// DRAGON - DEBUG //
 	//================//
+	const debugRegistry = (registry) => {
+		const [debugged, transformed] = registry
+		for (const rule of debugged) {
+			print("REDUNDANT RULE")
+			const step = rule.steps[0]
+			print("left")
+			for (const cell of step.left) {
+				cell.d
+			}
+			print("right")
+			for (const cell of step.right) {
+				cell.d
+			}
+		}
+		print("")
+		for (const rule of transformed) {
+			print("TRANSFORMED RULE")
+			const step = rule.steps[0]
+			print("left")
+			for (const cell of step.left) {
+				cell.d
+			}
+			print("right")
+			for (const cell of step.right) {
+				cell.d
+			}
+		}
+	}
 
 	const GREY = makeArrayFromSplash(Colour.Grey.splash)
 	const BLACK = makeArrayFromSplash(Colour.Black.splash)
@@ -2098,10 +2129,8 @@ on.load(() => {
 		right: [
 			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
 			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
-			makeDiagramCell({x: 0, y: 1, width: 1.0, content: RED}),
-			
-			/*makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
-			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),*/
+			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
 		],
 	})
 	
@@ -2110,37 +2139,22 @@ on.load(() => {
 			makeDiagramCell({x: 0, y: 0, content: PURPLE}),
 		],
 		right: [
-			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
-			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.recolour}),
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.recolour}),
 		],
 	})
 
-	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
-	const [debugged, transformed] = registerRule(WATER_RIGHT_FALL_RULE)
+	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
+	debugRegistry(registerRule(WATER_RIGHT_FALL_RULE))
 	
 
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
 	//registerRule(ROCK_FALL_RULE)
-	registerRule(SAND_FALL_RULE)
-	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	/*for (const rule of debugged) {
-		print("REDUNDANT RULE")
-		const step = rule.steps[0]
-		for (const cell of step.right) {
-			cell.d
-		}
-	}
-	print("")
-	for (const rule of transformed) {
-		print("TRANSFORMED RULE")
-		const step = rule.steps[0]
-		for (const cell of step.right) {
-			cell.d
-		}
-	}*/
+	//registerRule(SAND_FALL_RULE)
+	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2175,8 +2189,12 @@ on.load(() => {
 		]
 	})
 
+	
+
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
+
+
 	state.brush.colour = Colour.Yellow.splash
 	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
