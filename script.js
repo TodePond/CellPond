@@ -149,7 +149,7 @@ const state = {
 	speed: {
 		//count: 32768/1,
 		dynamic: true,
-		aer: 0.5,
+		aer: 0.4,
 		redraw: 1.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
@@ -2144,8 +2144,8 @@ on.load(() => {
 		],
 	})
 
-	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	debugRegistry(registerRule(WATER_RIGHT_FALL_RULE))
+	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
+	registerRule(WATER_RIGHT_FALL_RULE)
 	
 
 	
@@ -2154,7 +2154,7 @@ on.load(() => {
 	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
