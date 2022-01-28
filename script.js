@@ -219,7 +219,7 @@ const state = {
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
-		size: 0,
+		size: 1,
 	},
 
 	cursor: {
@@ -1915,26 +1915,25 @@ on.load(() => {
 	// TODO: also support Splitting (with some funky backend syntax if needed)
 	// this funky syntax could include dummy cells on the right
 	const makeResultFunction = (diagram) => {
+
 		const results = []
 		for (const cell of diagram.right) {
-			
 			const result = cell.instruction(cell)
-
 			results.push(result)
 		}
 
-
-		
 		return (neighbours, redraw) => {
 
 			let drawn = 0
 			let neighbourId = 0
+			let skip = 0
 			const bonusTargets = []
 
 			for (const instruction of results) {
 				const target = bonusTargets.length > 0? bonusTargets.pop() : neighbours[neighbourId]
-				const result = instruction(target, redraw)
-				const {drawn: resultDrawn, bonusTargets: resultBonusTargets} = result
+				const result = instruction(target, redraw, neighbours, neighbourId)
+				const {drawn: resultDrawn, bonusTargets: resultBonusTargets, skip: resultSkip} = result
+				if (resultSkip !== undefined) skip += resultSkip
 				drawn += resultDrawn
 				if (resultBonusTargets !== undefined) {
 					bonusTargets.push(...resultBonusTargets)
@@ -1942,6 +1941,10 @@ on.load(() => {
 				
 				if (bonusTargets.length === 0) {
 					neighbourId++
+					if (skip > 0) {
+						neighbourId++
+						skip--
+					}
 				}
 			}
 
@@ -1996,6 +1999,8 @@ on.load(() => {
 		return instruction
 	}
 
+	// A SPLIT REQUIRES THE CORRECT NUMBER OF RECOLOUR COMMANDS AFTER IT
+	// IF YOU DON'T, IT WILL GO WRONG
 	DRAGON_INSTRUCTION.split = (cell) => {
 
 		const splashes = getSplashesArrayFromArray(cell.content)
@@ -2013,6 +2018,30 @@ on.load(() => {
 			return {drawn, bonusTargets: tail}
 
 		}
+		return instruction
+
+	}
+
+	DRAGON_INSTRUCTION.merge = (cell) => {
+
+		const splashes = getSplashesArrayFromArray(cell.content)
+		
+		const childCount = Math.abs(cell.splitX) * Math.abs(cell.splitY)
+
+		const instruction = (target, redraw, neighbours, neighbourId) => {
+
+			const children = neighbours.slice(neighbourId, neighbourId+childCount)
+			const merged = mergeCells(children)
+
+			const colour = splashes[Random.Uint32 % splashes.length]
+			let drawn = 0
+			if (redraw) drawn += setCellColour(merged, colour)
+			else merged.colour = colour
+
+			return {drawn, skip: childCount-1}
+
+		}
+
 		return instruction
 
 	}
@@ -2127,8 +2156,7 @@ on.load(() => {
 			makeDiagramCell({x: 0, y: 1, content: BLACK}),
 		],
 		right: [
-			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
-			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
 		],
@@ -2146,8 +2174,6 @@ on.load(() => {
 
 	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
 	registerRule(WATER_RIGHT_FALL_RULE)
-	
-
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
