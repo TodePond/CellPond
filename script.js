@@ -147,10 +147,10 @@ const state = {
 	},
 
 	speed: {
-		//count: 32768/1,
-		dynamic: true,
-		aer: 0.4,
-		redraw: 1.0,
+		count: 4096 / 1,
+		dynamic: false,
+		aer: 1.0,
+		redraw: 3.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -219,7 +219,7 @@ const state = {
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
-		size: 1,
+		size: 0,
 	},
 
 	cursor: {
@@ -234,7 +234,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 6
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_DIMENSION = 2 ** WORLD_SIZE
 const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
@@ -824,7 +824,9 @@ on.load(() => {
 		state.dragon.behaves.shuffle()
 		for (const behave of state.dragon.behaves) {
 			const result = behave(cell, redraw)
-			if (result !== 0) return result
+			if (result === undefined) continue
+			//if (result === 0) continue
+			return result
 		}
 		return 0
 
@@ -1718,16 +1720,21 @@ on.load(() => {
 		]
 	}
 
-	const getTransformedRule = (rule, transformation, isTranslation = false) => {
-		const steps = rule.steps.map(step => getTransformedDiagram(step, transformation, isTranslation))
+	const getTransformedRule = (rule, transformation, isTranslation) => {
+
+		// TODO: SHOULD THIS ACTUALLY BE THE MAX SIZE OF ALL STEPS COMBINED???? NOT SURE NEEDS TESTING
+		const [ruleWidth, ruleHeight] = getDiagramDimensions(rule.steps[0])
+
+		const steps = rule.steps.map(step => getTransformedDiagram(step, transformation, isTranslation, ruleWidth, ruleHeight))
+
 		const transformedRule = makeRule({steps, transformations: rule.transformations, locked: rule.locked})
 		return transformedRule
 	}
 
-	const getTransformedDiagram = (diagram, transformation, isTranslation = false) => {
+	const getTransformedDiagram = (diagram, transformation, isTranslation, ruleWidth, ruleHeight) => {
 
 		const {left, right} = diagram
-		const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
+		const [diagramWidth, diagramHeight] = [ruleWidth, ruleHeight]
 
 		const transformedLeft = []
 		const transformedRight = right === undefined? undefined : []
@@ -1764,7 +1771,9 @@ on.load(() => {
 		if (width === undefined) width = cell.width
 		if (height === undefined) height = cell.height
 		
-		const content = cell.content.isDiagram? getTransformedDiagram(cell.content, transformation) : cell.content
+		// leftover from when content could be a sub-diagram
+		//const content = cell.content.isDiagram? getTransformedDiagram(cell.content, transformation) : cell.content
+		const content = cell.content
 
 		return makeDiagramCell({x, y, splitX, splitY, width, height, content, instruction: cell.instruction})
 	}
@@ -1855,7 +1864,7 @@ on.load(() => {
 				if (drawn !== undefined) return drawn
 			}
 
-			return 0
+			return undefined
 		}
 
 		return behaveFunction
@@ -2070,27 +2079,31 @@ on.load(() => {
 		const [debugged, transformed] = registry
 		for (const rule of debugged) {
 			print("REDUNDANT RULE")
-			const step = rule.steps[0]
-			print("left")
-			for (const cell of step.left) {
-				cell.d
-			}
-			print("right")
-			for (const cell of step.right) {
-				cell.d
+			for (const step of rule.steps) {
+				print("STEP >>")
+				print("left")
+				for (const cell of step.left) {
+					cell.d
+				}
+				print("right")
+				for (const cell of step.right) {
+					cell.d
+				}
 			}
 		}
 		print("")
 		for (const rule of transformed) {
 			print("TRANSFORMED RULE")
-			const step = rule.steps[0]
-			print("left")
-			for (const cell of step.left) {
-				cell.d
-			}
-			print("right")
-			for (const cell of step.right) {
-				cell.d
+			for (const step of rule.steps) {
+				print("STEP >>")
+				print("left")
+				for (const cell of step.left) {
+					cell.d
+				}
+				print("right")
+				for (const cell of step.right) {
+					cell.d
+				}
 			}
 		}
 	}
@@ -2151,14 +2164,39 @@ on.load(() => {
 
 	const WATER_RIGHT_FALL_DIAGRAM = makeDiagram({
 		left: [
-			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
-			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: CYAN}),
 			makeDiagramCell({x: 0, y: 1, content: BLACK}),
 		],
 		right: [
-			makeDiagramCell({x: 0, y: 0, width: 0.5, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
-			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
-			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 0, width: 1.0, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0, y: 1, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: CYAN}),
+		],
+	})
+	
+
+	const WATER_RIGHT_SPIN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: BLUE}),
+			makeDiagramCell({x: 1, y: 0, content: CYAN}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: CYAN}),
+			makeDiagramCell({x: 1, y: 0, content: BLUE}),
+		],
+	})
+
+	const WATER_RIGHT_SLIDE_DIAGRAM = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1.0, content: BLUE}),
+			makeDiagramCell({x: 1, y: 0, width: 1.0, content: CYAN}),
+			makeDiagramCell({x: 2, y: 0, width: 2.0, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0.0, y: 0.0, width: 2.0, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 2, y: 0.0, width: 1.0, content: BLUE, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 3, y: 0.0, width: 1.0, content: CYAN}),
 		],
 	})
 	
@@ -2171,16 +2209,17 @@ on.load(() => {
 			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.recolour}),
 		],
 	})
-
-	const WATER_RIGHT_FALL_RULE = makeRule({steps: [WATER_RIGHT_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
-	registerRule(WATER_RIGHT_FALL_RULE)
 	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
 	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	debugRegistry(registerRule(makeRule({steps: [WATER_RIGHT_SLIDE_DIAGRAM, WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X})))
+	//registerRule(makeRule({steps: [], transformations: DRAGON_TRANSFORMATIONS.X}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
@@ -2216,11 +2255,99 @@ on.load(() => {
 	})
 
 	
+	
+	const WATER_SPAWN_DIAGRAM_CYAN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: PURPLE}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: CYAN}),
+		],
+	})
+	
+	const WATER_SPAWN_DIAGRAM_BLUE = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: PURPLE}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: BLUE}),
+		],
+	})
+	
+	const WATER_FALL_CYAN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: CYAN}),
+			makeDiagramCell({x: 0, y: 1, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: BLACK}),
+			makeDiagramCell({x: 0, y: 1, content: CYAN}),
+		],
+	})
+	
+	const WATER_FALL_BLUE = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: BLUE}),
+			makeDiagramCell({x: 0, y: 1, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: BLACK}),
+			makeDiagramCell({x: 0, y: 1, content: BLUE}),
+		],
+	})
+
+	const WATER_SLIDE_BLUE = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: BLUE}),
+			makeDiagramCell({x: 1, y: 0, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: BLACK}),
+			makeDiagramCell({x: 1, y: 0, content: BLUE}),
+		],
+	})
+
+	const WATER_SLIDE_CYAN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: CYAN}),
+			makeDiagramCell({x: -1, y: 0, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: BLACK}),
+			makeDiagramCell({x: -1, y: 0, content: CYAN}),
+		],
+	})
+
+	const WATER_SWAP_BLUE = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: BLUE}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: CYAN}),
+		],
+	})
+
+	const WATER_SWAP_CYAN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, content: CYAN}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, content: BLUE}),
+		],
+	})
+
+	/*registerRule(makeRule({steps: [WATER_SPAWN_DIAGRAM_CYAN]}))
+	registerRule(makeRule({steps: [WATER_SPAWN_DIAGRAM_BLUE]}))
+
+	registerRule(makeRule({steps: [WATER_FALL_BLUE]}))
+	registerRule(makeRule({steps: [WATER_FALL_CYAN]}))
+
+	registerRule(makeRule({steps: [WATER_SLIDE_BLUE, WATER_SWAP_BLUE]}))
+	registerRule(makeRule({steps: [WATER_SLIDE_CYAN, WATER_SWAP_CYAN]}))*/
+	
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-
-
 	state.brush.colour = Colour.Yellow.splash
 	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
