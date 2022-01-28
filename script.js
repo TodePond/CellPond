@@ -147,10 +147,10 @@ const state = {
 	},
 
 	speed: {
-		count: 4096 / 1,
+		count: 4096 * 2,
 		dynamic: false,
 		aer: 1.0,
-		redraw: 3.0,
+		redraw: 2.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -219,7 +219,7 @@ const state = {
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
-		size: 0,
+		size: 1,
 	},
 
 	cursor: {
@@ -234,7 +234,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 6
+const WORLD_SIZE = 7
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_DIMENSION = 2 ** WORLD_SIZE
 const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
@@ -1881,20 +1881,22 @@ on.load(() => {
 			
 			const condition = (origin) => {
 				
+				const width = cell.width * origin.width
+				const height = cell.height * origin.height
+
 				const x = origin.x + cell.x*origin.width
 				const y = origin.y + cell.y*origin.height
 
-				const centerX = x + cell.width*origin.width/2
-				const centerY = y + cell.height*origin.height/2
-
+				const centerX = x + width/2
+				const centerY = y + height/2
 
 				const neighbour = pickCell(centerX, centerY)
 
 				if (neighbour === undefined) return undefined
-				if (neighbour.width !== cell.width*origin.width) return undefined
-				if (neighbour.height !== cell.height*origin.height) return undefined
 				if (neighbour.left !== x) return undefined
 				if (neighbour.top !== y) return undefined
+				if (neighbour.width !== width) return undefined
+				if (neighbour.height !== height) return undefined
 				if (!splashes.has(neighbour.colour)) return undefined
 				
 				return neighbour
@@ -2162,7 +2164,7 @@ on.load(() => {
 		],
 	})
 
-	const WATER_RIGHT_FALL_DIAGRAM = makeDiagram({
+	const WATER_RIGHT_FALL = makeDiagram({
 		left: [
 			makeDiagramCell({x: 0, y: 0, width: 0.5, content: BLUE}),
 			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: CYAN}),
@@ -2171,6 +2173,32 @@ on.load(() => {
 		right: [
 			makeDiagramCell({x: 0, y: 0, width: 1.0, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0, y: 1, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: CYAN}),
+		],
+	})
+
+	const WATER_RIGHT_FALL_BLUE = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: BLUE}),
+			makeDiagramCell({x: 0, y: 1, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 1.0, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0, y: 1, width: 0.5, content: BLUE, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: BLUE}),
+		],
+	})
+
+	const WATER_RIGHT_FALL_CYAN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 0.5, content: CYAN}),
+			makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: CYAN}),
+			makeDiagramCell({x: 0, y: 1, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 1.0, content: BLACK, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
+			makeDiagramCell({x: 0, y: 1, width: 0.5, content: CYAN, instruction: DRAGON_INSTRUCTION.split, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0.5, y: 1, width: 0.5, content: CYAN}),
 		],
 	})
@@ -2210,14 +2238,40 @@ on.load(() => {
 		],
 	})
 	
+	const WATER_RIGHT_RESPAWN_BLUE = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: BLUE}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: BLUE}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: BLUE}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: CYAN}),
+		],
+	})
+	
+	const WATER_RIGHT_RESPAWN_CYAN = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: CYAN}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: CYAN}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: BLUE}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: CYAN}),
+		],
+	})
+	
 	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
 	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
 	//registerRule(ROCK_FALL_RULE)
 	//registerRule(SAND_FALL_RULE)
 	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
-	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
-	debugRegistry(registerRule(makeRule({steps: [WATER_RIGHT_SLIDE_DIAGRAM, WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X})))
+	registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_FALL], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_FALL_BLUE], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [WATER_RIGHT_FALL_CYAN], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SLIDE_DIAGRAM, WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X}))
+
 	//registerRule(makeRule({steps: [], transformations: DRAGON_TRANSFORMATIONS.X}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X}))
 
