@@ -147,10 +147,10 @@ const state = {
 	},
 
 	speed: {
-		count: 4096 * 2,
+		count: 4096 * 1,
 		dynamic: false,
 		aer: 1.0,
-		redraw: 2.0,
+		redraw: 1.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -234,7 +234,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 6
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_DIMENSION = 2 ** WORLD_SIZE
 const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
