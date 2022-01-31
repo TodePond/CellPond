@@ -150,7 +150,7 @@ const state = {
 		count: 4096 * 1,
 		dynamic: false,
 		//aer: 1.0,
-		redraw: 1.0,
+		redraw: 2.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -309,8 +309,9 @@ on.load(() => {
 
 	
 	// Setup Show
-	const show = Show.start({paused: true})
-	const {context, canvas, pad} = show
+	const show = Show.start({paused: false})
+	const {context, canvas} = show
+	canvas.style["position"] = "absolute"
 	
 	//===============//
 	// IMAGE + SIZES //
@@ -2459,10 +2460,74 @@ on.load(() => {
 	//====================//
 	// COLOURTODE - STATE //
 	//====================//
-	state.colourtode = {
-		entities: [],
+	state.colourTode = {
+		atoms: [],
 	}
 
-	// COLOURTODE - 
+	//====================//
+	// COLOURTODE - SETUP //
+	//====================//
+	const colourTodeCanvas = document.createElement("canvas")
+	const colourTodeContext = colourTodeCanvas.getContext("2d")
+	
+	colourTodeCanvas.style["image-rendering"] = "pixelated"
+	colourTodeCanvas.style["position"] = "absolute"
+	colourTodeCanvas.style["top"] = "0px"
+	
+	document.body.append(colourTodeCanvas)
+
+	on.resize(() => {
+		colourTodeCanvas.width = innerWidth
+		colourTodeCanvas.height = innerHeight
+		colourTodeCanvas.style["width"] = innerWidth
+		colourTodeCanvas.style["height"] = innerHeight
+	})
+
+	trigger("resize")
+
+	//===================//
+	// COLOURTODE - TICK //
+	//===================//
+	const colourTodeTick = () => {
+		colourTodeUpdate()
+		colourTodeDraw()
+		requestAnimationFrame(colourTodeTick)
+	}
+	
+	const colourTodeUpdate = () => {
+		
+	}
+
+	const colourTodeDraw = () => {
+		for (const atom of state.colourTode.atoms) {
+			atom.draw(atom)
+		}
+	}
+
+	requestAnimationFrame(colourTodeTick)
+
+	//===================//
+	// COLOURTODE - ATOM //
+	//===================//
+	const makeAtom = ({draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 30, colour = Colour.White, ...properties} = {}) => {
+		const atom = {draw, overlaps, x, y, dx, dy, size, colour, ...properties}
+		return atom
+	}
+
+	//======================//
+	// COLOURTODE - ELEMENT //
+	//======================//
+	const COLOURTODE_SQUARE = {
+		draw: (atom) => {
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fillRect(atom.x, atom.y, atom.size, atom.size)
+		},
+	}
+
+	//====================//
+	// COLOURTODE - DEBUG //
+	//====================//
+	state.colourTode.atoms.push(makeAtom(COLOURTODE_SQUARE))
+
 
 })
