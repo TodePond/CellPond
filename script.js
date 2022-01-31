@@ -482,7 +482,6 @@ on.load(() => {
 	//========//
 	const updateCursor = () => {
 
-		updateHand()
 		updateBrush()
 		updatePan()
 
@@ -776,6 +775,7 @@ on.load(() => {
 	drawCells()
 	show.tick = () => {
 		
+		updateHand()
 		updateCursor()
 		updateCamera()
 		//state.dragon.behaves.shuffle()
@@ -2479,6 +2479,7 @@ on.load(() => {
 			velocity: {x: 0, y: 0},
 			velocityHistory: [],
 			velocityMemory: 5,
+			previous: {x: 0, y: 0},
 		},
 	}
 	const hand = state.colourTode.hand
@@ -2519,16 +2520,18 @@ on.load(() => {
 			hand.velocityHistory.shift()
 		}
 
-		if (Mouse.position !== undefined && state.cursor.previous.x !== undefined) {
+		if (Mouse.position !== undefined && hand.previous.x !== undefined) {
 			const [x, y] = Mouse.position
-			const dx = x - state.cursor.previous.x
-			const dy = y - state.cursor.previous.y
+			const dx = x - hand.previous.x
+			const dy = y - hand.previous.y
 			const velocity = {x: dx, y: dy}
 			hand.velocityHistory.push(velocity)
 			const sum = hand.velocityHistory.reduce((a, b) => ({x: a.x+b.x, y: a.y+b.y}), {x:0, y:0})
 			const average = {x: sum.x / hand.velocityHistory.length, y: sum.y / hand.velocityHistory.length}
 			hand.velocity.x = average.x
 			hand.velocity.y = average.y
+			hand.previous.x = x
+			hand.previous.y = y
 		}
 	}
 	
@@ -2579,13 +2582,16 @@ on.load(() => {
 			const y = e.clientY
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
-				if (!Mouse.Left) changeHandState(HAND.HOVER)
-				else {
-					grabAtom(atom, x, y)
-					changeHandState(HAND.TOUCHING)
+				if (atom.grabbable) {
+					if (!Mouse.Left) changeHandState(HAND.HOVER)
+					else {
+						grabAtom(atom, x, y)
+						changeHandState(HAND.TOUCHING)
+					}
 				}
 				return
 			}
+
 			if (x < state.view.left) return
 			if (x > state.view.right) return
 			if (y < state.view.top) return
@@ -2595,6 +2601,7 @@ on.load(() => {
 		},
 
 		atommove: (atom, mx, my) => {
+			if (!atom.grabbable) return
 			if (!atom.overlaps(atom, mx, my)) return
 			if (Mouse.Left) {
 				grabAtom(atom, mx, my)
@@ -2618,7 +2625,8 @@ on.load(() => {
 			const y = e.clientY
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
-				changeHandState(HAND.HOVER)
+				if (atom.grabbable) changeHandState(HAND.HOVER)
+				else changeHandState(HAND.FREE)
 				return
 			}
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
@@ -2631,7 +2639,8 @@ on.load(() => {
 		},
 		atommove: (atom, mx, my) => {
 			if (!atom.overlaps(atom, mx, my)) return
-			changeHandState(HAND.HOVER)
+			if (atom.grabbable) changeHandState(HAND.HOVER)
+			else changeHandState(HAND.FREE)
 		},
 		camerapan: () => {
 			const [x, y] = Mouse.position
@@ -2660,6 +2669,12 @@ on.load(() => {
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				if (atom.grabbable) changeHandState(HAND.HOVER)
+				else changeHandState(HAND.FREE)
+				return
+			}
 			changeHandState(HAND.FREE)
 		},
 	}
@@ -2671,6 +2686,7 @@ on.load(() => {
 
 			const atom = getAtom(e.clientX, e.clientY)
 			if (atom === undefined) return
+			if (!atom.grabbable) return
 			grabAtom(atom, e.clientX, e.clientY)
 			changeHandState(HAND.TOUCHING)
 
@@ -2681,6 +2697,8 @@ on.load(() => {
 			const y = e.clientY
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
+				if (atom.grabbable) changeHandState(HAND.HOVER)
+				else changeHandState(HAND.FREE)
 				return
 			}
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
@@ -2727,6 +2745,8 @@ on.load(() => {
 			hand.content.dy = hand.velocity.y
 		},
 		mouseup: (e) => {
+			hand.content.dx = hand.velocity.x
+			hand.content.dy = hand.velocity.y
 			hand.content = undefined
 			changeHandState(HAND.FREE)
 		}
@@ -2752,8 +2772,23 @@ on.load(() => {
 	//===================//
 	// COLOURTODE - ATOM //
 	//===================//
-	const makeAtom = ({click = () => {}, drag = () => {}, draw = () => {}, offscreen = () => false, overlaps = () => false, grab = (a) => a, x = 0, y = 0, dx = 0, dy = 0, size = 35, colour = Colour.White, ...properties} = {}) => {
-		const atom = {draw, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+	const makeAtom = ({
+			grabbable = true,
+			click = () => {},
+			drag = () => {},
+			draw = () => {},
+			offscreen = () => false,
+			overlaps = () => false,
+			grab = (a) => a,
+			x = 0,
+			y = 0,
+			dx = 0,
+			dy = 0,
+			size = 35,
+			colour = Colour.White,
+			...properties
+		} = {}) => {
+		const atom = {draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		return atom
 	}
 
@@ -2778,6 +2813,9 @@ on.load(() => {
 
 	const grabAtom = (atom, x, y) => {
 		atom = atom.grab(atom, x, y)
+		if (atom === undefined) {
+			return
+		}
 		hand.content = atom
 		hand.offset.x = atom.x - x
 		hand.offset.y = atom.y - y
@@ -2785,6 +2823,7 @@ on.load(() => {
 		atom.dy = hand.velocity.y
 		deleteAtom(atom)
 		registerAtom(atom)
+		return atom
 	}
 
 	//======================//
@@ -2821,18 +2860,89 @@ on.load(() => {
 		},
 	}
 
+	const COLOURTODE_TRIANGLE = {
+		draw: (atom) => {
+
+			const height = atom.size
+			const width = atom.size * Math.sqrt(3)/2
+			
+			const left = atom.x
+			const right = left + width
+			const top = atom.y
+			const bottom = top + height
+			const middleY = top + height/2
+
+			colourTodeContext.fillStyle = atom.colour
+			const path = new Path2D()
+
+			path.moveTo(left, top)
+			path.lineTo(right, middleY)
+			path.lineTo(left, bottom)
+			path.closePath()
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+		},
+		overlaps: (atom, x, y) => {
+			
+			const height = atom.size
+			const width = atom.size * Math.sqrt(3)/2
+			
+			const left = atom.x
+			const right = left + width
+			const top = atom.y
+			const bottom = top + height
+
+			if (x < left) return false
+			if (y < top) return false
+			if (x > right) return false
+			if (y > bottom) return false
+
+			return true
+		},
+		offscreen: (atom) => {
+
+			const height = atom.size
+			const width = atom.size * Math.sqrt(3)/2
+			
+			const left = atom.x
+			const right = left + width
+			const top = atom.y
+			const bottom = top + height
+
+			if (right < 0) return true
+			if (bottom < 0) return true
+			if (left > canvas.width) return true
+			if (top > canvas.height) return true
+			return false
+		},
+	}
+
 	const COLOURTODE_TOOL = {
 		element: COLOURTODE_SQUARE,
 		draw: (atom) => atom.element.draw(atom),
 		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
-		
+		grab: (atom, x, y) => {
+			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
+			registerAtom(newAtom)
+			return newAtom
+		}
 	}
 
 	//====================//
 	// COLOURTODE - DEBUG //
 	//====================//
-	state.colourTode.atoms.push({...makeAtom(COLOURTODE_SQUARE), colour: Colour.Blue})
-	state.colourTode.atoms.push({...makeAtom(COLOURTODE_TOOL), x: 10})
+	
+	let menuRight = 10
+
+	const addMenuTool = (element) => {
+		const atom = makeAtom({...COLOURTODE_TOOL, x: menuRight, y: 10, element})
+		registerAtom(atom)
+		menuRight += atom.size
+		menuRight += 10
+	}
+
+	addMenuTool(COLOURTODE_SQUARE)
+	addMenuTool(COLOURTODE_TRIANGLE)
 
 
 })
