@@ -149,7 +149,7 @@ const state = {
 	speed: {
 		count: 4096 * 1,
 		dynamic: false,
-		aer: 1.0,
+		//aer: 1.0,
 		redraw: 1.0,
 		redrawRepeatScore: 0.9,
 		redrawRepeatPenalty: 0.0,
@@ -234,7 +234,7 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 7
+const WORLD_SIZE = 6
 const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
 const WORLD_DIMENSION = 2 ** WORLD_SIZE
 const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
@@ -1644,16 +1644,9 @@ on.load(() => {
 		return {shape}
 	}
 
-	// TODO: something
+	// TODO: something - maybe related to ColourTode shapes?
 	const makeShape = () => {
 		return {}
-	}
-
-	const DRAGON_SHAPE = {
-		SQUARE: makeShape(),
-		CIRCLE: makeShape(),
-		TRIANGLE: makeShape(),
-		RECTANGLE: makeShape(),
 	}
 
 	//==================//
@@ -2115,7 +2108,7 @@ on.load(() => {
 	const CYAN = makeArrayFromSplash(Colour.Cyan.splash)
 	const BLUE = makeArrayFromSplash(Colour.Blue.splash)
 	const YELLOW = makeArrayFromSplash(Colour.Yellow.splash)
-	const PURPLE = makeArrayFromSplash(Colour.Purple.splash)
+	const PURPLE = makeArrayFromSplash(Colour.Cyan.splash - 111)
 	const RED = makeArrayFromSplash(Colour.Red.splash)
 	let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash)
 	RED_R /= 100
@@ -2205,6 +2198,26 @@ on.load(() => {
 		right: [
 			makeDiagramCell({x: 0, y: 0, width: 2, content: BLUE, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
 			makeDiagramCell({x: 0, y: 1, width: 2, content: BLACK}),
+		],
+	})
+
+	const WATER_RIGHT_UNSLIPP = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: PURPLE}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: PURPLE}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 2, content: BLUE, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
+		],
+	})
+
+	const WATER_RIGHT_UNSLIPC = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: CYAN}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: CYAN}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 2, content: BLUE, instruction: DRAGON_INSTRUCTION.merge, splitX: 2, splitY: 1}),
 		],
 	})
 
@@ -2300,8 +2313,10 @@ on.load(() => {
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 	registerRule(makeRule({steps: [WATER_RIGHT_FALL], transformations: DRAGON_TRANSFORMATIONS.X}))
 	registerRule(makeRule({steps: [WATER_RIGHT_SLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SLIDE], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_SLIDE, WATER_RIGHT_FLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
 	registerRule(makeRule({steps: [WATER_RIGHT_UNSLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_RIGHT_UNSLIPP], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [WATER_RIGHT_UNSLIPC], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 	//registerRule(makeRule({steps: [], transformations: DRAGON_TRANSFORMATIONS.X}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_FALL_CYAN], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_SLIDE_DIAGRAM, WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X}))
@@ -2440,5 +2455,14 @@ on.load(() => {
 	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
 	state.brush.colour = Colour.Blue.splash
+
+	//====================//
+	// COLOURTODE - STATE //
+	//====================//
+	state.colourtode = {
+		entities: [],
+	}
+
+	// COLOURTODE - 
 
 })
