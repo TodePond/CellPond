@@ -2473,6 +2473,7 @@ on.load(() => {
 		hand: {
 			state: undefined,
 			content: undefined,
+			offset: {x: 0, y: 0}
 		},
 	}
 	const hand = state.colourTode.hand
@@ -2512,6 +2513,7 @@ on.load(() => {
 	}
 
 	const colourTodeDraw = () => {
+		colourTodeContext.clearRect(0, 0, colourTodeCanvas.width, colourTodeCanvas.height)
 		for (const atom of state.colourTode.atoms) {
 			atom.draw(atom)
 		}
@@ -2522,37 +2524,58 @@ on.load(() => {
 	//===================//
 	// COLOURTODE - HAND //
 	//===================//
-	COLOURTODE_HAND_STATE = {}
-	COLOURTODE_HAND_STATE.FREE = {
+	const HAND = {}
+	HAND.FREE = {
 		mousedown: (e) => {
 
 			for (const atom of state.colourTode.atoms) {
 				if (!atom.overlaps(atom, e.clientX, e.clientY)) continue 
 				hand.content = atom
-				hand.state = COLOURTODE_HAND_STATE.TOUCHING
+				hand.offset.x = atom.x - e.clientX
+				hand.offset.y = atom.y - e.clientY
+				hand.state = HAND.TOUCHING
 				return
 			}
 
 		}
 	}
 
-	COLOURTODE_HAND_STATE.TOUCHING = {
-		mousedown: (e) => {
-			print("tochy")
+	HAND.TOUCHING = {
+		mousemove: (e) => {
+			hand.state = HAND.DRAGGING
+			return HAND.DRAGGING.mousemove(e)
 		},
+		mouseup: (e) => {
+			hand.content = undefined
+			hand.state = HAND.FREE
+		}
 	}
 
-	on.mousedown(e => {
-		return hand.state.mousedown(e)
-	})
+	HAND.DRAGGING = {
+		mousemove: (e) => {
+			const {x, y} = hand.content
+			hand.content.x = e.clientX + hand.offset.x
+			hand.content.y = e.clientY + hand.offset.y
+			hand.content.dx = hand.content.x - x
+			hand.content.dy = hand.content.y - y
+		},
+		mouseup: (e) => {
+			hand.content = undefined
+			hand.state = HAND.FREE
+		}
+	}
 
-	hand.state = COLOURTODE_HAND_STATE.FREE
+	on.mousedown(e => hand.state.mousedown? hand.state.mousedown(e) : undefined)
+	on.mousemove(e => hand.state.mousemove? hand.state.mousemove(e) : undefined)
+	on.mouseup(e => hand.state.mouseup? hand.state.mouseup(e) : undefined)
+
+	hand.state = HAND.FREE
 
 	//===================//
 	// COLOURTODE - ATOM //
 	//===================//
-	const makeAtom = ({click = () => {}, draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 30, colour = Colour.White, ...properties} = {}) => {
-		const atom = {draw, overlaps, x, y, dx, dy, size, colour, ...properties}
+	const makeAtom = ({click = () => {}, drag = () => {}, draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 35, colour = Colour.White, ...properties} = {}) => {
+		const atom = {draw, click, drag, overlaps, x, y, dx, dy, size, colour, ...properties}
 		return atom
 	}
 
