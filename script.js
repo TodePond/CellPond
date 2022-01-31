@@ -2532,7 +2532,7 @@ on.load(() => {
 		}
 	}
 	
-	const COLOURTODE_FRICTION = 0.95
+	const COLOURTODE_FRICTION = 0.9
 	const colourTodeUpdate = () => {
 		
 		for (const atom of state.colourTode.atoms) {
@@ -2545,6 +2545,11 @@ on.load(() => {
 
 			atom.dx *= COLOURTODE_FRICTION
 			atom.dy *= COLOURTODE_FRICTION
+
+			if (atom.offscreen(atom)) {
+				deleteAtom(atom)
+				continue
+			}
 
 			const [mx, my] = Mouse.position
 			if (hand.state.atommove) hand.state.atommove(atom, mx, my)
@@ -2576,11 +2581,7 @@ on.load(() => {
 			if (atom !== undefined) {
 				if (!Mouse.Left) changeHandState(HAND.HOVER)
 				else {
-					hand.content = atom
-					hand.offset.x = atom.x - x
-					hand.offset.y = atom.y - y
-					atom.dx = hand.velocity.x
-					atom.dy = hand.velocity.y
+					grabAtom(atom, x, y)
 					changeHandState(HAND.TOUCHING)
 				}
 				return
@@ -2596,11 +2597,7 @@ on.load(() => {
 		atommove: (atom, mx, my) => {
 			if (!atom.overlaps(atom, mx, my)) return
 			if (Mouse.Left) {
-				hand.content = atom
-				hand.offset.x = atom.x - mx
-				hand.offset.y = atom.y - my
-				atom.dx = hand.velocity.x
-				atom.dy = hand.velocity.y
+				grabAtom(atom, mx, my)
 				changeHandState(HAND.TOUCHING)
 			}
 			else changeHandState(HAND.HOVER)
@@ -2674,10 +2671,7 @@ on.load(() => {
 
 			const atom = getAtom(e.clientX, e.clientY)
 			if (atom === undefined) return
-
-			hand.content = atom
-			hand.offset.x = atom.x - e.clientX
-			hand.offset.y = atom.y - e.clientY
+			grabAtom(atom, e.clientX, e.clientY)
 			changeHandState(HAND.TOUCHING)
 
 		},
@@ -2758,8 +2752,8 @@ on.load(() => {
 	//===================//
 	// COLOURTODE - ATOM //
 	//===================//
-	const makeAtom = ({click = () => {}, drag = () => {}, draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 35, colour = Colour.White, ...properties} = {}) => {
-		const atom = {draw, click, drag, overlaps, x, y, dx, dy, size, colour, ...properties}
+	const makeAtom = ({click = () => {}, drag = () => {}, draw = () => {}, offscreen = () => false, overlaps = () => false, grab = (a) => a, x = 0, y = 0, dx = 0, dy = 0, size = 35, colour = Colour.White, ...properties} = {}) => {
+		const atom = {draw, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		return atom
 	}
 
@@ -2767,9 +2761,30 @@ on.load(() => {
 	// COLOURTODE - OVERLAP //
 	//======================//
 	const getAtom = (x, y) => {
-		for (const atom of state.colourTode.atoms) {
+		for (let i = state.colourTode.atoms.length-1; i >= 0; i--) {
+			const atom = state.colourTode.atoms[i]
 			if (atom.overlaps(atom, x, y)) return atom
 		}
+	}
+
+	const deleteAtom = (atom) => {
+		const id = state.colourTode.atoms.indexOf(atom)
+		state.colourTode.atoms.splice(id, 1)
+	}
+
+	const registerAtom = (atom) => {
+		state.colourTode.atoms.push(atom)
+	}
+
+	const grabAtom = (atom, x, y) => {
+		atom = atom.grab(atom, x, y)
+		hand.content = atom
+		hand.offset.x = atom.x - x
+		hand.offset.y = atom.y - y
+		atom.dx = hand.velocity.x
+		atom.dy = hand.velocity.y
+		deleteAtom(atom)
+		registerAtom(atom)
 	}
 
 	//======================//
@@ -2792,13 +2807,32 @@ on.load(() => {
 			if (y > bottom) return false
 
 			return true
-		}
+		},
+		offscreen: (atom) => {
+			const left = atom.x
+			const right = atom.x + atom.size
+			const top = atom.y
+			const bottom = atom.y + atom.size
+			if (right < 0) return true
+			if (bottom < 0) return true
+			if (left > canvas.width) return true
+			if (top > canvas.height) return true
+			return false
+		},
+	}
+
+	const COLOURTODE_TOOL = {
+		element: COLOURTODE_SQUARE,
+		draw: (atom) => atom.element.draw(atom),
+		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
+		
 	}
 
 	//====================//
 	// COLOURTODE - DEBUG //
 	//====================//
-	state.colourTode.atoms.push(makeAtom(COLOURTODE_SQUARE))
+	state.colourTode.atoms.push({...makeAtom(COLOURTODE_SQUARE), colour: Colour.Blue})
+	state.colourTode.atoms.push({...makeAtom(COLOURTODE_TOOL), x: 10})
 
 
 })
