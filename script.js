@@ -147,11 +147,11 @@ const state = {
 	},
 
 	speed: {
-		count: 4096 * 1,
+		count: 4096 * 0.25,
 		dynamic: false,
 		//aer: 1.0,
-		redraw: 2.0,
-		redrawRepeatScore: 0.9,
+		redraw: 1.0,
+		redrawRepeatScore: 0.5,
 		redrawRepeatPenalty: 0.0,
 	},
 
@@ -482,6 +482,7 @@ on.load(() => {
 	//========//
 	const updateCursor = () => {
 
+		updateHand()
 		updateBrush()
 		updatePan()
 
@@ -492,6 +493,7 @@ on.load(() => {
 	}
 
 	const updateBrush = () => {
+		if (state.colourTode.hand.state !== HAND.BRUSH) return
 		if (!Mouse.Left) return
 		let [x, y] = getCursorView(...Mouse.position)
 		if (x === undefined || y === undefined) {
@@ -899,7 +901,7 @@ on.load(() => {
 			const x = xStart + dx*ix
 			for (let iy = 0; iy < height; iy++) {
 				const y = yStart + dy*iy
-				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour})
+				const child = makeCell({x, y, width: childWidth, height: childHeight, colour: cell.colour, lastDraw: cell.lastDraw})
 				children.push(child)
 			}
 		}
@@ -992,6 +994,7 @@ on.load(() => {
 			width: right-left,
 			height: bottom-top,
 			colour: cells[0].colour,
+			lastDraw: cells[0].lastDraw,
 		})
 
 		addCell(cell)
@@ -2313,11 +2316,9 @@ on.load(() => {
 		],
 	})
 	
-	const ROCK_FALL_RULE = makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE})
-	const SAND_FALL_RULE = makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X})
-	//registerRule(ROCK_FALL_RULE)
-	//registerRule(SAND_FALL_RULE)
-	//registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 	registerRule(makeRule({steps: [WATER_RIGHT_FALL], transformations: DRAGON_TRANSFORMATIONS.X}))
@@ -2460,10 +2461,10 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = Colour.Yellow.splash
 	state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
 	state.brush.colour = Colour.Blue.splash
+	state.brush.colour = Colour.Yellow.splash
 
 	//====================//
 	// COLOURTODE - STATE //
@@ -2526,32 +2527,85 @@ on.load(() => {
 	//===================//
 	const HAND = {}
 	HAND.FREE = {
-		mousedown: (e) => {
+		cursor: "auto",
 
-			for (const atom of state.colourTode.atoms) {
-				if (!atom.overlaps(atom, e.clientX, e.clientY)) continue 
-				hand.content = atom
-				hand.offset.x = atom.x - e.clientX
-				hand.offset.y = atom.y - e.clientY
-				hand.state = HAND.TOUCHING
+		mousemove: (e) => {
+			const x = e.clientX
+			const y = e.clientY
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				hand.state = HAND.HOVER
 				return
 			}
+			if (x < state.view.left) return
+			if (x > state.view.right) return
+			if (y < state.view.top) return
+			if (y > state.view.bottom) return
+			hand.state = HAND.BRUSH
+		}
+	}
 
+	HAND.BRUSH = {
+		cursor: "crosshair",
+		mousemove: (e) => {
+			const x = e.clientX
+			const y = e.clientY
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				hand.state = HAND.HOVER
+				return
+			}
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				return
+			}
+			hand.state = HAND.FREE
+		}
+	}
+
+	HAND.HOVER = {
+		cursor: "pointer",
+		
+		mousedown: (e) => {
+
+			const atom = getAtom(e.clientX, e.clientY)
+			if (atom === undefined) return
+
+			hand.content = atom
+			hand.offset.x = atom.x - e.clientX
+			hand.offset.y = atom.y - e.clientY
+			hand.state = HAND.TOUCHING
+
+		},
+
+		mousemove: (e) => {
+			const x = e.clientX
+			const y = e.clientY
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				return
+			}
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				hand.state = HAND.BRUSH
+				return
+			}
+			hand.state = HAND.FREE
 		}
 	}
 
 	HAND.TOUCHING = {
+		cursor: "pointer",
 		mousemove: (e) => {
 			hand.state = HAND.DRAGGING
 			return HAND.DRAGGING.mousemove(e)
 		},
 		mouseup: (e) => {
 			hand.content = undefined
-			hand.state = HAND.FREE
+			hand.state = HAND.HOVER
 		}
 	}
 
 	HAND.DRAGGING = {
+		cursor: "move",
 		mousemove: (e) => {
 			const {x, y} = hand.content
 			hand.content.x = e.clientX + hand.offset.x
@@ -2563,6 +2617,10 @@ on.load(() => {
 			hand.content = undefined
 			hand.state = HAND.FREE
 		}
+	}
+
+	const updateHand = () => {
+		colourTodeCanvas.style["cursor"] = hand.state.cursor
 	}
 
 	on.mousedown(e => hand.state.mousedown? hand.state.mousedown(e) : undefined)
@@ -2577,6 +2635,15 @@ on.load(() => {
 	const makeAtom = ({click = () => {}, drag = () => {}, draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 35, colour = Colour.White, ...properties} = {}) => {
 		const atom = {draw, click, drag, overlaps, x, y, dx, dy, size, colour, ...properties}
 		return atom
+	}
+
+	//======================//
+	// COLOURTODE - OVERLAP //
+	//======================//
+	const getAtom = (x, y) => {
+		for (const atom of state.colourTode.atoms) {
+			if (atom.overlaps(atom, x, y)) return atom
+		}
 	}
 
 	//======================//
