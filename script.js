@@ -748,6 +748,7 @@ on.load(() => {
 			state.camera.x += state.camera.dx
 			state.camera.y += state.camera.dy
 			updateImageSize()
+			if (hand.state.camerapan) hand.state.camerapan()
 		}
 
 		if (state.camera.mscale !== 1.0) {
@@ -2537,12 +2538,16 @@ on.load(() => {
 		for (const atom of state.colourTode.atoms) {
 
 			if (hand.content === atom) continue
-			
+			if (atom.dx === 0 && atom.dy === 0) continue
+
 			atom.x += atom.dx
 			atom.y += atom.dy
 
 			atom.dx *= COLOURTODE_FRICTION
 			atom.dy *= COLOURTODE_FRICTION
+
+			const [mx, my] = Mouse.position
+			if (hand.state.atommove) hand.state.atommove(atom, mx, my)
 
 		}
 
@@ -2586,7 +2591,27 @@ on.load(() => {
 			if (y > state.view.bottom) return
 			if (Mouse.Left) changeHandState(HAND.BRUSHING)
 			else changeHandState(HAND.BRUSH)
-		}
+		},
+
+		atommove: (atom, mx, my) => {
+			if (!atom.overlaps(atom, mx, my)) return
+			if (Mouse.Left) {
+				hand.content = atom
+				hand.offset.x = atom.x - mx
+				hand.offset.y = atom.y - my
+				atom.dx = hand.velocity.x
+				atom.dy = hand.velocity.y
+				changeHandState(HAND.TOUCHING)
+			}
+			else changeHandState(HAND.HOVER)
+		},
+		camerapan: () => {
+			const [x, y] = Mouse.position
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				changeHandState(HAND.BRUSH)
+				return
+			}
+		},
 	}
 
 	HAND.BRUSH = {
@@ -2606,7 +2631,18 @@ on.load(() => {
 		},
 		mousedown: (e) => {
 			changeHandState(HAND.BRUSHING)
-		}
+		},
+		atommove: (atom, mx, my) => {
+			if (!atom.overlaps(atom, mx, my)) return
+			changeHandState(HAND.HOVER)
+		},
+		camerapan: () => {
+			const [x, y] = Mouse.position
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				return
+			}
+			changeHandState(HAND.FREE)
+		},
 	}
 
 	HAND.BRUSHING = {
@@ -2621,8 +2657,14 @@ on.load(() => {
 		},
 		mouseup: (e) => {
 			changeHandState(HAND.BRUSH)
-		}
-
+		},
+		camerapan: () => {
+			const [x, y] = Mouse.position
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				return
+			}
+			changeHandState(HAND.FREE)
+		},
 	}
 
 	HAND.HOVER = {
@@ -2652,6 +2694,20 @@ on.load(() => {
 				return
 			}
 			changeHandState(HAND.FREE)
+		},
+
+		atommove: (atom, x, y) => {
+			if (atom.overlaps(atom, x, y)) return
+			const newAtom = getAtom(x, y)
+			if (newAtom !== undefined) {
+				changeHandState(HAND.HOVER)
+				return
+			}
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				changeHandState(HAND.BRUSH)
+				return
+			}
+			changeHandState(HAND.FREE)
 		}
 	}
 
@@ -2671,7 +2727,6 @@ on.load(() => {
 	HAND.DRAGGING = {
 		cursor: "move",
 		mousemove: (e) => {
-			const {x, y} = hand.content
 			hand.content.x = e.clientX + hand.offset.x
 			hand.content.y = e.clientY + hand.offset.y
 			hand.content.dx = hand.velocity.x
@@ -2688,9 +2743,15 @@ on.load(() => {
 		hand.state = state
 	}
 
-	on.mousedown(e => hand.state.mousedown? hand.state.mousedown(e) : undefined)
 	on.mousemove(e => hand.state.mousemove? hand.state.mousemove(e) : undefined)
-	on.mouseup(e => hand.state.mouseup? hand.state.mouseup(e) : undefined)
+	on.mousedown(e => {
+		if (e.button !== 0) return
+		if (hand.state.mousedown) hand.state.mousedown(e)
+	})
+	on.mouseup(e => {
+		if (e.button !== 0) return
+		if (hand.state.mouseup) hand.state.mouseup(e)
+	})
 
 	hand.state = HAND.FREE
 
