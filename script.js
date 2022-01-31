@@ -203,7 +203,7 @@ const state = {
 		dsControl: 1,
 		dsTargetSpeed: 0.05,
 
-		scale: 1.0,
+		scale: 0.9,
 		mscale: 1.0,
 		dmscale: 0.002,
 
@@ -359,6 +359,9 @@ on.load(() => {
 	context.fillRect(0, 0, canvas.width, canvas.height)
 	updateImageSize()
 	updateImageData()
+
+	state.camera.x += (canvas.width - state.image.size) / 2
+	state.camera.y += (canvas.height - state.image.size) / 2
 
 	//======//
 	// DRAW //
@@ -636,7 +639,15 @@ on.load(() => {
 
 	const ZOOM = 0.05
 	on.mousewheel((e) => {
+
 		const dy = e.deltaY / 100
+
+		doZoom(dy, ...Mouse.position)
+		
+	})
+
+	const doZoom = (dy, centerX, centerY) => {
+
 		const sign = -Math.sign(dy)
 		const d = Math.abs(dy)
 
@@ -652,9 +663,6 @@ on.load(() => {
 			const newScale = state.camera.scale
 			const scale = newScale / oldScale
 
-			const centerX = Mouse.position[0]
-			const centerY = Mouse.position[1]
-
 			state.camera.x += (1-scale) * centerX/newScale
 			state.camera.y += (1-scale) * centerY/newScale
 
@@ -665,7 +673,7 @@ on.load(() => {
 		//stampScale(scale)
 
 		updateImageSize()
-	})
+	}
 
 	on.contextmenu((e) => {
 		e.preventDefault()
@@ -2462,7 +2470,12 @@ on.load(() => {
 	//====================//
 	state.colourTode = {
 		atoms: [],
+		hand: {
+			state: undefined,
+			content: undefined,
+		},
 	}
+	const hand = state.colourTode.hand
 
 	//====================//
 	// COLOURTODE - SETUP //
@@ -2507,9 +2520,38 @@ on.load(() => {
 	requestAnimationFrame(colourTodeTick)
 
 	//===================//
+	// COLOURTODE - HAND //
+	//===================//
+	COLOURTODE_HAND_STATE = {}
+	COLOURTODE_HAND_STATE.FREE = {
+		mousedown: (e) => {
+
+			for (const atom of state.colourTode.atoms) {
+				if (!atom.overlaps(atom, e.clientX, e.clientY)) continue 
+				hand.content = atom
+				hand.state = COLOURTODE_HAND_STATE.TOUCHING
+				return
+			}
+
+		}
+	}
+
+	COLOURTODE_HAND_STATE.TOUCHING = {
+		mousedown: (e) => {
+			print("tochy")
+		},
+	}
+
+	on.mousedown(e => {
+		return hand.state.mousedown(e)
+	})
+
+	hand.state = COLOURTODE_HAND_STATE.FREE
+
+	//===================//
 	// COLOURTODE - ATOM //
 	//===================//
-	const makeAtom = ({draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 30, colour = Colour.White, ...properties} = {}) => {
+	const makeAtom = ({click = () => {}, draw = () => {}, overlaps = () => false, x = 0, y = 0, dx = 0, dy = 0, size = 30, colour = Colour.White, ...properties} = {}) => {
 		const atom = {draw, overlaps, x, y, dx, dy, size, colour, ...properties}
 		return atom
 	}
@@ -2522,6 +2564,19 @@ on.load(() => {
 			colourTodeContext.fillStyle = atom.colour
 			colourTodeContext.fillRect(atom.x, atom.y, atom.size, atom.size)
 		},
+		overlaps: (atom, x, y) => {
+			const left = atom.x
+			const right = atom.x + atom.size
+			const top = atom.y
+			const bottom = atom.y + atom.size
+
+			if (x < left) return false
+			if (y < top) return false
+			if (x > right) return false
+			if (y > bottom) return false
+
+			return true
+		}
 	}
 
 	//====================//
