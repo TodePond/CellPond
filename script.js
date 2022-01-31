@@ -482,7 +482,7 @@ on.load(() => {
 	//========//
 	const updateCursor = () => {
 
-		updateHand()
+		//updateHand()
 		updateBrush()
 		updatePan()
 
@@ -493,7 +493,7 @@ on.load(() => {
 	}
 
 	const updateBrush = () => {
-		if (state.colourTode.hand.state !== HAND.BRUSH) return
+		if (state.colourTode.hand.state !== HAND.BRUSHING) return
 		if (!Mouse.Left) return
 		let [x, y] = getCursorView(...Mouse.position)
 		if (x === undefined || y === undefined) {
@@ -2534,14 +2534,23 @@ on.load(() => {
 			const y = e.clientY
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
-				hand.state = HAND.HOVER
+				if (!Mouse.Left) changeHandState(HAND.HOVER)
+				else {
+					hand.content = atom
+					hand.offset.x = atom.x - x
+					hand.offset.y = atom.y - y
+					atom.dx = e.movementX
+					atom.dy = e.movementY
+					changeHandState(HAND.TOUCHING)
+				}
 				return
 			}
 			if (x < state.view.left) return
 			if (x > state.view.right) return
 			if (y < state.view.top) return
 			if (y > state.view.bottom) return
-			hand.state = HAND.BRUSH
+			if (Mouse.Left) changeHandState(HAND.BRUSHING)
+			else changeHandState(HAND.BRUSH)
 		}
 	}
 
@@ -2552,14 +2561,33 @@ on.load(() => {
 			const y = e.clientY
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
-				hand.state = HAND.HOVER
+				changeHandState(HAND.HOVER)
 				return
 			}
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
-			hand.state = HAND.FREE
+			changeHandState(HAND.FREE)
+		},
+		mousedown: (e) => {
+			changeHandState(HAND.BRUSHING)
 		}
+	}
+
+	HAND.BRUSHING = {
+		cursor: "crosshair",
+		mousemove: (e) => {
+			const x = e.clientX
+			const y = e.clientY
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				return
+			}
+			changeHandState(HAND.FREE)
+		},
+		mouseup: (e) => {
+			changeHandState(HAND.BRUSH)
+		}
+
 	}
 
 	HAND.HOVER = {
@@ -2573,7 +2601,7 @@ on.load(() => {
 			hand.content = atom
 			hand.offset.x = atom.x - e.clientX
 			hand.offset.y = atom.y - e.clientY
-			hand.state = HAND.TOUCHING
+			changeHandState(HAND.TOUCHING)
 
 		},
 
@@ -2585,22 +2613,23 @@ on.load(() => {
 				return
 			}
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
-				hand.state = HAND.BRUSH
+				changeHandState(HAND.BRUSH)
 				return
 			}
-			hand.state = HAND.FREE
+			changeHandState(HAND.FREE)
 		}
 	}
 
 	HAND.TOUCHING = {
 		cursor: "pointer",
 		mousemove: (e) => {
-			hand.state = HAND.DRAGGING
-			return HAND.DRAGGING.mousemove(e)
+			changeHandState(HAND.DRAGGING)
+			colourTodeCanvas.style["cursor"] = "move"
+			HAND.DRAGGING.mousemove(e)
 		},
 		mouseup: (e) => {
 			hand.content = undefined
-			hand.state = HAND.HOVER
+			changeHandState(HAND.HOVER)
 		}
 	}
 
@@ -2615,12 +2644,13 @@ on.load(() => {
 		},
 		mouseup: (e) => {
 			hand.content = undefined
-			hand.state = HAND.FREE
+			changeHandState(HAND.FREE)
 		}
 	}
 
-	const updateHand = () => {
-		colourTodeCanvas.style["cursor"] = hand.state.cursor
+	const changeHandState = (state) => {
+		colourTodeCanvas.style["cursor"] = state.cursor
+		hand.state = state
 	}
 
 	on.mousedown(e => hand.state.mousedown? hand.state.mousedown(e) : undefined)
