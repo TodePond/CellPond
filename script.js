@@ -482,7 +482,7 @@ on.load(() => {
 	//========//
 	const updateCursor = () => {
 
-		//updateHand()
+		updateHand()
 		updateBrush()
 		updatePan()
 
@@ -2474,7 +2474,10 @@ on.load(() => {
 		hand: {
 			state: undefined,
 			content: undefined,
-			offset: {x: 0, y: 0}
+			offset: {x: 0, y: 0},
+			velocity: {x: 0, y: 0},
+			velocityHistory: [],
+			velocityMemory: 5,
 		},
 	}
 	const hand = state.colourTode.hand
@@ -2504,13 +2507,45 @@ on.load(() => {
 	// COLOURTODE - TICK //
 	//===================//
 	const colourTodeTick = () => {
+
 		colourTodeUpdate()
 		colourTodeDraw()
 		requestAnimationFrame(colourTodeTick)
 	}
+
+	const updateHand = () => {
+		if (hand.velocityHistory.length >= hand.velocityMemory) {
+			hand.velocityHistory.shift()
+		}
+
+		if (Mouse.position !== undefined && state.cursor.previous.x !== undefined) {
+			const [x, y] = Mouse.position
+			const dx = x - state.cursor.previous.x
+			const dy = y - state.cursor.previous.y
+			const velocity = {x: dx, y: dy}
+			hand.velocityHistory.push(velocity)
+			const sum = hand.velocityHistory.reduce((a, b) => ({x: a.x+b.x, y: a.y+b.y}), {x:0, y:0})
+			const average = {x: sum.x / hand.velocityHistory.length, y: sum.y / hand.velocityHistory.length}
+			hand.velocity.x = average.x
+			hand.velocity.y = average.y
+		}
+	}
 	
+	const COLOURTODE_FRICTION = 0.95
 	const colourTodeUpdate = () => {
 		
+		for (const atom of state.colourTode.atoms) {
+
+			if (hand.content === atom) continue
+			
+			atom.x += atom.dx
+			atom.y += atom.dy
+
+			atom.dx *= COLOURTODE_FRICTION
+			atom.dy *= COLOURTODE_FRICTION
+
+		}
+
 	}
 
 	const colourTodeDraw = () => {
@@ -2539,8 +2574,8 @@ on.load(() => {
 					hand.content = atom
 					hand.offset.x = atom.x - x
 					hand.offset.y = atom.y - y
-					atom.dx = e.movementX
-					atom.dy = e.movementY
+					atom.dx = hand.velocity.x
+					atom.dy = hand.velocity.y
 					changeHandState(HAND.TOUCHING)
 				}
 				return
@@ -2639,8 +2674,8 @@ on.load(() => {
 			const {x, y} = hand.content
 			hand.content.x = e.clientX + hand.offset.x
 			hand.content.y = e.clientY + hand.offset.y
-			hand.content.dx = hand.content.x - x
-			hand.content.dy = hand.content.y - y
+			hand.content.dx = hand.velocity.x
+			hand.content.dy = hand.velocity.y
 		},
 		mouseup: (e) => {
 			hand.content = undefined
