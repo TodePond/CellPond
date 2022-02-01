@@ -2724,7 +2724,6 @@ on.load(() => {
 			if (isAtomOverlapping(atom, x, y)) return
 			const newAtom = getAtom(x, y)
 			if (newAtom !== undefined) {
-				changeHandState(HAND.HOVER)
 				return
 			}
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
@@ -2763,7 +2762,17 @@ on.load(() => {
 			hand.content.dx = hand.velocity.x * HAND_RELEASE
 			hand.content.dy = hand.velocity.y * HAND_RELEASE
 			hand.content = undefined
-			changeHandState(HAND.FREE)
+			const x = e.clientX
+			const y = e.clientY
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				if (atom.grabbable) {
+					if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					else changeHandState(HAND.HOVER)
+				}
+				else changeHandState(HAND.FREE)
+				return
+			}
 		}
 	}
 
