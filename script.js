@@ -2945,11 +2945,58 @@ on.load(() => {
 	//======================//
 	// COLOURTODE - ELEMENT //
 	//======================//
-	const COLOURTODE_SQUARE = {
+	const BORDER_THICKNESS = 3
+	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
+			const {x, y} = getAtomPosition(atom)
 			colourTodeContext.fillStyle = atom.colour
-			colourTodeContext.fillRect(atom.x, atom.y, atom.size, atom.size)
+			colourTodeContext.fillRect(x, y, atom.width, atom.height)
+
+			if (!atom.hasBorder) return
+			return
+			const top = [x, y, atom.width, BORDER_THICKNESS]
+			const bottom = [x, y+atom.height-BORDER_THICKNESS, atom.width, BORDER_THICKNESS]
+			const right = [x+atom.width-BORDER_THICKNESS, y, BORDER_THICKNESS, atom.height]
+			const left = [x, y, BORDER_THICKNESS, atom.height]
+
+			colourTodeContext.fillStyle = Colour.splash(000)
+			colourTodeContext.fillRect(...top)
+			colourTodeContext.fillRect(...bottom)
+			colourTodeContext.fillRect(...right)
+			colourTodeContext.fillRect(...left)
+
 		},
+		offscreen: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+			const left = x
+			const right = x + atom.width
+			const top = y
+			const bottom = y + atom.height
+			if (right < 0) return true
+			if (bottom < 0) return true
+			if (left > canvas.width) return true
+			if (top > canvas.height) return true
+			return false
+		},
+		overlaps: (atom, mx, my) => {
+			const {x, y} = getAtomPosition(atom)
+			const left = x
+			const right = x + atom.width
+			const top = y
+			const bottom = y + atom.height
+
+			if (mx < left) return false
+			if (my < top) return false
+			if (mx > right) return false
+			if (my > bottom) return false
+			
+			return true
+		},
+	}
+
+	const COLOURTODE_SQUARE = {
+		hasBorder: true,
+		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: (atom, x, y) => {
 			const left = atom.x
 			const right = atom.x + atom.size
@@ -3112,40 +3159,6 @@ on.load(() => {
 		},
 	}
 
-	const COLOURTODE_RECTANGLE = {
-		draw: (atom) => {
-			const {x, y} = getAtomPosition(atom)
-			colourTodeContext.fillStyle = atom.colour
-			colourTodeContext.fillRect(x, y, atom.width, atom.height)
-		},
-		offscreen: (atom) => {
-			const {x, y} = getAtomPosition(atom)
-			const left = x
-			const right = x + atom.width
-			const top = y
-			const bottom = y + atom.height
-			if (right < 0) return true
-			if (bottom < 0) return true
-			if (left > canvas.width) return true
-			if (top > canvas.height) return true
-			return false
-		},
-		overlaps: (atom, mx, my) => {
-			const {x, y} = getAtomPosition(atom)
-			const left = x
-			const right = x + atom.width
-			const top = y
-			const bottom = y + atom.height
-
-			if (mx < left) return false
-			if (my < top) return false
-			if (mx > right) return false
-			if (my > bottom) return false
-			
-			return true
-		},
-	}
-
 	const COLOURTODE_PICKER_PAD_MARGIN = 10
 	const COLOURTODE_PICKER_PAD = {
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -3162,6 +3175,7 @@ on.load(() => {
 
 	const CHANNEL_HEIGHT = 21
 	const COLOURTODE_PICKER_CHANNEL = {
+		hasBorder: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
@@ -3178,6 +3192,14 @@ on.load(() => {
 			atom.colourId = 0
 			atom.dcolourId = 1
 			atom.colourTicker = Infinity
+
+			const selectionTop = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
+			atom.selectionTop = selectionTop
+			selectionTop.y = -selectionTop.height
+
+			const selectionBottom = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
+			atom.selectionBottom = selectionBottom
+			selectionBottom.y = atom.height
 		},
 
 		update: (atom) => {
@@ -3217,9 +3239,38 @@ on.load(() => {
 			} else {
 				atom.colourTicker++
 			}
-
-			
 		},
+
+		click: (atom) => {
+			if (!atom.expanded) {
+				atom.expanded = true
+
+				const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
+				option.y -= atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2
+				atom.option = option
+
+			} else {
+				atom.expanded = false
+				deleteChild(atom, atom.option)
+			}
+		},
+	}
+
+	const COLOURTODE_CHANNEL_SELECTION_END = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		height: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
+		width: COLOURTODE_SQUARE.size,
+		colour: Colour.Void,
+	}
+
+	const COLOURTODE_PICKER_CHANNEL_OPTION = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		height: CHANNEL_HEIGHT,
+		width: COLOURTODE_SQUARE.size,
 	}
 
 	//====================//
