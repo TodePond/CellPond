@@ -1543,7 +1543,7 @@ on.load(() => {
 	// Values[10] - what values this number could represent
 	// Channel - what colour channel this number uses as its base (0, 1 or 2)
 	// Operations[] - any operations that this number includes
-	makeNumber = ({values, channel = 0, operations = []} = {}) => {
+	const makeNumber = ({values, channel = 0, operations = []} = {}) => {
 		let numberValues = undefined
 		if (typeof values === "function") numberValues = [false, false, false, false, false, false, false, false, false, false]
 		else numberValues = values
@@ -2520,7 +2520,7 @@ on.load(() => {
 			hand.velocityHistory.shift()
 		}
 
-		if (Mouse.position !== undefined && hand.previous.x !== undefined) {
+		if (Mouse.position !== undefined && Mouse.position[0] !== undefined && hand.previous.x !== undefined) {
 			const [x, y] = Mouse.position
 			const dx = x - hand.previous.x
 			const dy = y - hand.previous.y
@@ -2537,28 +2537,36 @@ on.load(() => {
 	
 	const COLOURTODE_FRICTION = 0.9
 	const colourTodeUpdate = () => {
-		
 		for (const atom of state.colourTode.atoms) {
+			updateAtom(atom)
+		}
+	}
 
-			if (hand.content === atom) continue
-			if (atom.dx === 0 && atom.dy === 0) continue
+	const updateAtom = (atom, checkOffscreen = true) => {
 
-			atom.x += atom.dx
-			atom.y += atom.dy
-
-			atom.dx *= COLOURTODE_FRICTION
-			atom.dy *= COLOURTODE_FRICTION
-
-			if (isAtomOffscreen(atom)) {
-				deleteAtom(atom)
-				continue
-			}
-
-			const [mx, my] = Mouse.position
-			if (hand.state.atommove) hand.state.atommove(atom, mx, my)
-
+		for (const child of atom.children) {
+			updateAtom(child, false)
 		}
 
+		atom.update(atom)
+
+		// MOVEMENT
+		if (hand.content === atom) return
+		if (atom.dx === 0 && atom.dy === 0) return
+
+		atom.x += atom.dx
+		atom.y += atom.dy
+
+		atom.dx *= COLOURTODE_FRICTION
+		atom.dy *= COLOURTODE_FRICTION
+
+		if (checkOffscreen && isAtomOffscreen(atom)) {
+			deleteAtom(atom)
+			return
+		}
+
+		const [mx, my] = Mouse.position
+		if (hand.state.atommove) hand.state.atommove(atom, mx, my)
 	}
 
 	const colourTodeDraw = () => {
@@ -2737,12 +2745,33 @@ on.load(() => {
 	HAND.TOUCHING = {
 		cursor: "pointer",
 		mousemove: (e) => {
-			changeHandState(HAND.DRAGGING)
-			colourTodeCanvas.style["cursor"] = "move"
-			HAND.DRAGGING.mousemove(e)
+			const x = e.clientX
+			const y = e.clientY
+			if (hand.content.draggable) {				
+				changeHandState(HAND.DRAGGING)
+				colourTodeCanvas.style["cursor"] = "move"
+				hand.content.drag(hand.content, x, y)
+				HAND.DRAGGING.mousemove(e)
+				return
+			}
+
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				if (atom.grabbable) {
+					if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					else changeHandState(HAND.HOVER)
+				}
+				else changeHandState(HAND.FREE)
+				return
+			}
+			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+				changeHandState(HAND.BRUSH)
+				return
+			}
+			changeHandState(HAND.FREE)
 		},
 		mouseup: (e) => {
-			hand.content.click(hand.content)
+			hand.content.click(hand.clickContent)
 			hand.content.dx = 0
 			hand.content.dy = 0
 			hand.content = undefined
@@ -2799,12 +2828,15 @@ on.load(() => {
 	const COLOURTODE_BASE_PARENT = {x: 0, y: 0}
 	const makeAtom = ({
 			grabbable = true,
-			click = () => {},
-			drag = () => {},
+			draggable = true,
+			click = () => {}, // Fires when you mouseup a click on the atom
+			drag = () => {}, // Fires when you start dragging the atom
 			draw = () => {},
+			update = () => {},
 			offscreen = () => false,
 			overlaps = () => false,
-			grab = (a) => a,
+			grab = (a) => a, // Fires when you start a clock on the atom - returns atom that gets dragged
+			touch = (a) => a, // Fires when you start a click on the atom - returns atom that handles the click
 			x = 0,
 			y = 0,
 			dx = 0,
@@ -2813,9 +2845,13 @@ on.load(() => {
 			colour = Colour.White,
 			children = [],
 			parent = COLOURTODE_BASE_PARENT,
+			width = size,
+			height = size,
+			construct = () => {},
 			...properties
 		} = {}) => {
-		const atom = {parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		atom.construct(atom)
 		return atom
 	}
 
@@ -2862,6 +2898,7 @@ on.load(() => {
 	}
 
 	const grabAtom = (atom, x, y) => {
+		hand.clickContent = atom.touch(atom)
 		atom = atom.grab(atom, x, y)
 		if (atom === undefined) {
 			return
@@ -2938,13 +2975,19 @@ on.load(() => {
 		},
 		click: (atom) => {
 			if (!atom.expanded) {
+				atom.expanded = true
+
 				const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
 				atom.pickerPad = pickerPad
-				atom.expanded = true
+
+				const red = createChild(atom, COLOURTODE_PICKER_CHANNEL_RED)
+				atom.red = red
+
 			}
 			else {
-				deleteChild(atom, atom.pickerPad)
 				atom.expanded = false
+				deleteChild(atom, atom.pickerPad)
+				deleteChild(atom, atom.red)
 			}
 
 		},
@@ -3009,17 +3052,6 @@ on.load(() => {
 		},
 	}
 
-	const COLOURTODE_TOOL = {
-		element: COLOURTODE_SQUARE,
-		draw: (atom) => atom.element.draw(atom),
-		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
-		grab: (atom, x, y) => {
-			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
-			registerAtom(newAtom)
-			return newAtom
-		}
-	}
-
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
@@ -3049,7 +3081,7 @@ on.load(() => {
 			if (my < top) return false
 			if (mx > right) return false
 			if (my > bottom) return false
-
+			
 			return true
 		},
 	}
@@ -3068,27 +3100,113 @@ on.load(() => {
 		dragOnly: true,
 	}
 
+	const CHANNEL_HEIGHT = 21
 	const COLOURTODE_PICKER_CHANNEL = {
-		draw: COLOURTODE_PICKER_PAD.draw,
-		overlaps: COLOURTODE_SQUARE.overlaps,
-		offscreen: COLOURTODE_SQUARE.offscreen,
+		draw: COLOURTODE_RECTANGLE.draw,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		
+		width: COLOURTODE_SQUARE.size,
+		y: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
+		height: CHANNEL_HEIGHT,
+
+		construct: (atom) => {
+			const values = [true, true, true, true, true, true, true, true, true, true]
+			const channel = Random.Uint8 % 3
+			atom.value = makeNumber({values, channel})
+			atom.needsColoursUpdate = true
+			atom.colourId = 0
+			atom.dcolourId = 1
+			atom.colourTicker = 0
+		},
+
+		update: (atom) => {
+			if (atom.needsColoursUpdate) {
+				const channels = []
+				for (let i = 0; i < 3; i++) {
+					if (i === atom.value.channel) {
+						channels[i] = atom.value
+					}
+					else {
+						const values = [true, false, false, false, false, false, false, false, false, false]
+						channels[i] = makeNumber({values, channel: i})
+					}
+				}
+				const array = makeArray({channels})
+				atom.colours = getSplashesArrayFromArray(array)
+				atom.needsColoursUpdate = false
+			}
+
+			if (atom.colourTicker >= 30 / atom.colours.length) {
+				atom.colourTicker = 0
+
+				atom.colourId += atom.dcolourId
+				if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
+					atom.dcolourId *= -1
+				}
+				if (atom.colourId >= atom.colours.length) {
+					atom.dcolourId = -1
+					atom.colourId = atom.colours.length-1
+				}
+				atom.colour = Colour.splash(atom.colours[atom.colourId])
+
+			} else {
+				atom.colourTicker++
+			}
+
+			
+		},
+	}
+
+	const COLOURTODE_PICKER_CHANNEL_RED = {
+		...COLOURTODE_PICKER_CHANNEL,
+		colour: Colour.Red,
+		x: COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN,
+	}
+
+	const COLOURTODE_PICKER_CHANNEL_GREEN = {
+		...COLOURTODE_PICKER_CHANNEL,
+		colour: Colour.Green,
+		x: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)*2,
+	}
+
+	const COLOURTODE_PICKER_CHANNEL_BLUE = {
+		...COLOURTODE_PICKER_CHANNEL,
+		colour: Colour.Blue,
+		x: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)*3,
 	}
 
 	//====================//
 	// COLOURTODE - DEBUG //
 	//====================//
-	
 	let menuRight = 10
 
+	const COLOURTODE_TOOL = {
+		element: COLOURTODE_SQUARE,
+		draw: (atom) => atom.element.draw(atom),
+		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
+		grab: (atom, x, y) => {
+			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
+			registerAtom(newAtom)
+			return newAtom
+		}
+	}
+
 	const addMenuTool = (element) => {
-		const atom = makeAtom({...COLOURTODE_TOOL, x: menuRight, y: 10, element})
+		const {width = COLOURTODE_SQUARE.size, height = COLOURTODE_SQUARE.size} = element
+		let y = COLOURTODE_PICKER_PAD_MARGIN
+		if (height < COLOURTODE_SQUARE.size) {
+			y += (COLOURTODE_SQUARE.size - height)/2
+		}
+		const atom = makeAtom({...COLOURTODE_TOOL, width, height, x: menuRight, y, element})
 		registerAtom(atom)
-		menuRight += atom.size
+		menuRight += width
 		menuRight += 10
 	}
 
 	addMenuTool(COLOURTODE_SQUARE)
 	addMenuTool(COLOURTODE_TRIANGLE)
+	addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
 
 })
