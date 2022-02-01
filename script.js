@@ -2842,7 +2842,7 @@ on.load(() => {
 			dx = 0,
 			dy = 0,
 			size = 35,
-			colour = Colour.White,
+			colour = Colour.splash(999),
 			children = [],
 			parent = COLOURTODE_BASE_PARENT,
 			width = size,
@@ -2980,17 +2980,77 @@ on.load(() => {
 				const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
 				atom.pickerPad = pickerPad
 
-				const red = createChild(atom, COLOURTODE_PICKER_CHANNEL_RED)
+				const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+				red.x += COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
+				red.value = atom.value.channels[0]
+				red.needsColoursUpdate = true
 				atom.red = red
+
+				const green = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+				green.x += 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+				green.value = atom.value.channels[1]
+				green.needsColoursUpdate = true
+				atom.green = green
+
+				const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+				blue.x += 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+				blue.value = atom.value.channels[2]
+				blue.needsColoursUpdate = true
+				atom.blue = blue
 
 			}
 			else {
 				atom.expanded = false
 				deleteChild(atom, atom.pickerPad)
 				deleteChild(atom, atom.red)
+				deleteChild(atom, atom.green)
+				deleteChild(atom, atom.blue)
 			}
+		},
+		construct: (atom) => {
+			atom.needsColoursUpdate = true
+			/*const r = Random.Uint8 % 7 + 3
+			const g = Random.Uint8 % 7 + 3
+			const b = Random.Uint8 % 7 + 3*/
+			const r = Random.Uint8 % 10
+			const g = Random.Uint8 % 10
+			const b = Random.Uint8 % 10
+			print(r, g, b)
+			atom.value = makeArrayFromSplash(r*100 + g*10 + b)
+			
+			atom.colourId = 0
+			atom.dcolourId = 1
+			atom.colourTicker = Infinity
 
 		},
+
+		update: (atom) => {
+			if (atom.needsColoursUpdate) {
+				atom.colours = getSplashesArrayFromArray(atom.value)
+				atom.needsColoursUpdate = false
+			}
+
+			if (atom.colourTicker >= 40 / atom.colours.length) {
+				atom.colourTicker = 0
+
+				atom.colourId += atom.dcolourId
+				if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
+					atom.dcolourId *= -1
+				}
+				if (atom.colourId >= atom.colours.length) {
+					atom.dcolourId = -1
+					atom.colourId = atom.colours.length-1
+				}
+				if (atom.colourId < 0) {
+					atom.dcolourId = 1
+					atom.colourId = 0
+				}
+				atom.colour = Colour.splash(atom.colours[atom.colourId])
+			}
+			else atom.colourTicker++
+
+		},
+
 		size: 35,
 		expanded: false,
 	}
@@ -3093,7 +3153,7 @@ on.load(() => {
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		grab: (atom) => atom.parent,
 		colour: Colour.Grey,
-		width: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN) * 4,
+		width: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN) * 4 + COLOURTODE_PICKER_PAD_MARGIN,
 		height: COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN * 2,
 		y: -COLOURTODE_PICKER_PAD_MARGIN,
 		x: -COLOURTODE_PICKER_PAD_MARGIN,
@@ -3111,13 +3171,13 @@ on.load(() => {
 		height: CHANNEL_HEIGHT,
 
 		construct: (atom) => {
-			const values = [true, true, true, true, true, true, true, true, true, true]
+			const values = [false, false, false, false, false, false, false, false, false, true]
 			const channel = Random.Uint8 % 3
 			atom.value = makeNumber({values, channel})
 			atom.needsColoursUpdate = true
 			atom.colourId = 0
 			atom.dcolourId = 1
-			atom.colourTicker = 0
+			atom.colourTicker = Infinity
 		},
 
 		update: (atom) => {
@@ -3137,7 +3197,7 @@ on.load(() => {
 				atom.needsColoursUpdate = false
 			}
 
-			if (atom.colourTicker >= 30 / atom.colours.length) {
+			if (atom.colourTicker >= 40 / atom.colours.length) {
 				atom.colourTicker = 0
 
 				atom.colourId += atom.dcolourId
@@ -3148,6 +3208,10 @@ on.load(() => {
 					atom.dcolourId = -1
 					atom.colourId = atom.colours.length-1
 				}
+				if (atom.colourId < 0) {
+					atom.dcolourId = 1
+					atom.colourId = 0
+				}
 				atom.colour = Colour.splash(atom.colours[atom.colourId])
 
 			} else {
@@ -3156,24 +3220,6 @@ on.load(() => {
 
 			
 		},
-	}
-
-	const COLOURTODE_PICKER_CHANNEL_RED = {
-		...COLOURTODE_PICKER_CHANNEL,
-		colour: Colour.Red,
-		x: COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN,
-	}
-
-	const COLOURTODE_PICKER_CHANNEL_GREEN = {
-		...COLOURTODE_PICKER_CHANNEL,
-		colour: Colour.Green,
-		x: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)*2,
-	}
-
-	const COLOURTODE_PICKER_CHANNEL_BLUE = {
-		...COLOURTODE_PICKER_CHANNEL,
-		colour: Colour.Blue,
-		x: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)*3,
 	}
 
 	//====================//
