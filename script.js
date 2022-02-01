@@ -2745,6 +2745,7 @@ on.load(() => {
 	HAND.TOUCHING = {
 		cursor: "pointer",
 		mousemove: (e) => {
+			if (e.movementX === 0 && e.movementY === 0) return
 			const x = e.clientX
 			const y = e.clientY
 			if (hand.content.draggable) {				
@@ -2906,8 +2907,8 @@ on.load(() => {
 		hand.content = atom
 		hand.offset.x = atom.x - x
 		hand.offset.y = atom.y - y
-		atom.dx = hand.velocity.x
-		atom.dy = hand.velocity.y
+		atom.dx = 0
+		atom.dy = 0
 
 		// If atom isn't a child, bring it to the top level
 		if (atom.parent === COLOURTODE_BASE_PARENT) {
@@ -3015,7 +3016,6 @@ on.load(() => {
 			const r = Random.Uint8 % 10
 			const g = Random.Uint8 % 10
 			const b = Random.Uint8 % 10
-			print(r, g, b)
 			atom.value = makeArrayFromSplash(r*100 + g*10 + b)
 			
 			atom.colourId = 0
