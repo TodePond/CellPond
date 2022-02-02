@@ -2829,7 +2829,12 @@ on.load(() => {
 	//===================//
 	// COLOURTODE - ATOM //
 	//===================//
-	const COLOURTODE_BASE_PARENT = {x: 0, y: 0}
+	const COLOURTODE_BASE_PARENT = {
+		x: 0,
+		y: 0,
+		grab: (atom, x, y, child) => child,
+		touch: (atom, child) => child,
+	}
 	const makeAtom = ({
 			grabbable = true,
 			draggable = true,
@@ -2904,11 +2909,23 @@ on.load(() => {
 	}
 
 	const grabAtom = (atom, x, y) => {
-		hand.clickContent = atom.touch(atom)
-		const grabbed = atom.grab(atom, x, y)
-		if (grabbed === undefined) {
-			return
+
+		
+
+		const touched = atom.touch(atom)
+		hand.clickContent = touched
+
+		
+		let previousGrabbed = atom
+		let grabbed = atom.grab(atom, x, y)
+
+		if (grabbed === undefined) return
+		if (grabbed !== previousGrabbed) {
+			const newGrabbed = grabbed.grab(grabbed, x, y, previousGrabbed)
+			previousGrabbed = grabbed
+			grabbed = newGrabbed
 		}
+
 		hand.content = grabbed
 		hand.offset.x = grabbed.x - x
 		hand.offset.y = grabbed.y - y
@@ -3231,13 +3248,20 @@ on.load(() => {
 			if (!atom.expanded) {
 				atom.expanded = true
 
-				const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
-				option.y -= atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2
-				atom.option = option
+				atom.options = []
+
+				for (let i = 0; i < 10; i++) {
+					const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
+					option.y = i * (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+					atom.options.push(option)
+				}
+
 
 			} else {
 				atom.expanded = false
-				deleteChild(atom, atom.option)
+				for (const option of atom.options) {
+					deleteChild(atom, option)
+				}
 			}
 		},
 	}
@@ -3261,7 +3285,7 @@ on.load(() => {
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		height: CHANNEL_HEIGHT,
 		width: COLOURTODE_SQUARE.size,
-
+		grab: (atom) => atom.parent,
 	}
 
 	//====================//
