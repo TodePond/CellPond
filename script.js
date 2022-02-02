@@ -3256,9 +3256,26 @@ on.load(() => {
 
 				atom.options = []
 
+				atom.value.values.d
+
+
+				let startId = undefined
+
+				for (let i = 0; i < atom.value.values.length; i++) {
+					const value = atom.value.values[i]
+					if (startId === undefined) {
+						if (value) startId = i
+					}
+				}
+				
+				const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+				const top = startId * optionSpacing - (10 * optionSpacing)
+				const centerId = 0
+
 				for (let i = 0; i < 10; i++) {
+					//if (centerId === i) continue
 					const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
-					option.y = i * (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+					option.y = top + i * optionSpacing
 					atom.options.push(option)
 				}
 
@@ -3312,6 +3329,7 @@ on.load(() => {
 
 	const addMenuTool = (element) => {
 		const {width = COLOURTODE_SQUARE.size, height = COLOURTODE_SQUARE.size} = element
+		
 		let y = COLOURTODE_PICKER_PAD_MARGIN
 		if (height < COLOURTODE_SQUARE.size) {
 			y += (COLOURTODE_SQUARE.size - height)/2
