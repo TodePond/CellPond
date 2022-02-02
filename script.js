@@ -2890,33 +2890,35 @@ on.load(() => {
 
 	// including children
 	const isAtomOverlapping = (atom, x, y) => {
+		
 		if (atom.overlaps(atom, x, y)) return atom
 		
 		for (let i = atom.children.length-1; i >= 0; i--) {
 			const child = atom.children[i]
-			if (isAtomOverlapping(child, x, y)) return child
+			const result = isAtomOverlapping(child, x, y)
+			if (result) return result
 		}
 	}
 
 	const grabAtom = (atom, x, y) => {
 		hand.clickContent = atom.touch(atom)
-		atom = atom.grab(atom, x, y)
-		if (atom === undefined) {
+		const grabbed = atom.grab(atom, x, y)
+		if (grabbed === undefined) {
 			return
 		}
-		hand.content = atom
-		hand.offset.x = atom.x - x
-		hand.offset.y = atom.y - y
-		atom.dx = 0
-		atom.dy = 0
+		hand.content = grabbed
+		hand.offset.x = grabbed.x - x
+		hand.offset.y = grabbed.y - y
+		grabbed.dx = 0
+		grabbed.dy = 0
 
 		// If atom isn't a child, bring it to the top level
-		if (atom.parent === COLOURTODE_BASE_PARENT) {
-			deleteAtom(atom)
-			registerAtom(atom)
+		if (grabbed.parent === COLOURTODE_BASE_PARENT) {
+			deleteAtom(grabbed)
+			registerAtom(grabbed)
 		}
 
-		return atom
+		return grabbed
 	}
 
 	const getAtomPosition = (atom) => {
@@ -2997,30 +2999,8 @@ on.load(() => {
 	const COLOURTODE_SQUARE = {
 		hasBorder: true,
 		draw: COLOURTODE_RECTANGLE.draw,
-		overlaps: (atom, x, y) => {
-			const left = atom.x
-			const right = atom.x + atom.size
-			const top = atom.y
-			const bottom = atom.y + atom.size
-
-			if (x < left) return false
-			if (y < top) return false
-			if (x > right) return false
-			if (y > bottom) return false
-
-			return true
-		},
-		offscreen: (atom) => {
-			const left = atom.x
-			const right = atom.x + atom.size
-			const top = atom.y
-			const bottom = atom.y + atom.size
-			if (right < 0) return true
-			if (bottom < 0) return true
-			if (left > canvas.width) return true
-			if (top > canvas.height) return true
-			return false
-		},
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		click: (atom) => {
 			if (!atom.expanded) {
 				atom.expanded = true
@@ -3263,6 +3243,10 @@ on.load(() => {
 		height: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
 		width: COLOURTODE_SQUARE.size,
 		colour: Colour.Void,
+		//grabbable: false,
+		//dragOnly: true,
+		grab: (atom) => atom.parent,
+		click: (atom) => atom.parent,
 	}
 
 	const COLOURTODE_PICKER_CHANNEL_OPTION = {
@@ -3271,6 +3255,7 @@ on.load(() => {
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		height: CHANNEL_HEIGHT,
 		width: COLOURTODE_SQUARE.size,
+		draggable: false,
 	}
 
 	//====================//
