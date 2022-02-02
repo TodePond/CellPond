@@ -2772,7 +2772,10 @@ on.load(() => {
 			changeHandState(HAND.FREE)
 		},
 		mouseup: (e) => {
-			hand.content.click(hand.clickContent)
+			hand.clickContent.click(hand.clickContent)
+			hand.clickContent.dx = 0
+			hand.clickContent.dy = 0
+			hand.clickContent = undefined
 			hand.content.dx = 0
 			hand.content.dy = 0
 			hand.content = undefined
@@ -3012,18 +3015,21 @@ on.load(() => {
 				red.x += COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
 				red.value = atom.value.channels[0]
 				red.needsColoursUpdate = true
+				red.grab = () => atom
 				atom.red = red
 
 				const green = createChild(atom, COLOURTODE_PICKER_CHANNEL)
 				green.x += 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
 				green.value = atom.value.channels[1]
 				green.needsColoursUpdate = true
+				green.grab = () => atom
 				atom.green = green
 
 				const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
 				blue.x += 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
 				blue.value = atom.value.channels[2]
 				blue.needsColoursUpdate = true
+				blue.grab = () => atom
 				atom.blue = blue
 
 			}
@@ -3244,9 +3250,9 @@ on.load(() => {
 		width: COLOURTODE_SQUARE.size,
 		colour: Colour.Void,
 		//grabbable: false,
-		//dragOnly: true,
+		dragOnly: true,
 		grab: (atom) => atom.parent,
-		click: (atom) => atom.parent,
+		//click: (atom) => atom.parent,
 	}
 
 	const COLOURTODE_PICKER_CHANNEL_OPTION = {
@@ -3255,7 +3261,7 @@ on.load(() => {
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		height: CHANNEL_HEIGHT,
 		width: COLOURTODE_SQUARE.size,
-		draggable: false,
+
 	}
 
 	//====================//
