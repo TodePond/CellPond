@@ -2912,7 +2912,13 @@ on.load(() => {
 
 		
 
-		const touched = atom.touch(atom)
+		let previousTouched = atom
+		let touched = atom.touch(atom)
+		if (touched !== previousTouched) {
+			const newTouched = touched.touch(touched, x, y, previousTouched)
+			previousTouched = touched
+			touched = newTouched
+		}
 		hand.clickContent = touched
 
 		
