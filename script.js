@@ -2091,11 +2091,11 @@ on.load(() => {
 				print("STEP >>")
 				print("left")
 				for (const cell of step.left) {
-					cell.d
+					print(cell)
 				}
 				print("right")
 				for (const cell of step.right) {
-					cell.d
+					print(cell)
 				}
 			}
 		}
@@ -2106,11 +2106,11 @@ on.load(() => {
 				print("STEP >>")
 				print("left")
 				for (const cell of step.left) {
-					cell.d
+					print(cell)
 				}
 				print("right")
 				for (const cell of step.right) {
-					cell.d
+					print(cell)
 				}
 			}
 		}
@@ -3212,7 +3212,24 @@ on.load(() => {
 		},
 
 		update: (atom) => {
+
+			if (atom.expanded) {
+				if (atom.needsColoursUpdate) {
+					atom.needsColoursUpdate = false
+
+					for (let i = 0; i < 10; i++) {
+						const option = atom.options[i]
+						const r = atom.value.channel === 0? 9-i : 0
+						const g = atom.value.channel === 1? 9-i : 0
+						const b = atom.value.channel === 2? 9-i : 0
+						option.colour = Colour.splash(r*100 + g*10 + b)
+					}
+				}
+				return
+			}
+
 			if (atom.needsColoursUpdate) {
+				atom.needsColoursUpdate = false
 				const channels = []
 				for (let i = 0; i < 3; i++) {
 					if (i === atom.value.channel) {
@@ -3225,7 +3242,7 @@ on.load(() => {
 				}
 				const array = makeArray({channels})
 				atom.colours = getSplashesArrayFromArray(array)
-				atom.needsColoursUpdate = false
+				atom.colourTicker = Infinity
 			}
 
 			if (atom.colourTicker >= 40 / atom.colours.length) {
@@ -3256,35 +3273,42 @@ on.load(() => {
 
 				atom.options = []
 
-				atom.value.values.d
-
-
 				let startId = undefined
+				let endId = undefined
 
 				for (let i = 0; i < atom.value.values.length; i++) {
 					const value = atom.value.values[i]
-					if (startId === undefined) {
-						if (value) startId = i
+					if (value) {
+						if (startId === undefined) startId = i
+						endId = i
 					}
 				}
+
+				if (startId === undefined) throw new Error("[ColourTode] Number cannot be NOTHING. Please let @TodePond know if you see this error!")
+				const centerOptionId = 9 - Math.round((endId + startId) / 2)
 				
 				const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
-				const top = startId * optionSpacing - (10 * optionSpacing)
-				const centerId = 0
+				const top = startId * optionSpacing - (9 * optionSpacing)
 
 				for (let i = 0; i < 10; i++) {
-					//if (centerId === i) continue
+					if (centerOptionId === i) {
+						atom.options.push(atom)
+						continue
+					}
 					const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
 					option.y = top + i * optionSpacing
 					atom.options.push(option)
 				}
 
+				atom.needsColoursUpdate = true
 
-			} else {
+			}
+			else {
 				atom.expanded = false
 				for (const option of atom.options) {
-					deleteChild(atom, option)
+					if (atom !== option) deleteChild(atom, option)
 				}
+				atom.needsColoursUpdate = true
 			}
 		},
 	}
