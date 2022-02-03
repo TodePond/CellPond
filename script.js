@@ -1561,17 +1561,11 @@ on.load(() => {
 		return {operator, number}
 	}
 
-	// Evaluates all .channels and .operations into .values (based on a target dragon array, and target channel)
-	// I'm not actually sure when this would be used, or if it would be used at all
-	// So don't bother making it yet, because it might be useless
-	// Cos like... surely this stuff would be PRE-calculated anyway?????
-	const evaluateNumber = (number, array) => {
-
-		// TODO: evaluate channel
-		const source = array.channels[number.channel]
-
-		// TODO: evaluate operations
-		return array
+	const getFirstAllowedValue = (number) => {
+		for (let i = 0; i < 10; i++) {
+			const value = number.values[i]
+			if (value) return i
+		}
 	}
 
 	//================//
@@ -3023,6 +3017,7 @@ on.load(() => {
 	}
 
 	const COLOURTODE_SQUARE = {
+		isSquare: true,
 		hasBorder: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -3217,12 +3212,37 @@ on.load(() => {
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
 
+					let parentR = 0
+					let parentG = 0
+					let parentB = 0
+
+					if (atom.parent.isSquare) {
+
+						const redNumber = atom.parent.value.channels[0]
+						const greenNumber = atom.parent.value.channels[1]
+						const blueNumber = atom.parent.value.channels[2]
+
+
+						parentR = makeNumber({values: [...redNumber.values], channel: 0})
+						parentG = makeNumber({values: [...greenNumber.values], channel: 1})
+						parentB = makeNumber({values: [...blueNumber.values], channel: 2})
+					}
+
+					const parentChannels = [parentR, parentG, parentB]
+					const mainParentChannel = parentChannels[atom.value.channel]
+					mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
+
 					for (let i = 0; i < 10; i++) {
+
+						mainParentChannel.values[9-i] = true
+						if (i > 0) mainParentChannel.values[9-i+1] = false
+
+						const baseArray = makeArray({channels: parentChannels})
+
+						const colours = getSplashesArrayFromArray(baseArray)
+
 						const option = atom.options[i]
-						const r = atom.value.channel === 0? 9-i : 0
-						const g = atom.value.channel === 1? 9-i : 0
-						const b = atom.value.channel === 2? 9-i : 0
-						option.colour = Colour.splash(r*100 + g*10 + b)
+						option.colour = Colour.splash(colours[0])
 					}
 				}
 				return
