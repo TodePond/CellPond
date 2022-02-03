@@ -3212,9 +3212,9 @@ on.load(() => {
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
 
-					let parentR = 0
-					let parentG = 0
-					let parentB = 0
+					let parentR = undefined
+					let parentG = undefined
+					let parentB = undefined
 
 					if (atom.parent.isSquare) {
 
@@ -3222,10 +3222,15 @@ on.load(() => {
 						const greenNumber = atom.parent.value.channels[1]
 						const blueNumber = atom.parent.value.channels[2]
 
-
 						parentR = makeNumber({values: [...redNumber.values], channel: 0})
 						parentG = makeNumber({values: [...greenNumber.values], channel: 1})
 						parentB = makeNumber({values: [...blueNumber.values], channel: 2})
+					}
+					else {
+						const values = [true, false, false, false, false, false, false, false, false, false]
+						parentR = makeNumber({values: [...values], channel: 0})
+						parentG = makeNumber({values: [...values], channel: 1})
+						parentB = makeNumber({values: [...values], channel: 2})
 					}
 
 					const parentChannels = [parentR, parentG, parentB]
@@ -3242,13 +3247,14 @@ on.load(() => {
 						const colours = getSplashesArrayFromArray(baseArray)
 
 						const option = atom.options[i]
-						option.colour = Colour.splash(colours[0])
+						option.colours = colours
+						option.colourTicker = Infinity
+						//option.needsColoursUpdate = true
 					}
 				}
-				return
 			}
 
-			if (atom.needsColoursUpdate) {
+			if (!atom.expanded && atom.needsColoursUpdate) {
 				atom.needsColoursUpdate = false
 				const channels = []
 				for (let i = 0; i < 3; i++) {
@@ -3353,6 +3359,33 @@ on.load(() => {
 		height: CHANNEL_HEIGHT,
 		width: COLOURTODE_SQUARE.size,
 		grab: (atom) => atom.parent,
+		
+		colourTicker: Infinity,
+		colours: [Colour.splash(999)],
+		colourId: 0,
+		dcolourId: 1,
+		update: (atom) => {
+			if (atom.colourTicker >= 40 / atom.colours.length) {
+				atom.colourTicker = 0
+
+				atom.colourId += atom.dcolourId
+				if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
+					atom.dcolourId *= -1
+				}
+				if (atom.colourId >= atom.colours.length) {
+					atom.dcolourId = -1
+					atom.colourId = atom.colours.length-1
+				}
+				if (atom.colourId < 0) {
+					atom.dcolourId = 1
+					atom.colourId = 0
+				}
+				atom.colour = Colour.splash(atom.colours[atom.colourId])
+
+			} else {
+				atom.colourTicker++
+			}
+		},
 	}
 
 	//====================//
