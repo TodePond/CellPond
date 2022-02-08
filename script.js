@@ -2587,7 +2587,7 @@ on.load(() => {
 			if (atom !== undefined) {
 				if (atom.grabbable) {
 					if (!Mouse.Left) {
-						if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+						if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 						else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 						else changeHandState(HAND.HOVER)
 					}
@@ -2614,7 +2614,7 @@ on.load(() => {
 				grabAtom(atom, mx, my)
 				changeHandState(HAND.DRAGGING)
 			}
-			if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+			if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 			else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 			else changeHandState(HAND.HOVER)
 		},
@@ -2635,7 +2635,7 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
@@ -2685,7 +2685,7 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
@@ -2717,7 +2717,7 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
@@ -2753,7 +2753,6 @@ on.load(() => {
 			const y = e.clientY
 			if (hand.content.draggable) {				
 				changeHandState(HAND.DRAGGING)
-				colourTodeCanvas.style["cursor"] = "move"
 				hand.content.drag(hand.content, x, y)
 				HAND.DRAGGING.mousemove(e)
 				return
@@ -2762,7 +2761,7 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
@@ -2788,11 +2787,11 @@ on.load(() => {
 			const y = e.clientY
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
-				if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+				if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 				else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 				else changeHandState(HAND.HOVER)
 			}
-			else changeHandState(HAND.HOVER)
+			else changeHandState(HAND.FREE)
 		}
 	}
 
@@ -2813,7 +2812,7 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
@@ -2824,6 +2823,9 @@ on.load(() => {
 	}
 
 	const changeHandState = (state, cursor = state.cursor) => {
+		if (hand.content !== undefined && hand.content.cursor !== undefined) {
+			cursor = hand.content.cursor(hand.content, state)
+		}
 		colourTodeCanvas.style["cursor"] = cursor
 		hand.state = state
 	}
@@ -3395,7 +3397,11 @@ on.load(() => {
 					atom.options.push(atom)
 					continue
 				}
-				const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
+
+				const pityTop = i !== 9 - endId + 1
+				const pityBottom = i !== 9 - startId - 1
+				const option = createChild(atom, {...COLOURTODE_PICKER_CHANNEL_OPTION, pityTop, pityBottom})
+
 				option.y = top + i * optionSpacing
 				option.value = 9 - i
 				//option.colourTicker = Infinity
@@ -3416,10 +3422,12 @@ on.load(() => {
 		width: COLOURTODE_SQUARE.size,
 		colour: Colour.Void,
 		//grabbable: false,
-		dragOnly: true,
-		grab: (atom) => atom.parent,
-		//click: (atom) => atom.parent,
-		cursor: "ns-resize",
+		dragOnly: false,
+		grab: (atom) => atom.parent.expanded? atom : atom.parent,
+		touch: (atom) => atom.parent.expanded? atom : atom.parent,
+		cursor: (atom) => {
+			return atom.parent.expanded? "ns-resize" : "pointer"
+		},
 	}
 
 	const COLOURTODE_PICKER_CHANNEL_OPTION = {
@@ -3479,11 +3487,16 @@ on.load(() => {
 		},
 
 		construct: (atom) => {
-			const topPity = createChild(atom, COLOURTODE_OPTION_PADDING)
-			const bottomPity = createChild(atom, COLOURTODE_OPTION_PADDING)
 
-			topPity.y = -topPity.height
-			bottomPity.y = atom.height
+			if (atom.pityTop) {
+				const topPity = createChild(atom, COLOURTODE_OPTION_PADDING)
+				topPity.y = -topPity.height
+			}
+
+			if (atom.pityBottom) {
+				const bottomPity = createChild(atom, COLOURTODE_OPTION_PADDING)
+				bottomPity.y = atom.height
+			}
 		}
 	}
 
