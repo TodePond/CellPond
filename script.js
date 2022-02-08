@@ -2587,7 +2587,8 @@ on.load(() => {
 			if (atom !== undefined) {
 				if (atom.grabbable) {
 					if (!Mouse.Left) {
-						if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+						if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+						else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 						else changeHandState(HAND.HOVER)
 					}
 					else {
@@ -2613,6 +2614,8 @@ on.load(() => {
 				grabAtom(atom, mx, my)
 				changeHandState(HAND.DRAGGING)
 			}
+			if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+			else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 			else changeHandState(HAND.HOVER)
 		},
 		camerapan: () => {
@@ -2632,7 +2635,8 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
 				else changeHandState(HAND.FREE)
@@ -2680,7 +2684,11 @@ on.load(() => {
 			}
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
-				if (atom.grabbable) changeHandState(HAND.HOVER)
+				if (atom.grabbable) {
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					else changeHandState(HAND.HOVER)
+				}
 				else changeHandState(HAND.FREE)
 				return
 			}
@@ -2709,7 +2717,8 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
 				else changeHandState(HAND.FREE)
@@ -2753,7 +2762,8 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
 				else changeHandState(HAND.FREE)
@@ -2773,7 +2783,16 @@ on.load(() => {
 			hand.content.dx = 0
 			hand.content.dy = 0
 			hand.content = undefined
-			changeHandState(HAND.HOVER)
+
+			const x = e.clientX
+			const y = e.clientY
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+				else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+				else changeHandState(HAND.HOVER)
+			}
+			else changeHandState(HAND.HOVER)
 		}
 	}
 
@@ -2794,7 +2813,8 @@ on.load(() => {
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
-					if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor)
+					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
 					else changeHandState(HAND.HOVER)
 				}
 				else changeHandState(HAND.FREE)
@@ -3399,6 +3419,7 @@ on.load(() => {
 		dragOnly: true,
 		grab: (atom) => atom.parent,
 		//click: (atom) => atom.parent,
+		cursor: "ns-resize",
 	}
 
 	const COLOURTODE_PICKER_CHANNEL_OPTION = {
