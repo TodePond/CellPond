@@ -2826,8 +2826,8 @@ on.load(() => {
 	const COLOURTODE_BASE_PARENT = {
 		x: 0,
 		y: 0,
-		grab: (atom, x, y, child) => child,
-		touch: (atom, child) => child,
+		grab: (atom, x, y, child = atom) => child,
+		touch: (atom, child = atom) => child,
 	}
 	const makeAtom = ({
 			grabbable = true,
@@ -2903,8 +2903,6 @@ on.load(() => {
 	}
 
 	const grabAtom = (atom, x, y) => {
-
-		
 
 		let previousTouched = atom
 		let touched = atom.touch(atom)
@@ -3031,6 +3029,9 @@ on.load(() => {
 			}
 			else {
 				atom.expanded = false
+				atom.redExpanded = atom.red.expanded
+				atom.greenExpanded = atom.green.expanded
+				atom.blueExpanded = atom.blue.expanded
 				atom.deletePicker(atom)
 			}
 		},
@@ -3210,7 +3211,7 @@ on.load(() => {
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
-		
+		grab: (atom) => atom,
 		width: COLOURTODE_SQUARE.size,
 		y: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
 		height: CHANNEL_HEIGHT,
@@ -3454,11 +3455,34 @@ on.load(() => {
 				const square = parent.parent
 				square.receiveNumber(square, number, number.channel)
 			}
+		},
+
+		construct: (atom) => {
+			const topPity = createChild(atom, COLOURTODE_OPTION_PADDING)
+			const bottomPity = createChild(atom, COLOURTODE_OPTION_PADDING)
+
+			topPity.y = -topPity.height
+			bottomPity.y = atom.height
 		}
 	}
 
+	
+	const COLOURTODE_OPTION_PADDING = {
+		draw: () => {},
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		grab: (atom) => atom.parent.parent,
+		touch: (atom) => atom.parent,
+		colour: Colour.Grey,
+		width: COLOURTODE_SQUARE.size,
+		height: COLOURTODE_CHANNEL_SELECTION_END.height / 2,
+		y: 0,
+		x: 0,
+		//dragOnly: true,
+	}
+
 	//====================//
-	// COLOURTODE - DEBUG //
+	// COLOURTODE - TOOLS //
 	//====================//
 	let menuRight = 10
 
