@@ -2551,6 +2551,9 @@ on.load(() => {
 		atom.x += atom.dx
 		atom.y += atom.dy
 
+		atom.x = clamp(atom.x, atom.minX, atom.maxX)
+		atom.y = clamp(atom.y, atom.minY, atom.maxY)
+
 		atom.dx *= COLOURTODE_FRICTION
 		atom.dy *= COLOURTODE_FRICTION
 
@@ -2798,14 +2801,18 @@ on.load(() => {
 	HAND.DRAGGING = {
 		cursor: "move",
 		mousemove: (e) => {
-			hand.content.x = e.clientX + hand.offset.x
-			hand.content.y = e.clientY + hand.offset.y
+			if (!hand.content.dragLockX) hand.content.x = e.clientX + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = e.clientY + hand.offset.y
+
+			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
+			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
+
 			//hand.content.dx = hand.velocity.x
 			//hand.content.dy = hand.velocity.y
 		},
 		mouseup: (e) => {
-			hand.content.dx = hand.velocity.x * HAND_RELEASE
-			hand.content.dy = hand.velocity.y * HAND_RELEASE
+			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
+			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
 			hand.content = undefined
 			const x = e.clientX
 			const y = e.clientY
@@ -2819,6 +2826,8 @@ on.load(() => {
 				else changeHandState(HAND.FREE)
 				return
 			}
+			else changeHandState(HAND.FREE)
+			return
 		}
 	}
 
@@ -2866,6 +2875,10 @@ on.load(() => {
 			y = 0,
 			dx = 0,
 			dy = 0,
+			maxX = Infinity,
+			minX = -Infinity,
+			maxY = Infinity,
+			minY = -Infinity,
 			size = 35,
 			colour = Colour.splash(999),
 			children = [],
@@ -2875,7 +2888,7 @@ on.load(() => {
 			construct = () => {},
 			...properties
 		} = {}) => {
-		const atom = {update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		atom.construct(atom)
 		return atom
 	}
@@ -2889,10 +2902,11 @@ on.load(() => {
 	}
 
 	const drawAtom = (atom) => {
+		if (atom.behindChildren) atom.draw(atom)
 		for (const child of atom.children) {
 			drawAtom(child)
 		}
-		atom.draw(atom)
+		if (!atom.behindChildren) atom.draw(atom)
 	}
 
 	const deleteAtom = (atom) => {
@@ -2915,13 +2929,15 @@ on.load(() => {
 	// including children
 	const isAtomOverlapping = (atom, x, y) => {
 		
-		if (atom.overlaps(atom, x, y)) return atom
+		if (!atom.behindChildren && atom.overlaps(atom, x, y)) return atom
 		
 		for (let i = atom.children.length-1; i >= 0; i--) {
 			const child = atom.children[i]
 			const result = isAtomOverlapping(child, x, y)
 			if (result) return result
 		}
+		
+		if (atom.behindChildren && atom.overlaps(atom, x, y)) return atom
 	}
 
 	const grabAtom = (atom, x, y) => {
@@ -2956,6 +2972,11 @@ on.load(() => {
 		if (grabbed.parent === COLOURTODE_BASE_PARENT) {
 			deleteAtom(grabbed)
 			registerAtom(grabbed)
+		}
+		else {
+			const childId = grabbed.parent.children.indexOf(grabbed)
+			grabbed.parent.children.splice(childId, 1)
+			grabbed.parent.children.push(grabbed)
 		}
 
 		return grabbed
@@ -3229,6 +3250,8 @@ on.load(() => {
 
 	const CHANNEL_HEIGHT = 21
 	const COLOURTODE_PICKER_CHANNEL = {
+		
+		behindChildren: true,
 		hasBorder: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -3261,7 +3284,6 @@ on.load(() => {
 			if (atom.expanded) {
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
-
 					atom.updateColours(atom)
 				}
 			}
@@ -3308,11 +3330,7 @@ on.load(() => {
 		click: (atom) => {
 			if (!atom.expanded) {
 				atom.expanded = true
-
-
 				atom.createOptions(atom)
-
-
 			}
 			else {
 				atom.expanded = false
@@ -3409,6 +3427,12 @@ on.load(() => {
 				option.updateColours(option)
 				atom.options.push(option)
 			}
+
+			atom.selectionTop.minY = top - atom.selectionTop.height
+			atom.selectionTop.maxY = top + 10 * optionSpacing - (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2
+
+			atom.selectionBottom.minY = top - atom.selectionTop.height
+			atom.selectionBottom.maxY = top + 10 * optionSpacing - (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2
 			
 			atom.updateColours(atom)
 		}
@@ -3428,6 +3452,7 @@ on.load(() => {
 		cursor: (atom) => {
 			return atom.parent.expanded? "ns-resize" : "pointer"
 		},
+		dragLockX: true,
 	}
 
 	const COLOURTODE_PICKER_CHANNEL_OPTION = {
