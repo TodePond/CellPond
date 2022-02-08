@@ -150,7 +150,7 @@ const state = {
 		count: 4096 * 0.25,
 		dynamic: false,
 		//aer: 1.0,
-		redraw: 1.0,
+		redraw: 2.0,
 		redrawRepeatScore: 0.5,
 		redrawRepeatPenalty: 0.0,
 	},
@@ -3212,45 +3212,7 @@ on.load(() => {
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
 
-					let parentR = undefined
-					let parentG = undefined
-					let parentB = undefined
-
-					if (atom.parent.isSquare) {
-
-						const redNumber = atom.parent.value.channels[0]
-						const greenNumber = atom.parent.value.channels[1]
-						const blueNumber = atom.parent.value.channels[2]
-
-						parentR = makeNumber({values: [...redNumber.values], channel: 0})
-						parentG = makeNumber({values: [...greenNumber.values], channel: 1})
-						parentB = makeNumber({values: [...blueNumber.values], channel: 2})
-					}
-					else {
-						const values = [true, false, false, false, false, false, false, false, false, false]
-						parentR = makeNumber({values: [...values], channel: 0})
-						parentG = makeNumber({values: [...values], channel: 1})
-						parentB = makeNumber({values: [...values], channel: 2})
-					}
-
-					const parentChannels = [parentR, parentG, parentB]
-					const mainParentChannel = parentChannels[atom.value.channel]
-					mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
-
-					for (let i = 0; i < 10; i++) {
-
-						mainParentChannel.values[9-i] = true
-						if (i > 0) mainParentChannel.values[9-i+1] = false
-
-						const baseArray = makeArray({channels: parentChannels})
-
-						const colours = getSplashesArrayFromArray(baseArray)
-
-						const option = atom.options[i]
-						option.colours = colours
-						option.colourTicker = Infinity
-						//option.needsColoursUpdate = true
-					}
+					atom.updateColours(atom)
 				}
 			}
 
@@ -3297,47 +3259,109 @@ on.load(() => {
 			if (!atom.expanded) {
 				atom.expanded = true
 
-				atom.options = []
 
-				let startId = undefined
-				let endId = undefined
+				atom.createOptions(atom)
 
-				for (let i = 0; i < atom.value.values.length; i++) {
-					const value = atom.value.values[i]
-					if (value) {
-						if (startId === undefined) startId = i
-						endId = i
-					}
-				}
-
-				if (startId === undefined) throw new Error("[ColourTode] Number cannot be NOTHING. Please let @TodePond know if you see this error!")
-				const centerOptionId = 9 - Math.round((endId + startId) / 2)
-				
-				const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
-				const top = startId * optionSpacing - (9 * optionSpacing)
-
-				for (let i = 0; i < 10; i++) {
-					if (centerOptionId === i) {
-						atom.options.push(atom)
-						continue
-					}
-					const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
-					option.y = top + i * optionSpacing
-					atom.options.push(option)
-				}
-
-				atom.needsColoursUpdate = true
 
 			}
 			else {
 				atom.expanded = false
-				for (const option of atom.options) {
-					if (atom !== option) deleteChild(atom, option)
-				}
-				atom.needsColoursUpdate = true
+				atom.deleteOptions(atom)
 			}
 		},
+
+		deleteOptions: (atom) => {
+
+			for (const option of atom.options) {
+				if (atom !== option) deleteChild(atom, option)
+			}
+			atom.needsColoursUpdate = true
+			atom.colourTicker = Infinity
+		},
+
+		updateColours: (atom) => {
+			let parentR = undefined
+			let parentG = undefined
+			let parentB = undefined
+
+			if (atom.parent.isSquare) {
+
+				const redNumber = atom.parent.value.channels[0]
+				const greenNumber = atom.parent.value.channels[1]
+				const blueNumber = atom.parent.value.channels[2]
+
+				parentR = makeNumber({values: [...redNumber.values], channel: 0})
+				parentG = makeNumber({values: [...greenNumber.values], channel: 1})
+				parentB = makeNumber({values: [...blueNumber.values], channel: 2})
+			}
+			else {
+				const values = [true, false, false, false, false, false, false, false, false, false]
+				parentR = makeNumber({values: [...values], channel: 0})
+				parentG = makeNumber({values: [...values], channel: 1})
+				parentB = makeNumber({values: [...values], channel: 2})
+			}
+
+			const parentChannels = [parentR, parentG, parentB]
+			const mainParentChannel = parentChannels[atom.value.channel]
+			mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
+
+			for (let i = 0; i < 10; i++) {
+
+				mainParentChannel.values[9-i] = true
+				if (i > 0) mainParentChannel.values[9-i+1] = false
+
+				const baseArray = makeArray({channels: parentChannels})
+
+				const colours = getSplashesArrayFromArray(baseArray)
+
+				const option = atom.options[i]
+				option.colours = colours
+				option.colourTicker = Infinity
+				//option.needsColoursUpdate = true
+			}
+		},
+
+		createOptions: (atom) => {
+
+
+			atom.options = []
+
+			let startId = undefined
+			let endId = undefined
+	
+			for (let i = 0; i < atom.value.values.length; i++) {
+				const value = atom.value.values[i]
+				if (value) {
+					if (startId === undefined) startId = i
+					endId = i
+				}
+			}
+	
+			if (startId === undefined) throw new Error("[ColourTode] Number cannot be NOTHING. Please let @TodePond know if you see this error!")
+			const centerOptionId = 9 - Math.round((endId + startId) / 2)
+			
+			const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+			const top = startId * optionSpacing - (9 * optionSpacing)
+	
+			for (let i = 0; i < 10; i++) {
+				if (centerOptionId === i) {
+					atom.options.push(atom)
+					continue
+				}
+				const option = createChild(atom, COLOURTODE_PICKER_CHANNEL_OPTION)
+				option.y = top + i * optionSpacing
+				option.value = 9 - i
+				//option.colourTicker = Infinity
+				//option.needsColoursUpdate = true
+				option.updateColours(option)
+				atom.options.push(option)
+			}
+			
+			atom.updateColours(atom)
+		}
 	}
+
+	
 
 	const COLOURTODE_CHANNEL_SELECTION_END = {
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -3361,31 +3385,47 @@ on.load(() => {
 		grab: (atom) => atom.parent,
 		
 		colourTicker: Infinity,
-		colours: [Colour.splash(999)],
+		colours: [999],
 		colourId: 0,
 		dcolourId: 1,
 		update: (atom) => {
 			if (atom.colourTicker >= 40 / atom.colours.length) {
 				atom.colourTicker = 0
 
-				atom.colourId += atom.dcolourId
-				if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
-					atom.dcolourId *= -1
-				}
-				if (atom.colourId >= atom.colours.length) {
-					atom.dcolourId = -1
-					atom.colourId = atom.colours.length-1
-				}
-				if (atom.colourId < 0) {
-					atom.dcolourId = 1
-					atom.colourId = 0
-				}
-				atom.colour = Colour.splash(atom.colours[atom.colourId])
+				atom.updateColours(atom)
 
 			} else {
 				atom.colourTicker++
 			}
 		},
+
+		updateColours: (atom) => {
+			atom.colourId += atom.dcolourId
+			if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
+				atom.dcolourId *= -1
+			}
+			if (atom.colourId >= atom.colours.length) {
+				atom.dcolourId = -1
+				atom.colourId = atom.colours.length-1
+			}
+			if (atom.colourId < 0) {
+				atom.dcolourId = 1
+				atom.colourId = 0
+			}
+			atom.colour = Colour.splash(atom.colours[atom.colourId])
+		},
+
+
+		click: (atom) => {
+			const values = [false, false, false, false, false, false, false, false, false, false]
+			values[atom.value] = true
+			const number = makeNumber({values, channel: atom.parent.value.channel})
+			const parent = atom.parent
+			parent.value = number
+			parent.deleteOptions(parent)
+			parent.createOptions(parent)
+			parent.updateColours(parent)
+		}
 	}
 
 	//====================//
