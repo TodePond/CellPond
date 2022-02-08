@@ -3026,39 +3026,65 @@ on.load(() => {
 			if (!atom.expanded) {
 				atom.expanded = true
 
-				const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
-				atom.pickerPad = pickerPad
-
-				const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-				red.x += COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
-				red.value = atom.value.channels[0]
-				red.needsColoursUpdate = true
-				red.grab = () => atom
-				atom.red = red
-
-				const green = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-				green.x += 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-				green.value = atom.value.channels[1]
-				green.needsColoursUpdate = true
-				green.grab = () => atom
-				atom.green = green
-
-				const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-				blue.x += 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-				blue.value = atom.value.channels[2]
-				blue.needsColoursUpdate = true
-				blue.grab = () => atom
-				atom.blue = blue
+				atom.createPicker(atom)
 
 			}
 			else {
 				atom.expanded = false
-				deleteChild(atom, atom.pickerPad)
-				deleteChild(atom, atom.red)
-				deleteChild(atom, atom.green)
-				deleteChild(atom, atom.blue)
+				atom.deletePicker(atom)
 			}
 		},
+
+		createPicker: (atom) => {
+			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
+			atom.pickerPad = pickerPad
+
+			const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+			red.x += COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
+			red.value = atom.value.channels[0]
+			red.needsColoursUpdate = true
+			red.grab = () => atom
+			atom.red = red
+			if (atom.redExpanded) atom.red.click(atom.red)
+
+			const green = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+			green.x += 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+			green.value = atom.value.channels[1]
+			green.needsColoursUpdate = true
+			green.grab = () => atom
+			atom.green = green
+			if (atom.greenExpanded) atom.green.click(atom.green)
+
+			const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+			blue.x += 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+			blue.value = atom.value.channels[2]
+			blue.needsColoursUpdate = true
+			blue.grab = () => atom
+			atom.blue = blue
+			if (atom.blueExpanded) atom.blue.click(atom.blue)
+		},
+
+		deletePicker: (atom) => {
+			deleteChild(atom, atom.pickerPad)
+			deleteChild(atom, atom.red)
+			deleteChild(atom, atom.green)
+			deleteChild(atom, atom.blue)
+		},
+
+		receiveNumber: (atom, number, channel = number.channel) => {
+			
+			atom.redExpanded = atom.red.expanded
+			atom.greenExpanded = atom.green.expanded
+			atom.blueExpanded = atom.blue.expanded
+
+			atom.value.channels[channel] = number
+
+			atom.deletePicker(atom)
+			atom.createPicker(atom)
+			atom.needsColoursUpdate = true
+			atom.colourTicker = Infinity
+		},
+
 		construct: (atom) => {
 			atom.needsColoursUpdate = true
 			/*const r = Random.Uint8 % 7 + 3
@@ -3067,7 +3093,8 @@ on.load(() => {
 			const r = Random.Uint8 % 10
 			const g = Random.Uint8 % 10
 			const b = Random.Uint8 % 10
-			atom.value = makeArrayFromSplash(r*100 + g*10 + b)
+			//atom.value = makeArrayFromSplash(r*100 + g*10 + b)
+			atom.value = makeArrayFromSplash(999)
 			
 			atom.colourId = 0
 			atom.dcolourId = 1
@@ -3323,7 +3350,6 @@ on.load(() => {
 
 		createOptions: (atom) => {
 
-
 			atom.options = []
 
 			let startId = undefined
@@ -3360,8 +3386,6 @@ on.load(() => {
 			atom.updateColours(atom)
 		}
 	}
-
-	
 
 	const COLOURTODE_CHANNEL_SELECTION_END = {
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -3425,6 +3449,11 @@ on.load(() => {
 			parent.deleteOptions(parent)
 			parent.createOptions(parent)
 			parent.updateColours(parent)
+
+			if (parent.parent !== COLOURTODE_BASE_PARENT) {
+				const square = parent.parent
+				square.receiveNumber(square, number, number.channel)
+			}
 		}
 	}
 
