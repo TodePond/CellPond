@@ -3234,10 +3234,11 @@ on.load(() => {
 		dragOnly: true,
 	}
 
-	const CHANNEL_HEIGHT = 21
+	const CHANNEL_HEIGHT = 25
+	const OPTION_SPACING = CHANNEL_HEIGHT + 10
 	const COLOURTODE_PICKER_CHANNEL = {
 		
-		behindChildren: true,
+		//behindChildren: true,
 		hasBorder: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -3256,13 +3257,51 @@ on.load(() => {
 			atom.dcolourId = 1
 			atom.colourTicker = Infinity
 
+			atom.selectionBack = createChild(atom, COLOURTODE_CHANNEL_SELECTION_SIDE)
+
 			const selectionTop = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
 			atom.selectionTop = selectionTop
-			selectionTop.y = -selectionTop.height
 
 			const selectionBottom = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
 			atom.selectionBottom = selectionBottom
-			selectionBottom.y = atom.height
+
+			atom.positionSelection(atom)
+		},
+
+		positionSelection: (atom, start, end, top, bottom) => {
+			if (!atom.expanded) {
+				atom.selectionBack.x = -COLOURTODE_CHANNEL_SELECTION_END.height
+				atom.selectionBack.height = atom.height
+				atom.selectionBack.width = atom.width + COLOURTODE_CHANNEL_SELECTION_END.height*2
+
+				atom.selectionTop.y = -atom.selectionTop.height
+				//atom.selectionTop.x = -atom.selectionTop.height
+				
+				atom.selectionBottom.y = atom.height
+				//atom.selectionBottom.x = -atom.selectionBottom.height
+			}
+			
+			else {
+				//const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+				const optionSpacing = OPTION_SPACING
+
+				atom.selectionTop.minY = top - atom.selectionTop.height
+				atom.selectionTop.maxY = end - atom.selectionTop.height
+
+				atom.selectionBottom.minY = start - atom.selectionBottom.height + optionSpacing
+				atom.selectionBottom.maxY = bottom - atom.selectionBottom.height + optionSpacing
+
+			}
+
+			// bring selectors to front!
+			const selectionTopId = atom.children.indexOf(atom.selectionTop)
+			atom.children.splice(selectionTopId, 1)
+			atom.children.push(atom.selectionTop)
+
+			const selectionBottomId = atom.children.indexOf(atom.selectionBottom)
+			atom.children.splice(selectionBottomId, 1)
+			atom.children.push(atom.selectionBottom)
+
 		},
 
 		update: (atom) => {
@@ -3331,6 +3370,7 @@ on.load(() => {
 			}
 			atom.needsColoursUpdate = true
 			atom.colourTicker = Infinity
+			atom.positionSelection(atom)
 		},
 
 		updateColours: (atom) => {
@@ -3393,8 +3433,10 @@ on.load(() => {
 			if (startId === undefined) throw new Error("[ColourTode] Number cannot be NOTHING. Please let @TodePond know if you see this error!")
 			const centerOptionId = 9 - Math.round((endId + startId) / 2)
 			
-			const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+			//const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
+			const optionSpacing = OPTION_SPACING
 			const top = startId * optionSpacing - (9 * optionSpacing)
+			const bottom = startId * optionSpacing
 	
 			for (let i = 0; i < 10; i++) {
 				if (centerOptionId === i) {
@@ -3414,11 +3456,7 @@ on.load(() => {
 				atom.options.push(option)
 			}
 
-			atom.selectionTop.minY = top - atom.selectionTop.height
-			atom.selectionTop.maxY = top + 10 * optionSpacing - (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2
-
-			atom.selectionBottom.minY = top - atom.selectionTop.height
-			atom.selectionBottom.maxY = top + 10 * optionSpacing - (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2
+			atom.positionSelection(atom, top + (9-startId) * optionSpacing, top + (9-endId) * optionSpacing, top, bottom)
 			
 			atom.updateColours(atom)
 		}
@@ -3436,7 +3474,7 @@ on.load(() => {
 				}
 			}
 
-			colourTodeContext.fillStyle = "#000000"
+			/*colourTodeContext.fillStyle = "#000000"
 			colourTodeContext.globalCompositeOperation = "lighten"
 			colourTodeContext.fillRect(x, y, atom.width, atom.height)
 			colourTodeContext.globalCompositeOperation = "source-over"
@@ -3449,13 +3487,22 @@ on.load(() => {
 			const H = Math.round(atom.height)
 
 			colourTodeContext.drawImage(colourTodeCanvas, X, Y, W, H, X, Y, W, H)
-			colourTodeContext.filter = "none"
+			colourTodeContext.filter = "none"*/
+
+			const X = Math.round(x)
+			const Y = Math.round(y)
+			const W = Math.round(atom.width)
+			const H = Math.round(atom.height)
+
+			colourTodeContext.fillStyle = Colour.Grey
+			colourTodeContext.fillRect(X, Y, W, H)
 			
 		},
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
-		height: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
-		width: COLOURTODE_SQUARE.size,
+		height: OPTION_SPACING - CHANNEL_HEIGHT,
+		width: COLOURTODE_SQUARE.size + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)*2,
+		x: COLOURTODE_SQUARE.size - (COLOURTODE_SQUARE.size + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)),
 		//grabbable: false,
 		dragOnly: false,
 		grab: (atom) => atom.parent.expanded? atom : atom.parent,
@@ -3464,6 +3511,19 @@ on.load(() => {
 			return atom.parent.expanded? "ns-resize" : "pointer"
 		},
 		dragLockX: true,
+	}
+
+	const COLOURTODE_CHANNEL_SELECTION_SIDE = {
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		width: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
+		height: COLOURTODE_SQUARE.size,
+		//grabbable: false,
+		grab: (atom) => atom.parent,
+		touch: (atom) => atom.parent,
+		dragLockX: true,
+		draw: COLOURTODE_RECTANGLE.draw,
+		colour: Colour.Grey,
 	}
 
 	const COLOURTODE_PICKER_CHANNEL_OPTION = {
@@ -3533,6 +3593,8 @@ on.load(() => {
 				const bottomPity = createChild(atom, COLOURTODE_OPTION_PADDING)
 				bottomPity.y = atom.height
 			}
+
+			//TODO: add cursor pity on the sides too
 		}
 	}
 
@@ -3545,7 +3607,7 @@ on.load(() => {
 		touch: (atom) => atom.parent,
 		colour: Colour.Grey,
 		width: COLOURTODE_SQUARE.size,
-		height: COLOURTODE_CHANNEL_SELECTION_END.height / 2,
+		height: OPTION_SPACING - CHANNEL_HEIGHT,
 		y: 0,
 		x: 0,
 		//dragOnly: true,
