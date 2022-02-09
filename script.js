@@ -3013,21 +3013,7 @@ on.load(() => {
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 			colourTodeContext.fillStyle = atom.colour
-			colourTodeContext.fillRect(x, y, atom.width, atom.height)
-
-			if (!atom.hasBorder) return
-			return
-			const top = [x, y, atom.width, BORDER_THICKNESS]
-			const bottom = [x, y+atom.height-BORDER_THICKNESS, atom.width, BORDER_THICKNESS]
-			const right = [x+atom.width-BORDER_THICKNESS, y, BORDER_THICKNESS, atom.height]
-			const left = [x, y, BORDER_THICKNESS, atom.height]
-
-			colourTodeContext.fillStyle = Colour.splash(000)
-			colourTodeContext.fillRect(...top)
-			colourTodeContext.fillRect(...bottom)
-			colourTodeContext.fillRect(...right)
-			colourTodeContext.fillRect(...left)
-
+			colourTodeContext.fillRect(Math.round(x), Math.round(y), Math.round(atom.width), Math.round(atom.height))
 		},
 		offscreen: (atom) => {
 			const {x, y} = getAtomPosition(atom)
@@ -3439,12 +3425,37 @@ on.load(() => {
 	}
 
 	const COLOURTODE_CHANNEL_SELECTION_END = {
-		draw: COLOURTODE_RECTANGLE.draw,
+		draw: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+
+			let colour = "pink"
+			if (atom.parent !== COLOURTODE_BASE_PARENT) {
+				if (atom.parent.parent !== COLOURTODE_BASE_PARENT) {
+					const colours = getSplashesArrayFromArray(atom.parent.parent.value)
+					colour = colours[Random.Uint32 % colours.length]
+				}
+			}
+
+			colourTodeContext.fillStyle = "#000000"
+			colourTodeContext.globalCompositeOperation = "lighten"
+			colourTodeContext.fillRect(x, y, atom.width, atom.height)
+			colourTodeContext.globalCompositeOperation = "source-over"
+
+			colourTodeContext.filter = "invert(1) saturate(0%) brightness(67.5%) contrast(10000%)"
+
+			const X = Math.round(x)
+			const Y = Math.round(y)
+			const W = Math.round(atom.width)
+			const H = Math.round(atom.height)
+
+			colourTodeContext.drawImage(colourTodeCanvas, X, Y, W, H, X, Y, W, H)
+			colourTodeContext.filter = "none"
+			
+		},
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		height: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
 		width: COLOURTODE_SQUARE.size,
-		colour: Colour.Void,
 		//grabbable: false,
 		dragOnly: false,
 		grab: (atom) => atom.parent.expanded? atom : atom.parent,
