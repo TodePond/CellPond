@@ -147,7 +147,7 @@ const state = {
 	},
 
 	speed: {
-		count: 4096 * 0.25,
+		count: 4096 * 0.5,
 		dynamic: false,
 		//aer: 1.0,
 		redraw: 2.0,
@@ -215,10 +215,10 @@ const state = {
 
 	brush: {
 		colour: 999,
-		colour: Colour.Grey.splash,
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
+		colour: Colour.Grey.splash,
 		size: 1,
 	},
 
@@ -2311,17 +2311,42 @@ on.load(() => {
 		],
 	})
 	
-	registerRule(makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
-	registerRule(makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
+	const WATER_DARK_FALL = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: GREY}),
+			makeDiagramCell({x: 0, y: 1, width: 1, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: BLACK}),
+			makeDiagramCell({x: 0, y: 1, width: 1, content: GREY}),
+		],
+	})
+	
+	const WATER_DARK_SLIP = makeDiagram({
+		left: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: GREY}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: BLACK}),
+		],
+		right: [
+			makeDiagramCell({x: 0, y: 0, width: 1, content: BLACK}),
+			makeDiagramCell({x: 1, y: 0, width: 1, content: GREY}),
+		],
+	})
+	
+	//registerRule(makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
+	registerRule(makeRule({steps: [WATER_DARK_FALL], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	registerRule(makeRule({steps: [WATER_DARK_SLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
+
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_FALL], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_SLIDE, WATER_RIGHT_FLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_UNSLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
-	registerRule(makeRule({steps: [WATER_RIGHT_UNSLIPP], transformations: DRAGON_TRANSFORMATIONS.NONE}))
-	registerRule(makeRule({steps: [WATER_RIGHT_UNSLIPC], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_FALL], transformations: DRAGON_TRANSFORMATIONS.X}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_SLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_SLIDE, WATER_RIGHT_FLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_UNSLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_UNSLIPP], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	//registerRule(makeRule({steps: [WATER_RIGHT_UNSLIPC], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 	//registerRule(makeRule({steps: [], transformations: DRAGON_TRANSFORMATIONS.X}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_FALL_CYAN], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_SLIDE_DIAGRAM, WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X}))
@@ -2456,10 +2481,10 @@ on.load(() => {
 
 	//state.brush.colour = RAINBOW_DIAGRAM_2
 	
-	state.brush.colour = WATER_RIGHT
+	/*state.brush.colour = WATER_RIGHT
 	state.brush.colour = Colour.Purple.splash
 	state.brush.colour = Colour.Blue.splash
-	state.brush.colour = Colour.Yellow.splash
+	state.brush.colour = Colour.Yellow.splash*/
 
 	//====================//
 	// COLOURTODE - STATE //
