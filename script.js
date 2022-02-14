@@ -2838,6 +2838,7 @@ on.load(() => {
 		mouseup: (e) => {
 			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
 			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
+			hand.content.drop(hand.content)
 			hand.content = undefined
 			const x = e.clientX
 			const y = e.clientY
@@ -2890,6 +2891,7 @@ on.load(() => {
 			draggable = true,
 			click = () => {}, // Fires when you mouseup a click on the atom
 			drag = () => {}, // Fires when you start dragging the atom
+			drop = () => {}, // Fires when you let go of the atom after a drag
 			draw = () => {},
 			update = () => {},
 			offscreen = () => false,
@@ -2913,7 +2915,7 @@ on.load(() => {
 			construct = () => {},
 			...properties
 		} = {}) => {
-		const atom = {maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		atom.construct(atom)
 		return atom
 	}
@@ -3286,9 +3288,11 @@ on.load(() => {
 
 			const selectionTop = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
 			atom.selectionTop = selectionTop
+			atom.selectionTop.isTop = true
 
 			const selectionBottom = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
 			atom.selectionBottom = selectionBottom
+			atom.selectionBottom.isTop = false
 
 			atom.positionSelection(atom)
 		},
@@ -3304,16 +3308,20 @@ on.load(() => {
 				
 				atom.selectionBottom.y = atom.height
 				//atom.selectionBottom.x = -atom.selectionBottom.height
+
 			}
 			
 			else {
 				//const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
 				const optionSpacing = OPTION_SPACING
 
-				atom.selectionTop.minY = top - atom.selectionTop.height
-				atom.selectionTop.maxY = end - atom.selectionTop.height
+				atom.selectionTop.y = end - atom.selectionTop.height
+				atom.selectionBottom.y = start + optionSpacing - atom.selectionBottom.height
 
-				atom.selectionBottom.minY = start - atom.selectionBottom.height + optionSpacing
+				atom.selectionTop.minY = top - atom.selectionTop.height
+				atom.selectionTop.maxY = atom.selectionBottom.y - optionSpacing
+
+				atom.selectionBottom.minY = atom.selectionTop.y + optionSpacing
 				atom.selectionBottom.maxY = bottom - atom.selectionBottom.height + optionSpacing
 
 			}
@@ -3440,6 +3448,34 @@ on.load(() => {
 			}
 		},
 
+		getCenterId: (atom) => {
+			let startId = undefined
+			let endId = undefined
+	
+			for (let i = 0; i < atom.value.values.length; i++) {
+				const value = atom.value.values[i]
+				if (value) {
+					if (startId === undefined) startId = i
+					endId = i
+				}
+			}
+			return Math.round((endId + startId) / 2)
+		},
+
+		getStartAndEndId: (atom) => {
+			let startId = undefined
+			let endId = undefined
+	
+			for (let i = 0; i < atom.value.values.length; i++) {
+				const value = atom.value.values[i]
+				if (value) {
+					if (startId === undefined) startId = i
+					endId = i
+				}
+			}
+			return [startId, endId]
+		},
+
 		createOptions: (atom) => {
 
 			atom.options = []
@@ -3456,15 +3492,20 @@ on.load(() => {
 			}
 	
 			if (startId === undefined) throw new Error("[ColourTode] Number cannot be NOTHING. Please let @TodePond know if you see this error!")
-			const centerOptionId = 9 - Math.round((endId + startId) / 2)
+			//const centerOptionId = 9 - Math.floor((endId + startId) / 2)
+			const centerOptionId = atom.getCenterId(atom)
 			
 			//const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2)
 			const optionSpacing = OPTION_SPACING
-			const top = startId * optionSpacing - (9 * optionSpacing)
-			const bottom = startId * optionSpacing
-	
+			let top = (centerOptionId - 9) * optionSpacing
+			let bottom = centerOptionId*optionSpacing
+
+			
+			const start = top + (9-startId) * optionSpacing
+			const end = top + (9-endId) * optionSpacing
+
 			for (let i = 0; i < 10; i++) {
-				if (centerOptionId === i) {
+				if (centerOptionId === 9-i) {
 					atom.options.push(atom)
 					continue
 				}
@@ -3481,7 +3522,8 @@ on.load(() => {
 				atom.options.push(option)
 			}
 
-			atom.positionSelection(atom, top + (9-startId) * optionSpacing, top + (9-endId) * optionSpacing, top, bottom)
+
+			atom.positionSelection(atom, start, end, top, bottom)
 			
 			atom.updateColours(atom)
 		}
@@ -3534,6 +3576,36 @@ on.load(() => {
 		touch: (atom) => atom.parent.expanded? atom : atom.parent,
 		cursor: (atom) => {
 			return atom.parent.expanded? "ns-resize" : "pointer"
+		},
+		drop: (atom) => {
+			let distanceFromMiddle = Math.round((atom.y+CHANNEL_HEIGHT/2) / OPTION_SPACING)
+
+			const oldNumber = atom.parent.value
+
+			let [startId, endId] = atom.parent.getStartAndEndId(atom.parent)
+			let centerId = atom.parent.getCenterId(atom.parent)
+
+			if (atom.isTop) {
+				endId = centerId - distanceFromMiddle
+			}
+			if (!atom.isTop) {
+				startId = centerId - (distanceFromMiddle-1)
+			}
+
+			const values = [false, false, false, false, false, false, false, false, false, false]
+			for (let i = startId; i <= endId; i++) {
+				values[i] = true
+			}
+
+			const number = makeNumber({channel: oldNumber.channel, values})
+			atom.parent.value = number
+			atom.parent.deleteOptions(atom.parent)
+			atom.parent.createOptions(atom.parent)
+
+			atom.dx = 0
+			atom.dy = 0
+
+			
 		},
 		dragLockX: true,
 	}
