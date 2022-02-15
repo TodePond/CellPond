@@ -3625,6 +3625,12 @@ on.load(() => {
 			atom.dy = 0
 
 			
+			if (atom.parent.parent !== COLOURTODE_BASE_PARENT) {
+				const square = atom.parent.parent
+				square.receiveNumber(square, number, number.channel)
+			}
+
+			
 		},
 		dragLockX: true,
 	}
@@ -3704,8 +3710,6 @@ on.load(() => {
 			parent.deleteOptions(parent)
 			parent.createOptions(parent)
 			parent.updateColours(parent)
-
-
 
 			if (parent.parent !== COLOURTODE_BASE_PARENT) {
 				const square = parent.parent
