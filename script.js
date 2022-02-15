@@ -3045,7 +3045,14 @@ on.load(() => {
 	//======================//
 	// COLOURTODE - ELEMENT //
 	//======================//
+	const COLOUR_CYCLE_SPEED = 5
+	const COLOUR_CYCLE_LENGTH = 40
 	const BORDER_THICKNESS = 3
+
+	const getColourCycleLength = (atom) => {
+		return Math.max(COLOUR_CYCLE_LENGTH / atom.colours.length, COLOUR_CYCLE_SPEED)
+	}
+
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
@@ -3175,7 +3182,7 @@ on.load(() => {
 				atom.needsColoursUpdate = false
 			}
 
-			if (atom.colourTicker >= 40 / atom.colours.length) {
+			if (atom.colourTicker >= getColourCycleLength(atom)) {
 				atom.colourTicker = 0
 
 				atom.colourId += atom.dcolourId
@@ -3379,7 +3386,7 @@ on.load(() => {
 				atom.colourTicker = Infinity
 			}
 
-			if (atom.colourTicker >= 40 / atom.colours.length) {
+			if (atom.colourTicker >= getColourCycleLength(atom)) {
 				atom.colourTicker = 0
 
 				atom.colourId += atom.dcolourId
@@ -3404,6 +3411,8 @@ on.load(() => {
 		click: (atom) => {
 			if (!atom.expanded) {
 				atom.expanded = true
+				atom.colourId = 0
+				atom.colourTicker = Infinity
 				atom.createOptions(atom)
 			}
 			else {
@@ -3661,7 +3670,7 @@ on.load(() => {
 		colourId: 0,
 		dcolourId: 1,
 		update: (atom) => {
-			if (atom.colourTicker >= 40 / atom.colours.length) {
+			if (atom.colourTicker >= getColourCycleLength(atom)) {
 				atom.colourTicker = 0
 
 				atom.updateColours(atom)
