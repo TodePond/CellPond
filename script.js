@@ -3107,6 +3107,9 @@ on.load(() => {
 				atom.blueExpanded = atom.blue.expanded
 				atom.deletePicker(atom)
 			}
+
+			const diagramCell = makeDiagramCell({content: atom.value})
+			state.brush.colour = makeDiagram({left: [diagramCell]})
 		},
 
 		createPicker: (atom) => {
@@ -3157,6 +3160,9 @@ on.load(() => {
 			atom.createPicker(atom)
 			atom.needsColoursUpdate = true
 			atom.colourTicker = Infinity
+
+			const diagramCell = makeDiagramCell({content: atom.value})
+			state.brush.colour = makeDiagram({left: [diagramCell]})
 		},
 
 		construct: (atom) => {
