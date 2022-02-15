@@ -3646,6 +3646,13 @@ on.load(() => {
 			}
 		},
 
+		getId: (atom) => {			
+			const parent = atom.parent
+			const centerId = parent.getCenterId(parent)
+			const offset = atom.y / OPTION_SPACING
+			return centerId - offset
+		},
+
 		updateColours: (atom) => {
 			atom.colourId += atom.dcolourId
 			if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
@@ -3662,8 +3669,14 @@ on.load(() => {
 			atom.colour = Colour.splash(atom.colours[atom.colourId])
 		},
 
+		touch: (atom) => {
+			const id = atom.getId(atom)
+			if (atom.parent.value.values[id]) return atom.parent
+			return atom
+		},
 
 		click: (atom) => {
+
 			const values = [false, false, false, false, false, false, false, false, false, false]
 			values[atom.value] = true
 			const number = makeNumber({values, channel: atom.parent.value.channel})
@@ -3672,6 +3685,8 @@ on.load(() => {
 			parent.deleteOptions(parent)
 			parent.createOptions(parent)
 			parent.updateColours(parent)
+
+
 
 			if (parent.parent !== COLOURTODE_BASE_PARENT) {
 				const square = parent.parent
