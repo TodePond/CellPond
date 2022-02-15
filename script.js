@@ -2826,11 +2826,20 @@ on.load(() => {
 	HAND.DRAGGING = {
 		cursor: "move",
 		mousemove: (e) => {
+
+			const oldX = hand.content.x
+			const oldY = hand.content.y
+
 			if (!hand.content.dragLockX) hand.content.x = e.clientX + hand.offset.x
 			if (!hand.content.dragLockY) hand.content.y = e.clientY + hand.offset.y
 
 			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
 			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
+
+			const dx = hand.content.x - oldX
+			const dy = hand.content.y - oldY
+
+			hand.content.move(hand.content, dx, dy)
 
 			//hand.content.dx = hand.velocity.x
 			//hand.content.dy = hand.velocity.y
@@ -2891,6 +2900,7 @@ on.load(() => {
 			draggable = true,
 			click = () => {}, // Fires when you mouseup a click on the atom
 			drag = () => {}, // Fires when you start dragging the atom
+			move = () => {}, // Fires when you start or continue dragging the atom //TODO: change this to be whenever the atom moves for any reason
 			drop = () => {}, // Fires when you let go of the atom after a drag
 			draw = () => {},
 			update = () => {},
@@ -2915,7 +2925,7 @@ on.load(() => {
 			construct = () => {},
 			...properties
 		} = {}) => {
-		const atom = {drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		atom.construct(atom)
 		return atom
 	}
@@ -3298,10 +3308,8 @@ on.load(() => {
 		},
 
 		positionSelection: (atom, start, end, top, bottom) => {
+			
 			if (!atom.expanded) {
-				atom.selectionBack.x = -COLOURTODE_CHANNEL_SELECTION_END.height
-				atom.selectionBack.height = atom.height
-				atom.selectionBack.width = atom.width + COLOURTODE_CHANNEL_SELECTION_END.height*2
 
 				atom.selectionTop.y = -atom.selectionTop.height
 				//atom.selectionTop.x = -atom.selectionTop.height
@@ -3323,8 +3331,9 @@ on.load(() => {
 
 				atom.selectionBottom.minY = atom.selectionTop.y + optionSpacing
 				atom.selectionBottom.maxY = bottom - atom.selectionBottom.height + optionSpacing
-
 			}
+
+			atom.positionSelectionBack(atom)
 
 			// bring selectors to front!
 			const selectionTopId = atom.children.indexOf(atom.selectionTop)
@@ -3335,6 +3344,13 @@ on.load(() => {
 			atom.children.splice(selectionBottomId, 1)
 			atom.children.push(atom.selectionBottom)
 
+		},
+
+		positionSelectionBack: (atom) => {
+			atom.selectionBack.x = -COLOURTODE_CHANNEL_SELECTION_END.height
+			atom.selectionBack.y = atom.selectionTop.y
+			atom.selectionBack.height = atom.selectionBottom.y - atom.selectionTop.y
+			atom.selectionBack.width = atom.width + COLOURTODE_CHANNEL_SELECTION_END.height*2
 		},
 
 		update: (atom) => {
@@ -3576,6 +3592,9 @@ on.load(() => {
 		touch: (atom) => atom.parent.expanded? atom : atom.parent,
 		cursor: (atom) => {
 			return atom.parent.expanded? "ns-resize" : "pointer"
+		},
+		move: (atom) => {
+			atom.parent.positionSelectionBack(atom.parent)
 		},
 		drop: (atom) => {
 			let distanceFromMiddle = Math.round((atom.y+CHANNEL_HEIGHT/2) / OPTION_SPACING)
