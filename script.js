@@ -2916,7 +2916,7 @@ on.load(() => {
 			minX = -Infinity,
 			maxY = Infinity,
 			minY = -Infinity,
-			size = 35,
+			size = 40,
 			colour = Colour.splash(999),
 			children = [],
 			parent = COLOURTODE_BASE_PARENT,
@@ -3262,14 +3262,13 @@ on.load(() => {
 			if (top > canvas.height) return true
 			return false
 		},
+		size: COLOURTODE_SQUARE.size,
 	}
 
 	const OPTION_MARGIN = 10
 	const CHANNEL_HEIGHT = COLOURTODE_SQUARE.size.d - OPTION_MARGIN*2
 	const OPTION_SPACING = CHANNEL_HEIGHT + OPTION_MARGIN
 	const SQUARE_OPTION_MARGIN = OPTION_MARGIN
-
-	CHANNEL_HEIGHT.d
 
 	
 
@@ -3783,20 +3782,20 @@ on.load(() => {
 	}
 
 	const addMenuTool = (element) => {
-		const {width = COLOURTODE_SQUARE.size, height = COLOURTODE_SQUARE.size} = element
+		const {width = COLOURTODE_SQUARE.size, height = COLOURTODE_SQUARE.size, size} = element
 		
 		let y = COLOURTODE_PICKER_PAD_MARGIN
 		if (height < COLOURTODE_SQUARE.size) {
 			y += (COLOURTODE_SQUARE.size - height)/2
 		}
-		const atom = makeAtom({...COLOURTODE_TOOL, width, height, x: menuRight, y, element})
+		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: menuRight, y, element})
 		registerAtom(atom)
 		menuRight += width
 		menuRight += 10
 	}
 
 	addMenuTool(COLOURTODE_SQUARE)
-	addMenuTool(COLOURTODE_TRIANGLE)
+	addMenuTool(COLOURTODE_TRIANGLE.d)
 	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
 
