@@ -3797,7 +3797,7 @@ on.load(() => {
 
 	addMenuTool(COLOURTODE_SQUARE)
 	addMenuTool(COLOURTODE_TRIANGLE)
-	addMenuTool(COLOURTODE_PICKER_CHANNEL)
+	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
 
 })
