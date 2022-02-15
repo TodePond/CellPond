@@ -3046,7 +3046,7 @@ on.load(() => {
 	// COLOURTODE - ELEMENT //
 	//======================//
 	const COLOUR_CYCLE_SPEED = 5
-	const COLOUR_CYCLE_LENGTH = 40
+	const COLOUR_CYCLE_LENGTH = 30
 	const BORDER_THICKNESS = 3
 
 	const getColourCycleLength = (atom) => {
@@ -3203,7 +3203,7 @@ on.load(() => {
 
 		},
 
-		size: 35,
+		size: 40,
 		expanded: false,
 	}
 
@@ -3264,22 +3264,31 @@ on.load(() => {
 		},
 	}
 
-	const COLOURTODE_PICKER_PAD_MARGIN = 10
+	const OPTION_MARGIN = 10
+	const CHANNEL_HEIGHT = COLOURTODE_SQUARE.size.d - OPTION_MARGIN*2
+	const OPTION_SPACING = CHANNEL_HEIGHT + OPTION_MARGIN
+	const SQUARE_OPTION_MARGIN = OPTION_MARGIN
+
+	CHANNEL_HEIGHT.d
+
+	
+
+	const COLOURTODE_PICKER_PAD_MARGIN = OPTION_MARGIN
 	const COLOURTODE_PICKER_PAD = {
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		grab: (atom) => atom.parent,
 		colour: Colour.Grey,
-		width: (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN) * 4 + COLOURTODE_PICKER_PAD_MARGIN,
-		height: COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN * 2,
-		y: -COLOURTODE_PICKER_PAD_MARGIN,
-		x: -COLOURTODE_PICKER_PAD_MARGIN,
+		width: COLOURTODE_SQUARE.size + SQUARE_OPTION_MARGIN * 2,
+		height: COLOURTODE_SQUARE.size + SQUARE_OPTION_MARGIN * 2,
+		y: -SQUARE_OPTION_MARGIN,
+		x: -SQUARE_OPTION_MARGIN,
 		dragOnly: true,
 	}
 
-	const CHANNEL_HEIGHT = 25
-	const OPTION_SPACING = CHANNEL_HEIGHT + 10
+	
+
 	const COLOURTODE_PICKER_CHANNEL = {
 		
 		//behindChildren: true,
@@ -3593,8 +3602,8 @@ on.load(() => {
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		height: OPTION_SPACING - CHANNEL_HEIGHT,
-		width: COLOURTODE_SQUARE.size + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)*2,
-		x: COLOURTODE_SQUARE.size - (COLOURTODE_SQUARE.size + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)),
+		width: COLOURTODE_SQUARE.size + OPTION_MARGIN*2,
+		x: - OPTION_MARGIN,
 		//grabbable: false,
 		dragOnly: false,
 		grab: (atom) => atom.parent.expanded? atom : atom.parent,
