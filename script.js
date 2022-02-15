@@ -2781,7 +2781,7 @@ on.load(() => {
 			const y = e.clientY
 			if (hand.content.draggable) {				
 				changeHandState(HAND.DRAGGING)
-				hand.content.drag(hand.content, x, y)
+				hand.content = hand.content.drag(hand.content, x, y)
 				HAND.DRAGGING.mousemove(e)
 				return
 			}
@@ -2899,7 +2899,7 @@ on.load(() => {
 			grabbable = true,
 			draggable = true,
 			click = () => {}, // Fires when you mouseup a click on the atom
-			drag = () => {}, // Fires when you start dragging the atom
+			drag = (a) => a, // Fires when you start dragging the atom
 			move = () => {}, // Fires when you start or continue dragging the atom //TODO: change this to be whenever the atom moves for any reason
 			drop = () => {}, // Fires when you let go of the atom after a drag
 			draw = () => {},
@@ -3272,7 +3272,7 @@ on.load(() => {
 	}
 
 	const OPTION_MARGIN = 10
-	const CHANNEL_HEIGHT = COLOURTODE_SQUARE.size.d - OPTION_MARGIN*2
+	const CHANNEL_HEIGHT = COLOURTODE_SQUARE.size - OPTION_MARGIN*2
 	const OPTION_SPACING = CHANNEL_HEIGHT + OPTION_MARGIN
 	const SQUARE_OPTION_MARGIN = OPTION_MARGIN
 
@@ -3771,6 +3771,27 @@ on.load(() => {
 		//dragOnly: true,
 	}
 
+	const paddles = []
+	const PADDLE = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		colour: Colour.Grey,
+		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*2,
+		dragOnly: true,
+		dragLockY: true,
+	}
+
+	const createPaddle = () => {
+		const paddle = makeAtom(PADDLE)
+		const id = paddles.length
+		paddles.push(paddle)
+		registerAtom(paddle)
+		if (id === 0) {
+			paddle.y = COLOURTODE_SQUARE.size + OPTION_MARGIN*2
+		}
+	}
+
 	//====================//
 	// COLOURTODE - TOOLS //
 	//====================//
@@ -3781,10 +3802,14 @@ on.load(() => {
 		draw: (atom) => atom.element.draw(atom),
 		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
 		grab: (atom, x, y) => {
+			return atom
+		},
+		drag: (atom) => {
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
 			registerAtom(newAtom)
 			return newAtom
-		}
+		},
+		cursor: () => "move",
 	}
 
 	const addMenuTool = (element) => {
@@ -3797,12 +3822,13 @@ on.load(() => {
 		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: menuRight, y, element})
 		registerAtom(atom)
 		menuRight += width
-		menuRight += 10
+		menuRight += OPTION_MARGIN
 	}
 
 	addMenuTool(COLOURTODE_SQUARE)
-	addMenuTool(COLOURTODE_TRIANGLE.d)
+	addMenuTool(COLOURTODE_TRIANGLE)
 	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
+	createPaddle()
 
 })
