@@ -3813,9 +3813,20 @@ on.load(() => {
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		colour: Colour.Grey,
-		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*2,
+		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*4,
 		dragOnly: true,
 		dragLockY: true,
+		x: Math.round(COLOURTODE_SQUARE.size/2),
+	}
+
+	const PADDLE_HANDLE = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		colour: Colour.Grey,
+		size: PADDLE.x,
+		x: -PADDLE.x,
+		y: PADDLE.size/2 - PADDLE.x/2
 	}
 
 	const createPaddle = () => {
@@ -3823,9 +3834,20 @@ on.load(() => {
 		const id = paddles.length
 		paddles.push(paddle)
 		registerAtom(paddle)
+
+		const handle = createChild(paddle, PADDLE_HANDLE)
+		paddle.handle = handle
+
 		if (id === 0) {
-			paddle.y = COLOURTODE_SQUARE.size + OPTION_MARGIN*2
+			paddle.y = COLOURTODE_SQUARE.size + OPTION_MARGIN + COLOURTODE_SQUARE.size/2
 		}
+		
+		setPaddleLimits(paddle)
+	}
+
+	const setPaddleLimits = (paddle) => {
+		paddle.maxX = paddle.handle.width
+		paddle.minX = paddle.handle.width - paddle.width
 	}
 
 	//====================//
