@@ -3807,7 +3807,8 @@ on.load(() => {
 		//dragOnly: true,
 	}
 
-	const paddles = []
+	paddles = []
+	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -3816,17 +3817,14 @@ on.load(() => {
 		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*4,
 		dragOnly: true,
 		dragLockY: true,
-		x: Math.round(COLOURTODE_SQUARE.size/2),
-		construct: (paddle, id) => {
-	
+		x: Math.round(PADDLE_MARGIN), //needed for handle creation
+		y: COLOURTODE_SQUARE.size + OPTION_MARGIN + PADDLE_MARGIN,
+		construct: (paddle) => {
 			const handle = createChild(paddle, PADDLE_HANDLE)
 			paddle.handle = handle
-	
-			if (id === 0) {
-				paddle.y = COLOURTODE_SQUARE.size + OPTION_MARGIN + COLOURTODE_SQUARE.size/2
-			}
-			
 			paddle.setLimits(paddle)
+			paddle.x = paddle.minX
+			paddle.expanded = false
 		},
 
 		setLimits: (paddle) => {
@@ -3841,17 +3839,51 @@ on.load(() => {
 
 			if (distanceFromMax < distanceFromMin) {
 				paddle.x = paddle.maxX
+				paddle.expanded = true
+
+				if (paddles.last === paddle) {
+					createPaddle()
+				}
+
 			} else {
 				paddle.x = paddle.minX
+				paddle.expanded = false
+
+				if (paddles.last !== paddle) {
+					deletePaddle(paddle)
+				}
 			}
 			paddle.dx = 0
 		}
 	}
 
+	const positionPaddles = () => {
+		let previous = undefined
+		for (const paddle of paddles) {
+			if (previous === undefined) {
+				paddle.y = PADDLE.y
+				previous = paddle
+				continue
+			}
+
+			paddle.y = previous.y + previous.height + PADDLE_MARGIN
+			previous = paddle
+		}
+	}
+
+	const deletePaddle = (paddle, id = paddles.indexOf(paddle)) => {
+		paddles.splice(id, 1)
+		deleteAtom(paddle)
+		positionPaddles()
+	}
+
 	const createPaddle = () => {
 		const id = paddles.length
-		const paddle = makeAtom(PADDLE, id)
+		const paddle = makeAtom(PADDLE)
+		
 		paddles.push(paddle)
+		positionPaddles()
+
 		registerAtom(paddle)
 	}
 
