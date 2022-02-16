@@ -3123,6 +3123,11 @@ on.load(() => {
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		touch: (atom) => {
+			const diagramCell = makeDiagramCell({content: atom.value})
+			state.brush.colour = makeDiagram({left: [diagramCell]})
+			return atom
+		},
 		click: (atom) => {
 			if (!atom.expanded) {
 				atom.expanded = true
@@ -3838,6 +3843,12 @@ on.load(() => {
 		drag: (atom) => {
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
 			registerAtom(newAtom)
+			
+			if (newAtom.isSquare) {
+				const diagramCell = makeDiagramCell({content: newAtom.value})
+				state.brush.colour = makeDiagram({left: [diagramCell]})
+			}
+
 			return newAtom
 		},
 		cursor: () => "move",
