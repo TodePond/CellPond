@@ -2924,9 +2924,9 @@ on.load(() => {
 			height = size,
 			construct = () => {},
 			...properties
-		} = {}) => {
+		} = {}, ...args) => {
 		const atom = {move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
-		atom.construct(atom)
+		atom.construct(atom, ...args)
 		return atom
 	}
 
@@ -3817,6 +3817,42 @@ on.load(() => {
 		dragOnly: true,
 		dragLockY: true,
 		x: Math.round(COLOURTODE_SQUARE.size/2),
+		construct: (paddle, id) => {
+	
+			const handle = createChild(paddle, PADDLE_HANDLE)
+			paddle.handle = handle
+	
+			if (id === 0) {
+				paddle.y = COLOURTODE_SQUARE.size + OPTION_MARGIN + COLOURTODE_SQUARE.size/2
+			}
+			
+			paddle.setLimits(paddle)
+		},
+
+		setLimits: (paddle) => {
+			paddle.maxX = paddle.handle.width
+			paddle.minX = paddle.handle.width - paddle.width
+		},
+
+		drop: (paddle) => {
+
+			const distanceFromMax = paddle.maxX - paddle.x
+			const distanceFromMin = paddle.x - paddle.minX
+
+			if (distanceFromMax < distanceFromMin) {
+				paddle.x = paddle.maxX
+			} else {
+				paddle.x = paddle.minX
+			}
+			paddle.dx = 0
+		}
+	}
+
+	const createPaddle = () => {
+		const id = paddles.length
+		const paddle = makeAtom(PADDLE, id)
+		paddles.push(paddle)
+		registerAtom(paddle)
 	}
 
 	const PADDLE_HANDLE = {
@@ -3826,28 +3862,8 @@ on.load(() => {
 		colour: Colour.Grey,
 		size: PADDLE.x,
 		x: -PADDLE.x,
-		y: PADDLE.size/2 - PADDLE.x/2
-	}
-
-	const createPaddle = () => {
-		const paddle = makeAtom(PADDLE)
-		const id = paddles.length
-		paddles.push(paddle)
-		registerAtom(paddle)
-
-		const handle = createChild(paddle, PADDLE_HANDLE)
-		paddle.handle = handle
-
-		if (id === 0) {
-			paddle.y = COLOURTODE_SQUARE.size + OPTION_MARGIN + COLOURTODE_SQUARE.size/2
-		}
-		
-		setPaddleLimits(paddle)
-	}
-
-	const setPaddleLimits = (paddle) => {
-		paddle.maxX = paddle.handle.width
-		paddle.minX = paddle.handle.width - paddle.width
+		y: PADDLE.size/2 - PADDLE.x/2,
+		grab: (atom) => atom.parent,
 	}
 
 	//====================//
