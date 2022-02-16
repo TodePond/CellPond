@@ -3053,11 +3053,41 @@ on.load(() => {
 		return Math.max(COLOUR_CYCLE_LENGTH / atom.colours.length, COLOUR_CYCLE_SPEED)
 	}
 
+	// prepare border colours
+	const borderColours = []
+	for (let i = 0; i < 1000; i++) {
+		const colour = Colour.splash(i)
+		let borderColour = Colour.add(colour, {lightness: -20})
+		/*if (colour.lightness <= Colour.Black.lightness) {
+			borderColour = Colour.add(colour, {lightness: 20})
+		}*/
+		borderColours.push(borderColour)
+	}
+
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
-			colourTodeContext.fillStyle = atom.colour
-			colourTodeContext.fillRect(Math.round(x), Math.round(y), Math.round(atom.width), Math.round(atom.height))
+
+			const X = Math.round(x)
+			const Y = Math.round(y)
+			const W = Math.round(atom.width)
+			const H = Math.round(atom.height)
+
+			if (atom.hasBorder) {
+				colourTodeContext.fillStyle = borderColours[atom.colour.splash]
+				colourTodeContext.fillRect(X, Y, W, H)
+
+				colourTodeContext.fillStyle = atom.colour
+				colourTodeContext.fillRect(X+BORDER_THICKNESS, Y+BORDER_THICKNESS, W-BORDER_THICKNESS*2, H-BORDER_THICKNESS*2)
+			}
+
+			else {
+				colourTodeContext.fillStyle = atom.colour
+				colourTodeContext.fillRect(X, Y, W, H)
+			}
+
+
+
 		},
 		offscreen: (atom) => {
 			const {x, y} = getAtomPosition(atom)
@@ -3678,6 +3708,7 @@ on.load(() => {
 		height: CHANNEL_HEIGHT,
 		width: COLOURTODE_SQUARE.size,
 		grab: (atom) => atom.parent,
+		hasBorder: true,
 		
 		colourTicker: Infinity,
 		colours: [999],
