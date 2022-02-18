@@ -642,10 +642,17 @@ on.load(() => {
 	on.mousewheel((e) => {
 
 		const dy = e.deltaY / 100
+		if (!Keyboard.Control) {
+			doZoom(dy, ...Mouse.position)
+		}
 
-		doZoom(dy, ...Mouse.position)
+		else {
+			PADDLE.scroll -= 50 * dy
+			positionPaddles()
+			e.preventDefault()
+		}
 		
-	})
+	}, {passive: false})
 
 	const doZoom = (dy, centerX, centerY) => {
 
@@ -3086,8 +3093,6 @@ on.load(() => {
 				colourTodeContext.fillRect(X, Y, W, H)
 			}
 
-
-
 		},
 		offscreen: (atom) => {
 			const {x, y} = getAtomPosition(atom)
@@ -3817,6 +3822,7 @@ on.load(() => {
 		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*4,
 		dragOnly: true,
 		dragLockY: true,
+		scroll: 0,
 		x: Math.round(PADDLE_MARGIN), //needed for handle creation
 		y: COLOURTODE_SQUARE.size + OPTION_MARGIN + PADDLE_MARGIN,
 		construct: (paddle) => {
@@ -3861,7 +3867,7 @@ on.load(() => {
 		let previous = undefined
 		for (const paddle of paddles) {
 			if (previous === undefined) {
-				paddle.y = PADDLE.y
+				paddle.y = PADDLE.y + PADDLE.scroll
 				previous = paddle
 				continue
 			}
@@ -3896,6 +3902,32 @@ on.load(() => {
 		x: -PADDLE.x,
 		y: PADDLE.size/2 - PADDLE.x/2,
 		grab: (atom) => atom.parent,
+	}
+
+	const CIRCLE = {
+		draw: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+
+			const X = Math.round(x + atom.width/2)
+			const Y = Math.round(y + atom.height/2)
+			const R = Math.round(atom.width/2)
+
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.beginPath()
+			colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
+			colourTodeContext.fill()
+
+		},
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+	}
+
+	const SYMMETRY_CIRCLE = {
+		draw: CIRCLE.draw,
+		offscreen: CIRCLE.offscreen,
+		overlaps: CIRCLE.overlaps,
+		expanded: false,
+		
 	}
 
 	//====================//
@@ -3939,6 +3971,7 @@ on.load(() => {
 
 	addMenuTool(COLOURTODE_SQUARE)
 	addMenuTool(COLOURTODE_TRIANGLE)
+	addMenuTool(SYMMETRY_CIRCLE)
 	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
 	createPaddle()
