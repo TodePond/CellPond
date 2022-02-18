@@ -3908,9 +3908,17 @@ on.load(() => {
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 
-			const X = Math.round(x + atom.width/2)
-			const Y = Math.round(y + atom.height/2)
-			const R = Math.round(atom.width/2)
+			const X = x + atom.width/2
+			const Y = y + atom.height/2
+			let R = (atom.width/2)
+
+			if (atom.hasBorder) {
+				colourTodeContext.fillStyle = atom.borderColour? atom.borderColour : Colour.Void
+				colourTodeContext.beginPath()
+				colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
+				colourTodeContext.fill()
+				R = (atom.width/2 - BORDER_THICKNESS*1.5)
+			}
 
 			colourTodeContext.fillStyle = atom.colour
 			colourTodeContext.beginPath()
@@ -3920,14 +3928,152 @@ on.load(() => {
 		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		
 	}
+
 
 	const SYMMETRY_CIRCLE = {
 		draw: CIRCLE.draw,
 		offscreen: CIRCLE.offscreen,
 		overlaps: CIRCLE.overlaps,
+		//behindChildren: true,
 		expanded: false,
-		
+		click: (atom) => {
+			if (atom.expanded) {
+				deleteChild(atom, atom.pad)
+				deleteChild(atom, atom.handle)
+				deleteChild(atom, atom.xToggle)
+				deleteChild(atom, atom.yToggle)
+				deleteChild(atom, atom.rToggle)
+				atom.expanded = false
+			}
+
+			else {
+				atom.pad = createChild(atom, SYMMETRY_PAD)
+				atom.handle = createChild(atom, SYMMETRY_HANDLE)
+				atom.expanded = true
+
+				atom.xToggle = createChild(atom, SYMMETRY_TOGGLE_X)
+				atom.yToggle = createChild(atom, SYMMETRY_TOGGLE_Y)
+				atom.rToggle = createChild(atom, SYMMETRY_TOGGLE_R)
+			}
+		},
+		size: COLOURTODE_SQUARE.size,
+		colour: Colour.Grey,
+	}
+
+	const SYMMETRY_PAD = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		dragOnly: true,
+		width: SYMMETRY_CIRCLE.size,
+		x: SYMMETRY_CIRCLE.size + OPTION_MARGIN,
+		height: (SYMMETRY_CIRCLE.size * 3) - OPTION_MARGIN,
+		y: -(SYMMETRY_CIRCLE.size * 3)/3 + OPTION_MARGIN/2,
+		colour: Colour.Grey,
+		grab: (atom) => atom.parent,
+	}
+
+	const SYMMETRY_HANDLE = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		dragOnly: true,
+		width: SYMMETRY_CIRCLE.size/2,
+		x: SYMMETRY_CIRCLE.size/2 + SYMMETRY_CIRCLE.size/4,
+		height: SYMMETRY_CIRCLE.size / 3,
+		y: SYMMETRY_CIRCLE.size/2 - (SYMMETRY_CIRCLE.size / 3)/2,
+		colour: Colour.Grey,
+		grab: (atom) => atom.parent,
+	}
+	
+	const SYMMETRY_TOGGLE_X = {
+		hasBorder: true,
+		borderColour: Colour.Black,
+		colour: Colour.Grey,
+		draw: (atom) => {
+			CIRCLE.draw(atom)
+			
+			const {x, y} = getAtomPosition(atom)
+
+			const W = (atom.size)
+			const H = (BORDER_THICKNESS*1.5)
+			const X = (x)
+			const Y = (y + atom.size/2 - BORDER_THICKNESS*1.5/2)
+
+			colourTodeContext.fillStyle = atom.borderColour
+			colourTodeContext.fillRect(X, Y, W, H)
+		},
+		offscreen: CIRCLE.offscreen,
+		overlaps: CIRCLE.overlaps,
+		expanded: false,
+		click: (atom) => {
+			print("X")
+		},
+		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
+		grab: (atom) => atom.parent,
+		x: SYMMETRY_PAD.x + SYMMETRY_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN)/2,
+		y: SYMMETRY_PAD.y + OPTION_MARGIN/2,
+	}
+	
+	const SYMMETRY_TOGGLE_Y = {
+		hasBorder: true,
+		borderColour: Colour.Black,
+		colour: Colour.Grey,
+		draw: (atom) => {
+			CIRCLE.draw(atom)
+			
+			const {x, y} = getAtomPosition(atom)
+
+			const W = (BORDER_THICKNESS*1.5)
+			const H = (atom.size)
+			const X = (x + atom.size/2 - BORDER_THICKNESS*1.5/2)
+			const Y = (y)
+
+			colourTodeContext.fillStyle = atom.borderColour
+			colourTodeContext.fillRect(X, Y, W, H)
+		},
+		offscreen: CIRCLE.offscreen,
+		overlaps: CIRCLE.overlaps,
+		expanded: false,
+		click: (atom) => {
+			print("X")
+		},
+		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
+		grab: (atom) => atom.parent,
+		x: SYMMETRY_PAD.x + SYMMETRY_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN)/2,
+		y: OPTION_MARGIN/2,
+	}
+	
+	const SYMMETRY_TOGGLE_R = {
+		hasBorder: true,
+		borderColour: Colour.Black,
+		colour: Colour.Grey,
+		draw: (atom) => {
+			CIRCLE.draw(atom)
+			
+			const {x, y} = getAtomPosition(atom)
+
+			let X = (x + atom.size/2)
+			let Y = (y + atom.size/2)
+			let R = atom.size/2 - (BORDER_THICKNESS*1.5)*2
+
+			colourTodeContext.fillStyle = atom.borderColour
+			colourTodeContext.beginPath()
+			colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
+			colourTodeContext.fill()
+		},
+		offscreen: CIRCLE.offscreen,
+		overlaps: CIRCLE.overlaps,
+		expanded: false,
+		click: (atom) => {
+			print("X")
+		},
+		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
+		grab: (atom) => atom.parent,
+		x: SYMMETRY_PAD.x + SYMMETRY_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN)/2,
+		y: SYMMETRY_PAD.y + SYMMETRY_PAD.height - (COLOURTODE_SQUARE.size - OPTION_MARGIN) - OPTION_MARGIN/2,
 	}
 
 	//====================//
