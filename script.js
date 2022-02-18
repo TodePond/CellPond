@@ -3207,14 +3207,16 @@ on.load(() => {
 
 		construct: (atom) => {
 			atom.needsColoursUpdate = true
-			/*const r = Random.Uint8 % 7 + 3
-			const g = Random.Uint8 % 7 + 3
-			const b = Random.Uint8 % 7 + 3*/
-			const r = Random.Uint8 % 10
+			/*const r = Random.Uint8 % 10
 			const g = Random.Uint8 % 10
-			const b = Random.Uint8 % 10
+			const b = Random.Uint8 % 10*/
+			/*const r = Random.Uint8 % 10
+			const g = Random.Uint8 % 10
+			const b = Random.Uint8 % 10*/
 			//atom.value = makeArrayFromSplash(r*100 + g*10 + b)
-			atom.value = makeArrayFromSplash(999)
+			//atom.value = makeArrayFromSplash(555)
+			const splash = TODEPOND_COLOURS[Random.Uint8 % TODEPOND_COLOURS.length]
+			atom.value = makeArrayFromSplash(splash)
 			
 			atom.colourId = 0
 			atom.dcolourId = 1
