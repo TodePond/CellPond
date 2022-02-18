@@ -3931,13 +3931,34 @@ on.load(() => {
 		
 	}
 
+	const SYMMETRY_TOGGLINGS = new Map()
+	SYMMETRY_TOGGLINGS.set(000, DRAGON_TRANSFORMATIONS.NONE)
+	SYMMETRY_TOGGLINGS.set(100, DRAGON_TRANSFORMATIONS.X)
+	SYMMETRY_TOGGLINGS.set(010, DRAGON_TRANSFORMATIONS.Y)
+	SYMMETRY_TOGGLINGS.set(110, DRAGON_TRANSFORMATIONS.XY)
+	SYMMETRY_TOGGLINGS.set(001, DRAGON_TRANSFORMATIONS.R)
+	SYMMETRY_TOGGLINGS.set(111, DRAGON_TRANSFORMATIONS.XYR)
+	SYMMETRY_TOGGLINGS.set(101, DRAGON_TRANSFORMATIONS.XYR)
+	SYMMETRY_TOGGLINGS.set(011, DRAGON_TRANSFORMATIONS.XYR)
+
+	const getXYR = getRGB
 
 	const SYMMETRY_CIRCLE = {
-		draw: CIRCLE.draw,
+		hasBorder: true,
+		draw: (atom) => {
+			CIRCLE.draw(atom)
+			if (atom.value === undefined) return
+			const [x, y, r] = getXYR(atom.value)
+			if (x > 0) SYMMETRY_TOGGLE_X.drawX(atom)
+			if (y > 0) SYMMETRY_TOGGLE_Y.drawY(atom)
+			if (r > 0) SYMMETRY_TOGGLE_R.drawR(atom)
+		},
 		offscreen: CIRCLE.offscreen,
 		overlaps: CIRCLE.overlaps,
 		//behindChildren: true,
 		expanded: false,
+		borderColour: Colour.Grey,
+		value: 000,
 		click: (atom) => {
 			if (atom.expanded) {
 				deleteChild(atom, atom.pad)
@@ -3953,13 +3974,19 @@ on.load(() => {
 				atom.handle = createChild(atom, SYMMETRY_HANDLE)
 				atom.expanded = true
 
+				
+				const [x, y, r] = getXYR(atom.value)
 				atom.xToggle = createChild(atom, SYMMETRY_TOGGLE_X)
 				atom.yToggle = createChild(atom, SYMMETRY_TOGGLE_Y)
 				atom.rToggle = createChild(atom, SYMMETRY_TOGGLE_R)
+
+				if (x > 0) atom.xToggle.value = true
+				if (y > 0) atom.yToggle.value = true
+				if (r > 0) atom.rToggle.value = true
 			}
 		},
 		size: COLOURTODE_SQUARE.size,
-		colour: Colour.Grey,
+		colour: Colour.Silver,
 	}
 
 	const SYMMETRY_PAD = {
@@ -3993,14 +4020,17 @@ on.load(() => {
 		borderColour: Colour.Black,
 		colour: Colour.Grey,
 		draw: (atom) => {
+			atom.colour = atom.value? Colour.Silver : Colour.Grey
 			CIRCLE.draw(atom)
-			
+			atom.drawX(atom)
+		},
+		drawX: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 
 			const W = (atom.size)
-			const H = (BORDER_THICKNESS*1.5)
+			const H = (BORDER_THICKNESS*1.0)
 			const X = (x)
-			const Y = (y + atom.size/2 - BORDER_THICKNESS*1.5/2)
+			const Y = (y + atom.size/2 - BORDER_THICKNESS*1.0/2)
 
 			colourTodeContext.fillStyle = atom.borderColour
 			colourTodeContext.fillRect(X, Y, W, H)
@@ -4009,8 +4039,12 @@ on.load(() => {
 		overlaps: CIRCLE.overlaps,
 		expanded: false,
 		click: (atom) => {
-			print("X")
+			atom.value = !atom.value
+			let [x, y, r] = getXYR(atom.parent.value)
+			x = atom.value? 100 : 0
+			atom.parent.value = x+y+r
 		},
+		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
 		grab: (atom) => atom.parent,
 		x: SYMMETRY_PAD.x + SYMMETRY_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN)/2,
@@ -4022,13 +4056,16 @@ on.load(() => {
 		borderColour: Colour.Black,
 		colour: Colour.Grey,
 		draw: (atom) => {
+			atom.colour = atom.value? Colour.Silver : Colour.Grey
 			CIRCLE.draw(atom)
-			
+			atom.drawY(atom)
+		},
+		drawY: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 
-			const W = (BORDER_THICKNESS*1.5)
+			const W = (BORDER_THICKNESS*1.0)
 			const H = (atom.size)
-			const X = (x + atom.size/2 - BORDER_THICKNESS*1.5/2)
+			const X = (x + atom.size/2 - BORDER_THICKNESS*1.0/2)
 			const Y = (y)
 
 			colourTodeContext.fillStyle = atom.borderColour
@@ -4038,8 +4075,12 @@ on.load(() => {
 		overlaps: CIRCLE.overlaps,
 		expanded: false,
 		click: (atom) => {
-			print("X")
+			atom.value = !atom.value
+			let [x, y, r] = getXYR(atom.parent.value)
+			y = atom.value? 10 : 0
+			atom.parent.value = x+y+r
 		},
+		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
 		grab: (atom) => atom.parent,
 		x: SYMMETRY_PAD.x + SYMMETRY_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN)/2,
@@ -4051,8 +4092,11 @@ on.load(() => {
 		borderColour: Colour.Black,
 		colour: Colour.Grey,
 		draw: (atom) => {
+			atom.colour = atom.value? Colour.Silver : Colour.Grey
 			CIRCLE.draw(atom)
-			
+			atom.drawR(atom)
+		},
+		drawR: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 
 			let X = (x + atom.size/2)
@@ -4063,13 +4107,23 @@ on.load(() => {
 			colourTodeContext.beginPath()
 			colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
 			colourTodeContext.fill()
+			
+			R -= BORDER_THICKNESS
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.beginPath()
+			colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
+			colourTodeContext.fill()
 		},
 		offscreen: CIRCLE.offscreen,
 		overlaps: CIRCLE.overlaps,
 		expanded: false,
 		click: (atom) => {
-			print("X")
+			atom.value = !atom.value
+			let [x, y, r] = getXYR(atom.parent.value)
+			r = atom.value? 1 : 0
+			atom.parent.value = x+y+r
 		},
+		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
 		grab: (atom) => atom.parent,
 		x: SYMMETRY_PAD.x + SYMMETRY_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN)/2,
