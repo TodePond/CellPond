@@ -2627,9 +2627,11 @@ on.load(() => {
 						else changeHandState(HAND.HOVER)
 					}
 					else {
-						if (atom.draggable) {
+						if (atom.grabbable && atom.draggable) {
 							grabAtom(atom, x, y)
 							changeHandState(HAND.DRAGGING)
+							hand.content = hand.content.drag(hand.content, x, y)
+							HAND.DRAGGING.mousemove(e)
 						}
 					}
 				}
@@ -2650,6 +2652,8 @@ on.load(() => {
 			if (Mouse.Left) {
 				grabAtom(atom, mx, my)
 				changeHandState(HAND.DRAGGING)
+				hand.content = hand.content.drag(hand.content, mx, my)
+				return
 			}
 			if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
 			else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
@@ -4037,7 +4041,6 @@ on.load(() => {
 				atom.handle = createChild(atom, SYMMETRY_HANDLE)
 				atom.expanded = true
 
-				
 				const [x, y, r] = getXYR(atom.value)
 				atom.xToggle = createChild(atom, SYMMETRY_TOGGLE_X)
 				atom.yToggle = createChild(atom, SYMMETRY_TOGGLE_Y)
