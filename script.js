@@ -3956,7 +3956,7 @@ on.load(() => {
 	const PIN_HOLE = {
 		locked: false,
 		borderScale: 1/2,
-		borderColour: Colour.Black,
+		borderColour: Colour.Void,
 		draw: (atom) => {
 			if (atom.locked) {
 				atom.hasBorder = true
@@ -3964,13 +3964,13 @@ on.load(() => {
 			}
 			else {
 				atom.hasBorder = false
-				atom.colour = Colour.Black
+				atom.colour = Colour.Void
 			}
 			CIRCLE.draw(atom)
 		},
 		overlaps: CIRCLE.overlaps,
 		offscreen: CIRCLE.offscreen,
-		colour: Colour.Black,
+		colour: Colour.Void,
 		size: PADDLE_HANDLE.size - OPTION_MARGIN/2,
 		y: OPTION_MARGIN/2/2,
 		x: OPTION_MARGIN/2/2,
