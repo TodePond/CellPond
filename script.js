@@ -2946,6 +2946,7 @@ on.load(() => {
 	const getAtom = (x, y) => {
 		for (let i = state.colourTode.atoms.length-1; i >= 0; i--) {
 			const atom = state.colourTode.atoms[i]
+			if (atom.justVisual) continue
 			const result = isAtomOverlapping(atom, x, y)
 			if (result !== undefined) return result
 		}
@@ -3035,6 +3036,7 @@ on.load(() => {
 	const getAtomPosition = (atom) => {
 		const {x, y} = atom
 		if (atom.parent === undefined) return {x, y}
+		if (atom.hasAbsolutePosition) return {x, y}
 		const {x: px, y: py} = getAtomPosition(atom.parent)
 		return {x: x+px, y: y+py}
 	}
@@ -3044,10 +3046,6 @@ on.load(() => {
 	//=======================//
 	const createChild = (parent, element) => {
 		const child = makeAtom(element)
-		return registerChild(parent, child)
-	}
-
-	const registerChild = (parent, child) => {
 		parent.children.push(child)
 		child.parent = parent
 		return child
@@ -3055,8 +3053,25 @@ on.load(() => {
 	
 	const deleteChild = (parent, child) => {
 		const id = parent.children.indexOf(child)
+		if (id === -1) throw new Error(`Can't delete child of atom because I can't find it!`)
 		parent.children.splice(id, 1)
 		child.parent = COLOURTODE_BASE_PARENT
+	}
+	
+	const giveChild = (parent, atom) => {
+		deleteAtom(atom)
+		parent.children.push(atom)
+		atom.parent = parent
+	}
+
+	const freeChild = (parent, child) => {
+		if (hand.content === child) {
+			const {x, y} = getAtomPosition(parent)
+			hand.offset.x += x
+			hand.offset.y += y
+		}
+		deleteChild(parent, child)
+		registerAtom(child)
 	}
 
 	//======================//
@@ -3825,8 +3840,10 @@ on.load(() => {
 	}
 
 	paddles = []
+
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
+		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
@@ -4028,6 +4045,7 @@ on.load(() => {
 		colour: Colour.Black,
 		value: 000,
 		click: (atom) => {
+			
 			if (atom.expanded) {
 				deleteChild(atom, atom.pad)
 				deleteChild(atom, atom.handle)
@@ -4050,9 +4068,96 @@ on.load(() => {
 				if (x > 0) atom.xToggle.value = true
 				if (y > 0) atom.yToggle.value = true
 				if (r > 0) atom.rToggle.value = true
+				
 			}
 		},
 		size: COLOURTODE_SQUARE.size,
+		update: (atom) => {
+			
+			const {x, y} = getAtomPosition(atom)
+
+			const id = state.colourTode.atoms.indexOf(atom)
+			const left = x
+			const top = y
+			const right = x + atom.width
+			const bottom = y + atom.height
+
+			for (const paddle of paddles) {
+				const pid = state.colourTode.atoms.indexOf(paddle)
+				const {x: px, y: py} = getAtomPosition(paddle)
+				const pright = px + paddle.width
+				const ptop = py
+				const pbottom = py + paddle.height
+				if (paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
+					if (atom.highlightPaddle !== undefined) {
+						deleteChild(atom, atom.highlightPaddle)
+						atom.highlightPaddle = undefined
+						atom.highlightedPaddle = undefined
+					}
+
+					atom.highlightPaddle = createChild(atom, HIGHLIGHT)
+					atom.highlightPaddle.width = HIGHLIGHT_THICKNESS
+					atom.highlightPaddle.height = paddle.height
+					atom.highlightPaddle.y = ptop
+					atom.highlightPaddle.x = pright - HIGHLIGHT_THICKNESS/2
+					atom.highlightedPaddle = paddle
+					return
+				}
+
+			}
+
+			if (atom.highlightPaddle !== undefined) {
+				deleteChild(atom, atom.highlightPaddle)
+				atom.highlightPaddle = undefined
+				atom.highlightedPaddle = undefined
+			}
+		},
+		drop: (atom) => {
+
+			if (!atom.attached) {
+				if (atom.highlightedPaddle !== undefined) {
+					const paddle = atom.highlightedPaddle
+					atom.attached = true
+					giveChild(paddle, atom)
+					
+					const {x: px, y: py} = getAtomPosition(paddle)
+					const pright = px + paddle.width
+					const ptop = py
+					const pbottom = py + paddle.height
+					atom.x = paddle.width -atom.width/2
+					atom.y = paddle.height/2 - atom.height/2
+					atom.dx = 0
+					atom.dy = 0
+				}
+			}
+			
+		},
+
+		drag: (atom) => {
+
+			if (atom.attached) {
+				atom.attached = false
+				const {x, y} = getAtomPosition(atom)
+				const paddle = atom.parent
+				freeChild(paddle, atom)
+				/*atom.x = x
+				atom.y = y*/
+			}
+
+			return atom
+		},
+	}
+
+	const HIGHLIGHT_THICKNESS = 3
+	const HIGHLIGHT = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		draggable: false,
+		grabbable: false,
+		justVisual: true,
+		colour: Colour.splash(999),
+		hasAbsolutePosition: true,
 	}
 
 	const SYMMETRY_PAD = {
