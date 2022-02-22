@@ -2627,8 +2627,10 @@ on.load(() => {
 						else changeHandState(HAND.HOVER)
 					}
 					else {
-						grabAtom(atom, x, y)
-						changeHandState(HAND.DRAGGING)
+						if (atom.draggable) {
+							grabAtom(atom, x, y)
+							changeHandState(HAND.DRAGGING)
+						}
 					}
 				}
 				return
@@ -3837,6 +3839,10 @@ on.load(() => {
 			paddle.setLimits(paddle)
 			paddle.x = paddle.minX
 			paddle.expanded = false
+
+			paddle.pinhole = createChild(handle, PIN_HOLE)
+
+
 		},
 
 		setLimits: (paddle) => {
@@ -3900,6 +3906,7 @@ on.load(() => {
 	}
 
 	const PADDLE_HANDLE = {
+		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
@@ -3907,7 +3914,11 @@ on.load(() => {
 		size: PADDLE.x,
 		x: -PADDLE.x,
 		y: PADDLE.size/2 - PADDLE.x/2,
-		grab: (atom) => atom.parent,
+		touch: (atom) => atom.parent,
+		grab: (atom) => {
+			//if (atom.parent.pinhole.locked) return 
+			return atom.parent.pinhole
+		},
 	}
 
 	const CIRCLE = {
@@ -3923,7 +3934,8 @@ on.load(() => {
 				colourTodeContext.beginPath()
 				colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
 				colourTodeContext.fill()
-				R = (atom.width/2 - BORDER_THICKNESS*1.5)
+				let borderScale = atom.borderScale !== undefined? atom.borderScale : 1.0
+				R = (atom.width/2 - BORDER_THICKNESS*1.5 * borderScale)
 			}
 
 			colourTodeContext.fillStyle = atom.colour
@@ -3935,6 +3947,51 @@ on.load(() => {
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		
+	}
+
+	const PIN_HOLE = {
+		locked: false,
+		borderScale: 1/2,
+		borderColour: Colour.Black,
+		draw: (atom) => {
+			if (atom.locked) {
+				atom.hasBorder = true
+				atom.colour = Colour.Grey				
+			}
+			else {
+				atom.hasBorder = false
+				atom.colour = Colour.Black
+			}
+			CIRCLE.draw(atom)
+		},
+		overlaps: CIRCLE.overlaps,
+		offscreen: CIRCLE.offscreen,
+		colour: Colour.Black,
+		size: PADDLE_HANDLE.size - OPTION_MARGIN/2,
+		y: OPTION_MARGIN/2/2,
+		x: OPTION_MARGIN/2/2,
+		click: (atom) => {
+			const handle = atom.parent
+			const paddle = handle.parent
+			if (atom.locked) {
+				atom.locked = false
+				paddle.grabbable = true
+				handle.grabbable = true
+				handle.draggable = true
+				paddle.draggable = true
+				atom.draggable = true
+			} 
+
+			else {
+				atom.locked = true
+				paddle.grabbable = false
+				handle.grabbable = false
+				handle.draggable = false
+				paddle.draggable = false
+				atom.draggable = false
+			}
+		},
+		grab: (atom) => atom.parent.parent,
 	}
 
 	const SYMMETRY_TOGGLINGS = new Map()
