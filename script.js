@@ -3038,6 +3038,10 @@ on.load(() => {
 	//=======================//
 	const createChild = (parent, element) => {
 		const child = makeAtom(element)
+		return registerChild(parent, child)
+	}
+
+	const registerChild = (parent, child) => {
 		parent.children.push(child)
 		child.parent = parent
 		return child
