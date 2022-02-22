@@ -3964,13 +3964,13 @@ on.load(() => {
 			}
 			else {
 				atom.hasBorder = false
-				atom.colour = Colour.Void
+				atom.colour = Colour.Black
 			}
 			CIRCLE.draw(atom)
 		},
 		overlaps: CIRCLE.overlaps,
 		offscreen: CIRCLE.offscreen,
-		colour: Colour.Void,
+		colour: Colour.Black,
 		size: PADDLE_HANDLE.size - OPTION_MARGIN/2,
 		y: OPTION_MARGIN/2/2,
 		x: OPTION_MARGIN/2/2,
@@ -4025,6 +4025,7 @@ on.load(() => {
 		//behindChildren: true,
 		expanded: false,
 		borderColour: Colour.Grey,
+		colour: Colour.Black,
 		value: 000,
 		click: (atom) => {
 			if (atom.expanded) {
@@ -4052,7 +4053,6 @@ on.load(() => {
 			}
 		},
 		size: COLOURTODE_SQUARE.size,
-		colour: Colour.Silver,
 	}
 
 	const SYMMETRY_PAD = {
