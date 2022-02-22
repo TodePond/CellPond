@@ -4082,13 +4082,14 @@ on.load(() => {
 			const right = x + atom.width
 			const bottom = y + atom.height
 
-			for (const paddle of paddles) {
+			if (hand.content === atom) for (const paddle of paddles) {
 				const pid = state.colourTode.atoms.indexOf(paddle)
 				const {x: px, y: py} = getAtomPosition(paddle)
 				const pright = px + paddle.width
 				const ptop = py
 				const pbottom = py + paddle.height
-				if (paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
+
+				if (!paddle.hasSymmetry && paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
 						deleteChild(atom, atom.highlightPaddle)
 						atom.highlightPaddle = undefined
@@ -4120,14 +4121,11 @@ on.load(() => {
 					atom.attached = true
 					giveChild(paddle, atom)
 					
-					const {x: px, y: py} = getAtomPosition(paddle)
-					const pright = px + paddle.width
-					const ptop = py
-					const pbottom = py + paddle.height
 					atom.x = paddle.width -atom.width/2
 					atom.y = paddle.height/2 - atom.height/2
 					atom.dx = 0
 					atom.dy = 0
+					paddle.hasSymmetry = true
 				}
 			}
 			
@@ -4137,11 +4135,9 @@ on.load(() => {
 
 			if (atom.attached) {
 				atom.attached = false
-				const {x, y} = getAtomPosition(atom)
 				const paddle = atom.parent
 				freeChild(paddle, atom)
-				/*atom.x = x
-				atom.y = y*/
+				paddle.hasSymmetry = false
 			}
 
 			return atom
