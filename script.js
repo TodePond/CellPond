@@ -530,8 +530,8 @@ on.load(() => {
 		const length = biggest / WORLD_CELL_SIZE
 
 		if (dx === 0 && dy === 0) {
-			for (let dx = -size; dx <= size; dx += WORLD_CELL_SIZE) {
-				for (let dy = -size; dy <= size; dy += WORLD_CELL_SIZE) {
+			for (let dx = -size/2; dx <= size/2; dx += WORLD_CELL_SIZE) {
+				for (let dy = -size/2; dy <= size/2; dy += WORLD_CELL_SIZE) {
 					points.add([x + dx, y + dy])
 				}
 			}
@@ -541,8 +541,8 @@ on.load(() => {
 			const X = px + ix * i
 			const Y = py + iy * i
 
-			for (let dx = -size; dx <= size; dx += WORLD_CELL_SIZE) {
-				for (let dy = -size; dy <= size; dy += WORLD_CELL_SIZE) {
+			for (let dx = -size/2; dx <= size/2; dx += WORLD_CELL_SIZE) {
+				for (let dy = -size/2; dy <= size/2; dy += WORLD_CELL_SIZE) {
 					points.add([X + dx, Y + dy])
 				}
 			}
@@ -566,6 +566,7 @@ on.load(() => {
 	}
 
 	const brush = (x, y) => {
+
 		let cell = pickCell(x, y)
 		if (cell === undefined) return
 
@@ -642,14 +643,20 @@ on.load(() => {
 	on.mousewheel((e) => {
 
 		const dy = e.deltaY / 100
-		if (!Keyboard.Control) {
-			doZoom(dy, ...Mouse.position)
-		}
 
-		else {
+		if (Keyboard.Control) {
 			PADDLE.scroll -= 50 * dy
 			positionPaddles()
 			e.preventDefault()
+		}
+		
+		else if (Keyboard.Shift) {
+			state.brush.size -= dy
+			if (state.brush.size < 0) state.brush.size = 0
+		}
+
+		else {
+			doZoom(dy, ...Mouse.position)
 		}
 		
 	}, {passive: false})
