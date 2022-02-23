@@ -3855,7 +3855,9 @@ on.load(() => {
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		colour: Colour.Grey,
-		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*4,
+		size: COLOURTODE_SQUARE.size + OPTION_MARGIN*4, //for legacy
+		width: COLOURTODE_SQUARE.size + OPTION_MARGIN*4,
+		height: COLOURTODE_SQUARE.size + OPTION_MARGIN*4,
 		dragOnly: true,
 		dragLockY: true,
 		scroll: 0,
@@ -3869,6 +3871,8 @@ on.load(() => {
 			paddle.expanded = false
 
 			paddle.pinhole = createChild(handle, PIN_HOLE)
+
+			updatePaddleSize(paddle)
 
 
 		},
@@ -3901,6 +3905,17 @@ on.load(() => {
 			}
 			paddle.dx = 0
 		}
+	}
+
+	const updatePaddleSize = (paddle) => {
+		let width = PADDLE.width
+		let height = PADDLE.size
+		
+		if (paddle.hasSymmetry) width += SYMMETRY_CIRCLE.size/4
+
+		paddle.width = width
+		paddle.height = height
+		paddle.setLimits(paddle)
 	}
 
 	const positionPaddles = () => {
@@ -4128,11 +4143,14 @@ on.load(() => {
 					atom.attached = true
 					giveChild(paddle, atom)
 					
+					paddle.hasSymmetry = true
+					updatePaddleSize(paddle)
+					
 					atom.x = paddle.width -atom.width/2
 					atom.y = paddle.height/2 - atom.height/2
 					atom.dx = 0
 					atom.dy = 0
-					paddle.hasSymmetry = true
+
 				}
 			}
 			
@@ -4145,6 +4163,7 @@ on.load(() => {
 				const paddle = atom.parent
 				freeChild(paddle, atom)
 				paddle.hasSymmetry = false
+				updatePaddleSize(paddle)
 			}
 
 			return atom
