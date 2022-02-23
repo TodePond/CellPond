@@ -3113,7 +3113,12 @@ on.load(() => {
 			const H = Math.round(atom.height)
 
 			if (atom.hasBorder) {
-				colourTodeContext.fillStyle = borderColours[atom.colour.splash]
+				if (atom.borderColour === undefined) {
+					colourTodeContext.fillStyle = borderColours[atom.colour.splash]
+				}
+				else {
+					colourTodeContext.fillStyle = atom.borderColour
+				}
 				colourTodeContext.fillRect(X, Y, W, H)
 
 				colourTodeContext.fillStyle = atom.colour
@@ -3281,6 +3286,91 @@ on.load(() => {
 			}
 			else atom.colourTicker++
 
+			const {x, y} = getAtomPosition(atom)
+
+			if (hand.content === atom) {
+
+				const id = state.colourTode.atoms.indexOf(atom)
+				const left = x
+				const top = y
+				const right = x + atom.width
+				const bottom = y + atom.height
+
+				if (atom.highlight !== undefined) {
+					deleteChild(atom, atom.highlight)
+					atom.highlight = undefined
+				}
+
+				for (const paddle of paddles) {
+
+					if (!paddle.expanded) continue
+
+					const pid = state.colourTode.atoms.indexOf(paddle)
+					const {x: px, y: py} = getAtomPosition(paddle)
+					const pleft = px
+					const pright = px + paddle.width
+					const ptop = py
+					const pbottom = py + paddle.height
+
+					if (paddle.cellAtoms.length === 0) {
+						if (left > pright) continue
+						if (right < pleft) continue
+						if (top > pbottom) continue
+						if (bottom < ptop) continue
+
+						atom.highlight = createChild(atom, HIGHLIGHT)
+						atom.highlight.hasBorder = true
+						atom.highlight.colour = Colour.Grey
+						atom.highlight.x = paddle.x + paddle.width/2 - atom.width/2
+						atom.highlight.y = paddle.y + paddle.height/2 - atom.height/2
+
+						atom.highlightedPaddle = paddle
+
+						break
+
+					}
+					
+					else {
+						// TODO: snap onto existing cellAtom!
+					}
+
+				}
+
+
+			}
+
+
+		},
+
+		drop: (atom) => {
+			if (atom.highlight !== undefined) {
+				const paddle = atom.highlightedPaddle
+				atom.attached = true
+				giveChild(paddle, atom)
+				paddle.cellAtoms.push(atom)
+				updatePaddleSize(paddle)
+
+				atom.x = paddle.width/2 - atom.width/2
+				atom.y = paddle.height/2 - atom.height/2
+				atom.dx = 0
+				atom.dy = 0
+			}
+		},
+
+		drag: (atom) => {
+
+			if (atom.attached) {
+				atom.attached = false
+				const paddle = atom.parent
+				freeChild(paddle, atom)
+
+				const id = paddle.cellAtoms.indexOf(atom)
+				paddle.cellAtoms.splice(id, 1)
+
+				updatePaddleSize(paddle)
+			}
+
+			return atom
 		},
 
 		size: 40,
@@ -3861,6 +3951,7 @@ on.load(() => {
 		dragOnly: true,
 		dragLockY: true,
 		scroll: 0,
+		cellAtoms: [],
 		x: Math.round(PADDLE_MARGIN), //needed for handle creation
 		y: COLOURTODE_SQUARE.size + OPTION_MARGIN + PADDLE_MARGIN,
 		construct: (paddle) => {
@@ -3908,10 +3999,13 @@ on.load(() => {
 	}
 
 	const updatePaddleSize = (paddle) => {
+		
 		let width = PADDLE.width
 		let height = PADDLE.size
 		
-		if (paddle.hasSymmetry) width += SYMMETRY_CIRCLE.size/4
+		if (paddle.hasSymmetry) {
+			width += SYMMETRY_CIRCLE.size/4
+		}
 
 		paddle.width = width
 		paddle.height = height
@@ -4114,8 +4208,6 @@ on.load(() => {
 				if (!paddle.hasSymmetry && paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
 						deleteChild(atom, atom.highlightPaddle)
-						atom.highlightPaddle = undefined
-						atom.highlightedPaddle = undefined
 					}
 
 					atom.highlightPaddle = createChild(atom, HIGHLIGHT)
@@ -4179,6 +4271,7 @@ on.load(() => {
 		grabbable: false,
 		justVisual: true,
 		colour: Colour.splash(999),
+		borderColour: Colour.splash(999),
 		hasAbsolutePosition: true,
 	}
 
