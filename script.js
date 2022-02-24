@@ -3026,8 +3026,12 @@ on.load(() => {
 		grabbed.dx = 0
 		grabbed.dy = 0
 
-		//if (grabbed.behind) return grabbed
+		bringAtomToFront(grabbed)
 
+		return grabbed
+	}
+
+	const bringAtomToFront = (grabbed) => {
 		// If atom isn't a child, bring it to the top level
 		if (grabbed.parent === COLOURTODE_BASE_PARENT) {
 			deleteAtom(grabbed)
@@ -3037,9 +3041,8 @@ on.load(() => {
 			const childId = grabbed.parent.children.indexOf(grabbed)
 			grabbed.parent.children.splice(childId, 1)
 			grabbed.parent.children.push(grabbed)
+			bringAtomToFront(grabbed.parent)
 		}
-
-		return grabbed
 	}
 
 	const getAtomPosition = (atom) => {
@@ -3192,8 +3195,8 @@ on.load(() => {
 		},
 
 		createPicker: (atom) => {
-			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
-			atom.pickerPad = pickerPad
+			//const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
+			//atom.pickerPad = pickerPad
 
 			const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
 			red.x += COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
@@ -3221,7 +3224,7 @@ on.load(() => {
 		},
 
 		deletePicker: (atom) => {
-			deleteChild(atom, atom.pickerPad)
+			//deleteChild(atom, atom.pickerPad)
 			deleteChild(atom, atom.red)
 			deleteChild(atom, atom.green)
 			deleteChild(atom, atom.blue)
@@ -3323,8 +3326,8 @@ on.load(() => {
 						atom.highlight = createChild(atom, HIGHLIGHT)
 						atom.highlight.hasBorder = true
 						atom.highlight.colour = Colour.Grey
-						atom.highlight.x = paddle.x + paddle.width/2 - atom.width/2
-						atom.highlight.y = paddle.y + paddle.height/2 - atom.height/2
+						atom.highlight.x = paddle.x + PADDLE.width/2 - atom.width/2
+						atom.highlight.y = paddle.y + PADDLE.height/2 - atom.height/2
 
 						atom.highlightedPaddle = paddle
 
@@ -3352,8 +3355,8 @@ on.load(() => {
 				paddle.cellAtoms.push(atom)
 				updatePaddleSize(paddle)
 
-				atom.x = paddle.width/2 - atom.width/2
-				atom.y = paddle.height/2 - atom.height/2
+				atom.x = PADDLE.width/2 - atom.width/2
+				atom.y = PADDLE.height/2 - atom.height/2
 				atom.dx = 0
 				atom.dy = 0
 			}
@@ -3942,7 +3945,6 @@ on.load(() => {
 
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
-		behind: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -4009,7 +4011,7 @@ on.load(() => {
 		let height = PADDLE.size
 		
 		if (paddle.hasSymmetry) {
-			width += SYMMETRY_CIRCLE.size/4
+			width += SYMMETRY_CIRCLE.size/3
 		}
 
 		paddle.width = width
