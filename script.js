@@ -3026,6 +3026,8 @@ on.load(() => {
 		grabbed.dx = 0
 		grabbed.dy = 0
 
+		//if (grabbed.behind) return grabbed
+
 		// If atom isn't a child, bring it to the top level
 		if (grabbed.parent === COLOURTODE_BASE_PARENT) {
 			deleteAtom(grabbed)
@@ -3940,6 +3942,7 @@ on.load(() => {
 
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
+		behind: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -3951,10 +3954,12 @@ on.load(() => {
 		dragOnly: true,
 		dragLockY: true,
 		scroll: 0,
-		cellAtoms: [],
 		x: Math.round(PADDLE_MARGIN), //needed for handle creation
 		y: COLOURTODE_SQUARE.size + OPTION_MARGIN + PADDLE_MARGIN,
 		construct: (paddle) => {
+
+			paddle.cellAtoms = []
+
 			const handle = createChild(paddle, PADDLE_HANDLE)
 			paddle.handle = handle
 			paddle.setLimits(paddle)
