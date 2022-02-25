@@ -3376,7 +3376,7 @@ on.load(() => {
 				
 				updatePaddleSize(paddle)
 				if (paddle.pinhole.locked) {
-					atom.unexpand(atom)
+					if (atom.expanded) atom.unexpand(atom)
 				}
 
 			}
@@ -4197,6 +4197,12 @@ on.load(() => {
 						cellAtom.unexpand(cellAtom)
 					}
 				}
+
+				if (paddle.hasSymmetry) {
+					if (paddle.symmetryCircle.expanded) {
+						paddle.symmetryCircle.unexpand(paddle.symmetryCircle)
+					}
+				}
 			}
 
 			updatePaddleRule(paddle)
@@ -4236,30 +4242,41 @@ on.load(() => {
 		click: (atom) => {
 			
 			if (atom.expanded) {
-				deleteChild(atom, atom.pad)
-				deleteChild(atom, atom.handle)
-				deleteChild(atom, atom.xToggle)
-				deleteChild(atom, atom.yToggle)
-				deleteChild(atom, atom.rToggle)
-				atom.expanded = false
+				atom.unexpand(atom)
 			}
 
 			else {
-				atom.pad = createChild(atom, SYMMETRY_PAD)
-				atom.handle = createChild(atom, SYMMETRY_HANDLE)
-				atom.expanded = true
 
-				const [x, y, r] = getXYR(atom.value)
-				atom.xToggle = createChild(atom, SYMMETRY_TOGGLE_X)
-				atom.yToggle = createChild(atom, SYMMETRY_TOGGLE_Y)
-				atom.rToggle = createChild(atom, SYMMETRY_TOGGLE_R)
-
-				if (x > 0) atom.xToggle.value = true
-				if (y > 0) atom.yToggle.value = true
-				if (r > 0) atom.rToggle.value = true
-				
+				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
+					atom.expand(atom)	
+				}
 			}
 		},
+
+		expand: (atom) => {
+			atom.pad = createChild(atom, SYMMETRY_PAD)
+			atom.handle = createChild(atom, SYMMETRY_HANDLE)
+			atom.expanded = true
+
+			const [x, y, r] = getXYR(atom.value)
+			atom.xToggle = createChild(atom, SYMMETRY_TOGGLE_X)
+			atom.yToggle = createChild(atom, SYMMETRY_TOGGLE_Y)
+			atom.rToggle = createChild(atom, SYMMETRY_TOGGLE_R)
+
+			if (x > 0) atom.xToggle.value = true
+			if (y > 0) atom.yToggle.value = true
+			if (r > 0) atom.rToggle.value = true
+		},
+
+		unexpand: (atom) => {
+			deleteChild(atom, atom.pad)
+			deleteChild(atom, atom.handle)
+			deleteChild(atom, atom.xToggle)
+			deleteChild(atom, atom.yToggle)
+			deleteChild(atom, atom.rToggle)
+			atom.expanded = false
+		},
+		
 		size: COLOURTODE_SQUARE.size,
 		update: (atom) => {
 			
@@ -4316,6 +4333,10 @@ on.load(() => {
 					atom.y = paddle.height/2 - atom.height/2
 					atom.dx = 0
 					atom.dy = 0
+
+					if (paddle.pinhole.locked && atom.expanded) {
+						atom.unexpand(atom)
+					}
 
 				}
 			}
