@@ -3177,21 +3177,31 @@ on.load(() => {
 		},
 		click: (atom) => {
 			if (!atom.expanded) {
-				atom.expanded = true
 
-				atom.createPicker(atom)
+				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
+					atom.expand(atom)
+				}
 
 			}
 			else {
-				atom.expanded = false
-				atom.redExpanded = atom.red.expanded
-				atom.greenExpanded = atom.green.expanded
-				atom.blueExpanded = atom.blue.expanded
-				atom.deletePicker(atom)
+				atom.unexpand(atom)
 			}
 
 			const diagramCell = makeDiagramCell({content: atom.value})
 			state.brush.colour = makeDiagram({left: [diagramCell]})
+		},
+
+		expand: (atom) => {
+			atom.expanded = true
+			atom.createPicker(atom)
+		},
+
+		unexpand: (atom) => {
+			atom.expanded = false
+			atom.redExpanded = atom.red.expanded
+			atom.greenExpanded = atom.green.expanded
+			atom.blueExpanded = atom.blue.expanded
+			atom.deletePicker(atom)
 		},
 
 		createPicker: (atom) => {
@@ -4178,6 +4188,12 @@ on.load(() => {
 				//handle.draggable = false
 				paddle.draggable = false
 				atom.draggable = false
+
+				for (const cellAtom of paddle.cellAtoms) {
+					if (cellAtom.expanded) {
+						cellAtom.unexpand(cellAtom)
+					}
+				}
 			}
 
 			updatePaddleRule(paddle)
