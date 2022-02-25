@@ -4007,6 +4007,7 @@ on.load(() => {
 
 	const updatePaddleSize = (paddle) => {
 		
+
 		let width = PADDLE.width
 		let height = PADDLE.size
 		
@@ -4017,6 +4018,34 @@ on.load(() => {
 		paddle.width = width
 		paddle.height = height
 		paddle.setLimits(paddle)
+
+		updatePaddleRule(paddle)
+	}
+
+	const updatePaddleRule = (paddle) => {
+
+		let transformations = DRAGON_TRANSFORMATIONS.NONE
+		if (paddle.hasSymmetry) {
+			const [x, y, r] = getXYR(paddle.symmetryCircle.value)
+
+			const isX = x > 0
+			const isY = y > 0
+			const isR = r > 0
+
+			let key = `${isX? "X" : ""}${isY? "Y" : ""}${isR? "R" : ""}`
+			if (key === "") key = "NONE"
+			else if (key === "XR" || key === "YR") key = "XYR"
+
+			transformations = DRAGON_TRANSFORMATIONS[key]
+		}
+		
+		const diagram = makeDiagram({
+			left: [],
+		})
+
+		const locked = paddle.pinhole.locked
+
+		const rule = makeRule({steps: [diagram], transformations, locked})
 	}
 
 	const positionPaddles = () => {
@@ -4134,6 +4163,8 @@ on.load(() => {
 				paddle.draggable = false
 				atom.draggable = false
 			}
+
+			updatePaddleRule(paddle)
 		},
 		grab: (atom) => atom.parent.parent,
 	}
@@ -4243,6 +4274,7 @@ on.load(() => {
 					giveChild(paddle, atom)
 					
 					paddle.hasSymmetry = true
+					paddle.symmetryCircle = atom
 					updatePaddleSize(paddle)
 					
 					atom.x = paddle.width -atom.width/2
@@ -4262,6 +4294,7 @@ on.load(() => {
 				const paddle = atom.parent
 				freeChild(paddle, atom)
 				paddle.hasSymmetry = false
+				paddle.symmetryCircle = undefined
 				updatePaddleSize(paddle)
 			}
 
@@ -4336,6 +4369,9 @@ on.load(() => {
 			let [x, y, r] = getXYR(atom.parent.value)
 			x = atom.value? 100 : 0
 			atom.parent.value = x+y+r
+			const circle = atom.parent
+			const paddle = circle.parent
+			updatePaddleRule(paddle)
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -4372,6 +4408,9 @@ on.load(() => {
 			let [x, y, r] = getXYR(atom.parent.value)
 			y = atom.value? 10 : 0
 			atom.parent.value = x+y+r
+			const circle = atom.parent
+			const paddle = circle.parent
+			updatePaddleRule(paddle)
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -4415,6 +4454,9 @@ on.load(() => {
 			let [x, y, r] = getXYR(atom.parent.value)
 			r = atom.value? 1 : 0
 			atom.parent.value = x+y+r
+			const circle = atom.parent
+			const paddle = circle.parent
+			updatePaddleRule(paddle)
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
