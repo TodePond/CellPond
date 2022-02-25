@@ -4038,6 +4038,10 @@ on.load(() => {
 
 			transformations = DRAGON_TRANSFORMATIONS[key]
 		}
+
+		for (const cellAtom of paddle.cellAtoms) {
+			print(cellAtom)
+		}
 		
 		const diagram = makeDiagram({
 			left: [],
@@ -4370,8 +4374,10 @@ on.load(() => {
 			x = atom.value? 100 : 0
 			atom.parent.value = x+y+r
 			const circle = atom.parent
-			const paddle = circle.parent
-			updatePaddleRule(paddle)
+			if (circle.parent !== COLOURTODE_BASE_PARENT) {
+				const paddle = circle.parent
+				updatePaddleRule(paddle)
+			}
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -4409,8 +4415,10 @@ on.load(() => {
 			y = atom.value? 10 : 0
 			atom.parent.value = x+y+r
 			const circle = atom.parent
-			const paddle = circle.parent
-			updatePaddleRule(paddle)
+			if (circle.parent !== COLOURTODE_BASE_PARENT) {
+				const paddle = circle.parent
+				updatePaddleRule(paddle)
+			}
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -4455,8 +4463,10 @@ on.load(() => {
 			r = atom.value? 1 : 0
 			atom.parent.value = x+y+r
 			const circle = atom.parent
-			const paddle = circle.parent
-			updatePaddleRule(paddle)
+			if (circle.parent !== COLOURTODE_BASE_PARENT) {
+				const paddle = circle.parent
+				updatePaddleRule(paddle)
+			}
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
