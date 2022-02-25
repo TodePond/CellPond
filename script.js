@@ -3243,8 +3243,14 @@ on.load(() => {
 			atom.needsColoursUpdate = true
 			atom.colourTicker = Infinity
 
-			const diagramCell = makeDiagramCell({content: atom.value})
-			state.brush.colour = makeDiagram({left: [diagramCell]})
+			/*const diagramCell = makeDiagramCell({content: atom.value})
+			state.brush.colour = makeDiagram({left: [diagramCell]})*/
+
+			if (atom.parent !== COLOURTODE_BASE_PARENT) {
+				const paddle = atom.parent
+				updatePaddleRule(paddle)
+			}
+
 		},
 
 		construct: (atom) => {
