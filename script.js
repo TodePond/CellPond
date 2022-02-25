@@ -4061,7 +4061,7 @@ on.load(() => {
 
 		const locked = paddle.pinhole.locked
 
-		const rule = makeRule({steps: [diagram], transformations, locked}).d
+		const rule = makeRule({steps: [diagram], transformations, locked})
 	}
 
 	const positionPaddles = () => {
@@ -4103,7 +4103,7 @@ on.load(() => {
 		size: PADDLE.x,
 		x: -PADDLE.x,
 		y: PADDLE.size/2 - PADDLE.x/2,
-		touch: (atom) => atom.parent,
+		touch: (atom) => atom.parent.pinhole,
 		grab: (atom) => {
 			//if (atom.parent.pinhole.locked) return 
 			return atom.parent.pinhole
@@ -4165,8 +4165,8 @@ on.load(() => {
 			if (atom.locked) {
 				atom.locked = false
 				paddle.grabbable = true
-				handle.grabbable = true
-				handle.draggable = true
+				//handle.grabbable = true
+				//handle.draggable = true
 				paddle.draggable = true
 				atom.draggable = true
 			} 
@@ -4174,8 +4174,8 @@ on.load(() => {
 			else {
 				atom.locked = true
 				paddle.grabbable = false
-				handle.grabbable = false
-				handle.draggable = false
+				//handle.grabbable = false
+				//handle.draggable = false
 				paddle.draggable = false
 				atom.draggable = false
 			}
