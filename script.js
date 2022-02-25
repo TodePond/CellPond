@@ -3359,12 +3359,13 @@ on.load(() => {
 				atom.attached = true
 				giveChild(paddle, atom)
 				paddle.cellAtoms.push(atom)
-				updatePaddleSize(paddle)
-
 				atom.x = PADDLE.width/2 - atom.width/2
 				atom.y = PADDLE.height/2 - atom.height/2
 				atom.dx = 0
 				atom.dy = 0
+				
+				updatePaddleSize(paddle)
+
 			}
 		},
 
@@ -4045,17 +4046,22 @@ on.load(() => {
 			transformations = DRAGON_TRANSFORMATIONS[key]
 		}
 
+		const origin = paddle.cellAtoms[0]
+		const left = []
 		for (const cellAtom of paddle.cellAtoms) {
-			print(cellAtom)
+			const x = (cellAtom.x - origin.x) / cellAtom.width
+			const y = (cellAtom.y - origin.y) / cellAtom.height
+			const diagramCell = makeDiagramCell({x, y, content: cellAtom.value})
+			left.push(diagramCell)
 		}
 		
 		const diagram = makeDiagram({
-			left: [],
+			left,
 		})
 
 		const locked = paddle.pinhole.locked
 
-		const rule = makeRule({steps: [diagram], transformations, locked})
+		const rule = makeRule({steps: [diagram], transformations, locked}).d
 	}
 
 	const positionPaddles = () => {
