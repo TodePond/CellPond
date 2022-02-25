@@ -3375,6 +3375,9 @@ on.load(() => {
 				atom.dy = 0
 				
 				updatePaddleSize(paddle)
+				if (paddle.pinhole.locked) {
+					atom.unexpand(atom)
+				}
 
 			}
 		},
