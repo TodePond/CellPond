@@ -2772,7 +2772,10 @@ on.load(() => {
 			if (!atom.grabbable) return
 			grabAtom(atom, e.clientX, e.clientY)
 			
-			if (atom.dragOnly) changeHandState(HAND.DRAGGING)
+			if (atom.dragOnly) {
+				hand.hasStartedDragging = false
+				changeHandState(HAND.DRAGGING)
+			}
 			else changeHandState(HAND.TOUCHING)
 
 		},
@@ -2865,6 +2868,11 @@ on.load(() => {
 		cursor: "move",
 		mousemove: (e) => {
 
+			if (!hand.hasStartedDragging) {
+				hand.hasStartedDragging = true
+				hand.content = hand.content.drag(hand.content, e.clientX, e.clientY)
+			}
+
 			const oldX = hand.content.x
 			const oldY = hand.content.y
 
@@ -2876,13 +2884,13 @@ on.load(() => {
 
 			const dx = hand.content.x - oldX
 			const dy = hand.content.y - oldY
-
 			hand.content.move(hand.content, dx, dy)
 
 			//hand.content.dx = hand.velocity.x
 			//hand.content.dy = hand.velocity.y
 		},
 		mouseup: (e) => {
+			hand.hasStartedDragging = true
 			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
 			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
 			hand.content.drop(hand.content)
@@ -4085,6 +4093,14 @@ on.load(() => {
 				}
 			}
 			paddle.dx = 0
+		},
+
+		drag: (paddle) => {
+			if (paddle.pinhole.locked) {
+				alert("I haven't coded this feature yet.")
+				return paddle
+			}
+			return paddle
 		}
 	}
 
@@ -4136,8 +4152,8 @@ on.load(() => {
 		})
 
 		const locked = paddle.pinhole.locked
-
 		const rule = makeRule({steps: [diagram], transformations, locked})
+		paddle.rule = rule
 	}
 
 	const positionPaddles = () => {
@@ -4242,17 +4258,18 @@ on.load(() => {
 				atom.locked = false
 				paddle.grabbable = true
 				//handle.grabbable = true
-				//handle.draggable = true
+				handle.draggable = true
 				paddle.draggable = true
 				atom.draggable = true
+				//paddle.dragOnly = true
 			} 
 
 			else {
 				atom.locked = true
-				paddle.grabbable = false
+				//paddle.grabbable = false
 				//handle.grabbable = false
-				//handle.draggable = false
-				paddle.draggable = false
+				handle.draggable = false
+				//paddle.draggable = false
 				atom.draggable = false
 
 				for (const cellAtom of paddle.cellAtoms) {
@@ -4266,9 +4283,14 @@ on.load(() => {
 						paddle.symmetryCircle.unexpand(paddle.symmetryCircle)
 					}
 				}
-			}
 
-			updatePaddleRule(paddle)
+				if (paddle.cellAtoms.length === 0) {
+					paddle.grabbable = false
+					paddle.draggable = false
+				}
+				//paddle.dragOnly = false
+				updatePaddleRule(paddle)
+			}
 		},
 		grab: (atom) => atom.parent.parent,
 	}
