@@ -1656,7 +1656,25 @@ on.load(() => {
 		return splashes
 	}
 
-	
+	const cloneDragonArray = (array) => {
+
+		const redValues = [false, false, false, false, false, false, false, false, false, false]
+		const greenValues = [false, false, false, false, false, false, false, false, false, false]
+		const blueValues = [false, false, false, false, false, false, false, false, false, false]
+
+		for (let i = 0; i < 10; i++) {
+			redValues[i] = array.channels[0].values[i]
+			greenValues[i] = array.channels[1].values[i]
+			blueValues[i] = array.channels[2].values[i]
+		}
+
+		const red = makeNumber({values: redValues, channel: 0})
+		const green = makeNumber({values: greenValues, channel: 1})
+		const blue = makeNumber({values: blueValues, channel: 2})
+
+		const clone = makeArray({channels: [red, green, blue]})
+		return clone
+	}
 
 	//================//
 	// DRAGON - SHAPE //
@@ -3414,14 +3432,30 @@ on.load(() => {
 		drag: (atom) => {
 
 			if (atom.attached) {
-				atom.attached = false
+
 				const paddle = atom.parent
+				if (paddle.pinhole.locked) {
+					const {x, y} = getAtomPosition(atom)
+					const clone = makeAtom(COLOURTODE_SQUARE)
+					hand.offset.x -= atom.x - x
+					hand.offset.y -= atom.y - y
+					clone.x = x
+					clone.y = y
+
+					const dragonArray = cloneDragonArray(atom.value)
+					clone.value = dragonArray
+					registerAtom(clone)
+					return clone
+				}
+				
+				atom.attached = false
 				freeChild(paddle, atom)
 
 				const id = paddle.cellAtoms.indexOf(atom)
 				paddle.cellAtoms.splice(id, 1)
 
 				updatePaddleSize(paddle)
+
 			}
 
 			return atom
