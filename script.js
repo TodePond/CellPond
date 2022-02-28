@@ -2943,9 +2943,10 @@ on.load(() => {
 			width = size,
 			height = size,
 			construct = () => {},
+			hasInner = true,
 			...properties
 		} = {}, ...args) => {
-		const atom = {move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {hasInner, move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		atom.construct(atom, ...args)
 		return atom
 	}
@@ -3110,24 +3111,43 @@ on.load(() => {
 
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
-			const {x, y} = getAtomPosition(atom)
+			let {x, y} = getAtomPosition(atom)
 
-			const X = Math.round(x)
-			const Y = Math.round(y)
+			let X = Math.round(x)
+			let Y = Math.round(y)
 			const W = Math.round(atom.width)
 			const H = Math.round(atom.height)
 
 			if (atom.hasBorder) {
-				if (atom.borderColour === undefined) {
-					colourTodeContext.fillStyle = borderColours[atom.colour.splash]
-				}
-				else {
-					colourTodeContext.fillStyle = atom.borderColour
-				}
-				colourTodeContext.fillRect(X, Y, W, H)
 
-				colourTodeContext.fillStyle = atom.colour
-				colourTodeContext.fillRect(X+BORDER_THICKNESS, Y+BORDER_THICKNESS, W-BORDER_THICKNESS*2, H-BORDER_THICKNESS*2)
+				if (atom.hasInner) {
+
+					if (atom.borderColour === undefined) {
+						colourTodeContext.fillStyle = borderColours[atom.colour.splash]
+					}
+					else {
+						colourTodeContext.fillStyle = atom.borderColour
+					}
+					colourTodeContext.fillRect(X, Y, W, H)
+
+					colourTodeContext.fillStyle = atom.colour
+					colourTodeContext.fillRect(X+BORDER_THICKNESS, Y+BORDER_THICKNESS, W-BORDER_THICKNESS*2, H-BORDER_THICKNESS*2)
+				}
+
+				else {
+					if (atom.borderColour === undefined) {
+						colourTodeContext.strokeStyle = borderColours[atom.colour.splash]
+					}
+					else {
+						colourTodeContext.strokeStyle = atom.borderColour
+					}
+
+					X = Math.round(x + 0.5) - 0.5
+					Y = Math.round(y + 0.5) - 0.5
+
+					colourTodeContext.lineWidth = BORDER_THICKNESS
+					colourTodeContext.strokeRect(X, Y, W, H)
+				}
 			}
 
 			else {
@@ -3309,6 +3329,8 @@ on.load(() => {
 
 			const {x, y} = getAtomPosition(atom)
 
+			atom.highlightedPaddle = undefined
+
 			if (hand.content === atom) {
 
 				const id = state.colourTode.atoms.indexOf(atom)
@@ -3321,6 +3343,7 @@ on.load(() => {
 					deleteChild(atom, atom.highlight)
 					atom.highlight = undefined
 				}
+				
 
 				for (const paddle of paddles) {
 
@@ -3342,8 +3365,10 @@ on.load(() => {
 						atom.highlight = createChild(atom, HIGHLIGHT)
 						atom.highlight.hasBorder = true
 						atom.highlight.colour = Colour.Grey
-						atom.highlight.x = paddle.x + PADDLE.width/2 - atom.width/2
-						atom.highlight.y = paddle.y + PADDLE.height/2 - atom.height/2
+						atom.highlight.x = paddle.x
+						atom.highlight.y = paddle.y
+						atom.highlight.width = paddle.width
+						atom.highlight.height = paddle.height
 
 						atom.highlightedPaddle = paddle
 
@@ -3360,6 +3385,10 @@ on.load(() => {
 
 			}
 
+			if (atom.highlightedPaddle === undefined && atom.highlight !== undefined) {
+				deleteChild(atom, atom.highlight)
+				atom.highlight = undefined
+			}
 
 		},
 
@@ -4358,7 +4387,7 @@ on.load(() => {
 		},
 	}
 
-	const HIGHLIGHT_THICKNESS = 3
+	const HIGHLIGHT_THICKNESS = BORDER_THICKNESS
 	const HIGHLIGHT = {
 		draw: COLOURTODE_RECTANGLE.draw,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
@@ -4369,6 +4398,7 @@ on.load(() => {
 		colour: Colour.splash(999),
 		borderColour: Colour.splash(999),
 		hasAbsolutePosition: true,
+		hasInner: false,
 	}
 
 	const SYMMETRY_PAD = {
