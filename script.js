@@ -4411,8 +4411,21 @@ on.load(() => {
 		drag: (atom) => {
 
 			if (atom.attached) {
-				atom.attached = false
 				const paddle = atom.parent
+
+				if (paddle.pinhole.locked) {
+					const clone = makeAtom(SYMMETRY_CIRCLE)
+					clone.value = atom.value
+					const {x, y} = getAtomPosition(atom)
+					hand.offset.x -= atom.x - x
+					hand.offset.y -= atom.y - y
+					clone.x = x
+					clone.y = y
+					registerAtom(clone)
+					return clone
+				}
+
+				atom.attached = false
 				freeChild(paddle, atom)
 				paddle.hasSymmetry = false
 				paddle.symmetryCircle = undefined
