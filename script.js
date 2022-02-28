@@ -3365,7 +3365,7 @@ on.load(() => {
 
 				for (const paddle of paddles) {
 
-					if (!paddle.expanded) continue
+					if (!paddle.expanded || paddle.pinhole.locked) continue
 
 					const pid = state.colourTode.atoms.indexOf(paddle)
 					const {x: px, y: py} = getAtomPosition(paddle)
@@ -4357,6 +4357,8 @@ on.load(() => {
 				const pright = px + paddle.width
 				const ptop = py
 				const pbottom = py + paddle.height
+
+				if (paddle.pinhole.locked) continue
 
 				if (!paddle.hasSymmetry && paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
