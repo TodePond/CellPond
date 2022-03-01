@@ -3355,11 +3355,10 @@ on.load(() => {
 
 			const {x, y} = getAtomPosition(atom)
 
-			atom.highlightedPaddle = undefined
+			atom.highlightedAtom = undefined
 
 			if (hand.content === atom) {
 
-				const id = state.colourTode.atoms.indexOf(atom)
 				const left = x
 				const top = y
 				const right = x + atom.width
@@ -3375,18 +3374,18 @@ on.load(() => {
 
 					if (!paddle.expanded || paddle.pinhole.locked) continue
 
-					const pid = state.colourTode.atoms.indexOf(paddle)
 					const {x: px, y: py} = getAtomPosition(paddle)
 					const pleft = px
 					const pright = px + paddle.width
 					const ptop = py
 					const pbottom = py + paddle.height
+					
+					if (left > pright) continue
+					if (right < pleft) continue
+					if (top > pbottom) continue
+					if (bottom < ptop) continue
 
 					if (paddle.cellAtoms.length === 0) {
-						if (left > pright) continue
-						if (right < pleft) continue
-						if (top > pbottom) continue
-						if (bottom < ptop) continue
 
 						atom.highlight = createChild(atom, HIGHLIGHT)
 						atom.highlight.hasBorder = true
@@ -3396,14 +3395,90 @@ on.load(() => {
 						atom.highlight.width = paddle.width
 						atom.highlight.height = paddle.height
 
-						atom.highlightedPaddle = paddle
+						atom.highlightedAtom = paddle
 
 						break
 
 					}
 					
 					else {
-						// TODO: snap onto existing cellAtom!
+						let winningDistance = Infinity
+						let winningSide = undefined
+						let winningCellAtom = undefined
+						for (const cellAtom of paddle.cellAtoms) {
+							const {x: cx, y: cy} = getAtomPosition(cellAtom)
+							const cleft = cx
+							const cright = cx + cellAtom.width
+							const ctop = cy
+							const cbottom = cy + cellAtom.height
+
+							const spotLeft = [cleft - cellAtom.width, ctop]
+							const spotAbove = [cleft, ctop - cellAtom.height]
+							const spotRight = [cright, ctop]
+							const spotBelow = [cleft, cbottom]
+
+							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1])
+							if (dspotLeft < winningDistance) {
+								winningDistance = dspotLeft
+								winningCellAtom = cellAtom
+								winningSide = "left"
+							}
+
+							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1])
+							if (dspotAbove < winningDistance) {
+								winningDistance = dspotAbove
+								winningCellAtom = cellAtom
+								winningSide = "above"
+							}
+
+							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1])
+							if (dspotRight < winningDistance) {
+								winningDistance = dspotRight
+								winningCellAtom = cellAtom
+								winningSide = "right"
+							}
+
+							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1])
+							if (dspotBelow < winningDistance) {
+								winningDistance = dspotBelow
+								winningCellAtom = cellAtom
+								winningSide = "below"
+							}
+						}
+
+						const {x: cx, y: cy} = getAtomPosition(winningCellAtom)
+
+						atom.highlight = createChild(atom, HIGHLIGHT)
+						if (winningSide === "left" || winningSide === "right") {
+							atom.highlight.width = HIGHLIGHT_THICKNESS
+							atom.highlight.height = winningCellAtom.height
+						}
+						else if (winningSide === "above" || winningSide === "below") {
+							atom.highlight.width = winningCellAtom.width
+							atom.highlight.height = HIGHLIGHT_THICKNESS
+						}
+
+						if (winningSide === "left") {
+							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2
+							atom.highlight.y = cy
+						}
+						else if (winningSide === "right") {
+							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2 + winningCellAtom.width
+							atom.highlight.y = cy
+						}
+						else if (winningSide === "above") {
+							atom.highlight.x = cx
+							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2
+						}
+						else if (winningSide === "below") {
+							atom.highlight.x = cx
+							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2 + winningCellAtom.height
+						}
+
+						atom.highlightedAtom = winningCellAtom
+
+						break
+
 					}
 
 				}
@@ -3411,7 +3486,7 @@ on.load(() => {
 
 			}
 
-			if (atom.highlightedPaddle === undefined && atom.highlight !== undefined) {
+			if (atom.highlightedAtom === undefined && atom.highlight !== undefined) {
 				deleteChild(atom, atom.highlight)
 				atom.highlight = undefined
 			}
@@ -3420,18 +3495,21 @@ on.load(() => {
 
 		drop: (atom) => {
 			if (atom.highlight !== undefined) {
-				const paddle = atom.highlightedPaddle
-				atom.attached = true
-				giveChild(paddle, atom)
-				paddle.cellAtoms.push(atom)
-				atom.x = PADDLE.width/2 - atom.width/2
-				atom.y = PADDLE.height/2 - atom.height/2
-				atom.dx = 0
-				atom.dy = 0
-				
-				updatePaddleSize(paddle)
-				if (paddle.pinhole.locked) {
-					if (atom.expanded) atom.unexpand(atom)
+
+				if (atom.highlightedAtom.isPaddle) {
+					const paddle = atom.highlightedAtom
+					atom.attached = true
+					giveChild(paddle, atom)
+					paddle.cellAtoms.push(atom)
+					atom.x = PADDLE.width/2 - atom.width/2
+					atom.y = PADDLE.height/2 - atom.height/2
+					atom.dx = 0
+					atom.dy = 0
+					
+					updatePaddleSize(paddle)
+					if (paddle.pinhole.locked) {
+						if (atom.expanded) atom.unexpand(atom)
+					}
 				}
 
 			}
@@ -4036,6 +4114,7 @@ on.load(() => {
 
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
+		isPaddle: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
