@@ -4277,6 +4277,13 @@ on.load(() => {
 		paddle.height = height
 		paddle.setLimits(paddle)
 
+		if (paddle.symmetryCircle !== undefined) {
+			paddle.symmetryCircle.x = paddle.width - paddle.symmetryCircle.width/2
+			paddle.symmetryCircle.y = paddle.height/2 - paddle.symmetryCircle.height/2
+		}
+		
+		paddle.handle.y = paddle.height/2 - paddle.handle.height/2
+
 		updatePaddleRule(paddle)
 
 		positionPaddles()
@@ -4338,7 +4345,6 @@ on.load(() => {
 	}
 
 	const createPaddle = () => {
-		const id = paddles.length
 		const paddle = makeAtom(PADDLE)
 		
 		paddles.push(paddle)
