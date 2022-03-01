@@ -3580,9 +3580,9 @@ on.load(() => {
 		expanded: false,
 	}
 
-	const COLOURTODE_TRIANGLE = {
+	const TRIANGLE_RIGHT = {
+		size: COLOURTODE_SQUARE.size,
 		draw: (atom) => {
-
 			const height = atom.size
 			const width = atom.size * Math.sqrt(3)/2
 			
@@ -3601,6 +3601,13 @@ on.load(() => {
 			path.closePath()
 			colourTodeContext.fillStyle = atom.colour
 			colourTodeContext.fill(path)
+		},
+	}
+
+	const COLOURTODE_TRIANGLE = {
+		expanded: false,
+		draw: (atom) => {
+			TRIANGLE_RIGHT.draw(atom)
 		},
 		overlaps: (atom, x, y) => {
 			
