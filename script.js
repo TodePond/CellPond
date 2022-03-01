@@ -4217,6 +4217,57 @@ on.load(() => {
 
 		let width = PADDLE.width
 		let height = PADDLE.size
+
+		if (paddle.cellAtoms.length > 0) {
+			let top = Infinity
+			let bottom = -Infinity
+			let right = -Infinity
+			let left = Infinity
+
+			for (const cellAtom of paddle.cellAtoms) {
+				const cx = cellAtom.x
+				const cy = cellAtom.y
+				const cleft = cx
+				const cright = cx + cellAtom.width
+				const ctop = cy
+				const cbottom = cy + cellAtom.height
+
+				if (cleft < left) left = cleft
+				if (cright > right) right = cright
+				if (ctop < top) top = ctop
+				if (cbottom > bottom) bottom = cbottom
+			}
+
+			let topOffset = 0
+			let leftOffset = 0
+
+			const yPadding = (PADDLE.height/2 - COLOURTODE_SQUARE.size/2)
+			const xPadding = (PADDLE.width/2 - COLOURTODE_SQUARE.size/2)
+
+			const desiredTop = yPadding
+			const desiredLeft = xPadding
+
+			if (top !== desiredTop) {
+				topOffset = desiredTop - top
+				bottom += topOffset
+			}
+			if (left !== desiredLeft) {
+				leftOffset = desiredLeft - left
+				right += leftOffset
+			}
+
+			for (const cellAtom of paddle.cellAtoms) {
+				cellAtom.y += topOffset
+				cellAtom.x += leftOffset
+			}
+
+			const desiredWidth = right + xPadding
+			const desiredHeight = bottom + yPadding
+
+			width = desiredWidth
+			height = desiredHeight
+
+		}
 		
 		if (paddle.hasSymmetry) {
 			width += SYMMETRY_CIRCLE.size/3
@@ -4227,6 +4278,8 @@ on.load(() => {
 		paddle.setLimits(paddle)
 
 		updatePaddleRule(paddle)
+
+		positionPaddles()
 	}
 
 	const updatePaddleRule = (paddle) => {
