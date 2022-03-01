@@ -3476,6 +3476,7 @@ on.load(() => {
 						}
 
 						atom.highlightedAtom = winningCellAtom
+						atom.highlightedSide = winningSide
 
 						break
 
@@ -3508,8 +3509,36 @@ on.load(() => {
 					
 					updatePaddleSize(paddle)
 					if (paddle.pinhole.locked) {
+						alert("ERROR: Atom somehow attached to a locked paddle! This should never happen! Please tell @todepond! :)")
 						if (atom.expanded) atom.unexpand(atom)
 					}
+				}
+				else {
+
+					const square = atom.highlightedAtom
+					const paddle = square.parent
+					atom.attached = true
+					giveChild(paddle, atom)
+					paddle.cellAtoms.push(atom)
+
+					if (atom.highlightedSide === "left") {
+						atom.x = square.x - atom.width
+						atom.y = square.y
+					} else if (atom.highlightedSide === "right") {
+						atom.x = square.x + square.width
+						atom.y = square.y
+					} else if (atom.highlightedSide === "above") {
+						atom.x = square.x
+						atom.y = square.y - atom.height
+					} else if (atom.highlightedSide === "below") {
+						atom.x = square.x
+						atom.y = square.y + square.height
+					}
+
+					atom.dx = 0
+					atom.dy = 0
+					updatePaddleSize(paddle)
+
 				}
 
 			}
