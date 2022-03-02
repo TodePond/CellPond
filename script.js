@@ -3582,13 +3582,17 @@ on.load(() => {
 
 	const TRIANGLE_RIGHT = {
 		size: COLOURTODE_SQUARE.size,
+		width: COLOURTODE_SQUARE.size * Math.sqrt(3)/2, //the only reason width is set is for the menu spacing
 		draw: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
 			const height = atom.size
 			const width = atom.size * Math.sqrt(3)/2
 			
-			const left = atom.x
+			const left = x
 			const right = left + width
-			const top = atom.y
+			const top = y
 			const bottom = top + height
 			const middleY = top + height/2
 
@@ -3601,22 +3605,22 @@ on.load(() => {
 			path.closePath()
 			colourTodeContext.fillStyle = atom.colour
 			colourTodeContext.fill(path)
-		},
-	}
-
-	const COLOURTODE_TRIANGLE = {
-		expanded: false,
-		draw: (atom) => {
-			TRIANGLE_RIGHT.draw(atom)
+			if (atom.hasBorder) {
+				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
+				colourTodeContext.strokeStyle = atom.borderColour
+				colourTodeContext.stroke(path)
+			}
 		},
 		overlaps: (atom, x, y) => {
 			
+			const {x: ax, y: ay} = getAtomPosition(atom)
+
 			const height = atom.size
 			const width = atom.size * Math.sqrt(3)/2
 			
-			const left = atom.x
+			const left = ax
 			const right = left + width
-			const top = atom.y
+			const top = ay
 			const bottom = top + height
 
 			if (x < left) return false
@@ -3628,12 +3632,14 @@ on.load(() => {
 		},
 		offscreen: (atom) => {
 
+			const {x, y} = getAtomPosition(atom)
+
 			const height = atom.size
 			const width = atom.size * Math.sqrt(3)/2
 			
-			const left = atom.x
+			const left = x
 			const right = left + width
-			const top = atom.y
+			const top = y
 			const bottom = top + height
 
 			if (right < 0) return true
@@ -3642,7 +3648,197 @@ on.load(() => {
 			if (top > canvas.height) return true
 			return false
 		},
+	}
+
+	const TRIANGLE_UP = {
 		size: COLOURTODE_SQUARE.size,
+		draw: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
+			const width = atom.size
+			const height = atom.size * Math.sqrt(3)/2
+			
+			const left = x
+			const right = left + width
+			const top = y
+			const bottom = top + height
+			const middleX = left + width/2
+
+			colourTodeContext.fillStyle = atom.colour
+			const path = new Path2D()
+
+			path.moveTo(left, bottom)
+			path.lineTo(middleX, top)
+			path.lineTo(right, bottom)
+			path.closePath()
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+			if (atom.hasBorder) {
+				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
+				colourTodeContext.strokeStyle = atom.borderColour
+				colourTodeContext.stroke(path)
+			}
+		},
+		overlaps: (atom, x, y) => {
+			
+			const {x: ax, y: ay} = getAtomPosition(atom)
+
+			const width = atom.size
+			const height = atom.size * Math.sqrt(3)/2
+			
+			const left = ax
+			const right = left + width
+			const top = ay
+			const bottom = top + height
+
+			if (x < left) return false
+			if (y < top) return false
+			if (x > right) return false
+			if (y > bottom) return false
+
+			return true
+		},
+		offscreen: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
+			const width = atom.size
+			const height = atom.size * Math.sqrt(3)/2
+			
+			const left = x
+			const right = left + width
+			const top = y
+			const bottom = top + height
+
+			if (right < 0) return true
+			if (bottom < 0) return true
+			if (left > canvas.width) return true
+			if (top > canvas.height) return true
+			return false
+		},
+	}
+
+	const TRIANGLE_DOWN = {
+		size: COLOURTODE_SQUARE.size,
+		draw: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
+			const width = atom.size
+			const height = atom.size * Math.sqrt(3)/2
+			
+			const left = x
+			const right = left + width
+			const top = y
+			const bottom = top + height
+			const middleX = left + width/2
+
+			colourTodeContext.fillStyle = atom.colour
+			const path = new Path2D()
+
+			path.moveTo(left, top)
+			path.lineTo(middleX, bottom)
+			path.lineTo(right, top)
+			path.closePath()
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+			if (atom.hasBorder) {
+				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
+				colourTodeContext.strokeStyle = atom.borderColour
+				colourTodeContext.stroke(path)
+			}
+		},
+		overlaps: (atom, x, y) => {
+			
+			const {x: ax, y: ay} = getAtomPosition(atom)
+
+			const width = atom.size
+			const height = atom.size * Math.sqrt(3)/2
+			
+			const left = ax
+			const right = left + width
+			const top = ay
+			const bottom = top + height
+
+			if (x < left) return false
+			if (y < top) return false
+			if (x > right) return false
+			if (y > bottom) return false
+
+			return true
+		},
+		offscreen: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
+			const width = atom.size
+			const height = atom.size * Math.sqrt(3)/2
+			
+			const left = x
+			const right = left + width
+			const top = y
+			const bottom = top + height
+
+			if (right < 0) return true
+			if (bottom < 0) return true
+			if (left > canvas.width) return true
+			if (top > canvas.height) return true
+			return false
+		},
+	}
+
+	const COLOURTODE_TRIANGLE = {
+		expanded: false,
+		draw: (atom) => {
+			if (atom.direction === "right") TRIANGLE_RIGHT.draw(atom)
+			else if (atom.direction === "down") TRIANGLE_DOWN.draw(atom)
+			else if (atom.direction === "up") TRIANGLE_UP.draw(atom)
+			else TRIANGLE_RIGHT.draw(atom)
+		},
+		colour: Colour.splash(999),
+		overlaps: TRIANGLE_RIGHT.overlaps,
+		offscreen: TRIANGLE_RIGHT.offscreen,
+		size: COLOURTODE_SQUARE.size,
+		width: TRIANGLE_RIGHT.width,
+		direction: "right",
+		click: (atom) => {
+			
+			if (atom.attached) {
+				return
+			}
+
+			if (atom.expanded) {
+				atom.unexpand(atom)
+			}
+			else {
+				atom.expand(atom)
+			}
+		},
+
+		expand: (atom) => {
+			atom.pad = createChild(atom, TRIANGLE_PAD)
+			atom.handle = createChild(atom, TRIANGLE_HANDLE)
+			atom.expanded = true
+
+			atom.upPick = createChild(atom, TRIANGLE_PICK_UP)
+			atom.rightPick = createChild(atom, TRIANGLE_PICK_RIGHT)
+			atom.downPick = createChild(atom, TRIANGLE_PICK_DOWN)
+			
+			if (atom.direction === "up") atom.upPick.value = true
+			if (atom.direction === "right") atom.rightPick.value = true
+			if (atom.direction === "down") atom.downPick.value = true
+		},
+
+		unexpand: (atom) => {
+			deleteChild(atom, atom.pad)
+			deleteChild(atom, atom.handle)
+			deleteChild(atom, atom.upPick)
+			deleteChild(atom, atom.rightPick)
+			deleteChild(atom, atom.downPick)
+			atom.expanded = false
+		},
+
 	}
 
 	const OPTION_MARGIN = 10
@@ -4646,6 +4842,32 @@ on.load(() => {
 		hasInner: false,
 	}
 
+	const TRIANGLE_PAD = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		dragOnly: true,
+		width: SYMMETRY_CIRCLE.size,
+		x: SYMMETRY_CIRCLE.size*Math.sqrt(3)/2 + OPTION_MARGIN,
+		height: (SYMMETRY_CIRCLE.size * 3) - OPTION_MARGIN,
+		y: -(SYMMETRY_CIRCLE.size * 3)/3 + OPTION_MARGIN/2,
+		colour: Colour.Grey,
+		grab: (atom) => atom.parent,
+	}
+
+	const TRIANGLE_HANDLE = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		dragOnly: true,
+		width: SYMMETRY_CIRCLE.size/2 + OPTION_MARGIN,
+		x: SYMMETRY_CIRCLE.size/2,
+		height: SYMMETRY_CIRCLE.size / 3,
+		y: SYMMETRY_CIRCLE.size/2 - (SYMMETRY_CIRCLE.size / 3)/2,
+		colour: Colour.Grey,
+		grab: (atom) => atom.parent,
+	}
+
 	const SYMMETRY_PAD = {
 		draw: COLOURTODE_RECTANGLE.draw,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
@@ -4670,6 +4892,90 @@ on.load(() => {
 		y: SYMMETRY_CIRCLE.size/2 - (SYMMETRY_CIRCLE.size / 3)/2,
 		colour: Colour.Grey,
 		grab: (atom) => atom.parent,
+	}
+
+	const TRIANGLE_PICK_UP = {
+		hasBorder: true,
+		borderColour: Colour.Black,
+		draw: (atom) => {
+			atom.colour = atom.value? Colour.Silver : Colour.Black
+			TRIANGLE_UP.draw(atom)
+		},
+		click: (atom) => {
+			
+			const triangle = atom.parent
+			triangle.upPick.value = false
+			triangle.rightPick.value = false
+			triangle.downPick.value = false
+			
+			triangle.direction = "up"
+			atom.value = true
+
+		},
+		offscreen: TRIANGLE_UP.offscreen,
+		overlaps: TRIANGLE_UP.overlaps,
+		
+		value: false,
+		size: COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5,
+		grab: (atom) => atom.parent,
+		x: TRIANGLE_PAD.x + TRIANGLE_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5)/2,
+		y: TRIANGLE_PAD.y + OPTION_MARGIN*1.5/2,
+	}
+
+	const TRIANGLE_PICK_RIGHT = {
+		hasBorder: true,
+		borderColour: Colour.Black,
+		draw: (atom) => {
+			atom.colour = atom.value? Colour.Silver : Colour.Black
+			TRIANGLE_RIGHT.draw(atom)
+		},
+		offscreen: TRIANGLE_RIGHT.offscreen,
+		overlaps: TRIANGLE_RIGHT.overlaps,
+		
+		value: false,
+		size: COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5,
+		grab: (atom) => atom.parent,
+		click: (atom) => {
+			
+			const triangle = atom.parent
+			triangle.upPick.value = false
+			triangle.rightPick.value = false
+			triangle.downPick.value = false
+			
+			triangle.direction = "right"
+			atom.value = true
+
+		},
+		x: TRIANGLE_PAD.x + TRIANGLE_PAD.width/2 - ((COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5) * Math.sqrt(3)/2)/2,
+		y: OPTION_MARGIN*1.5/2,
+	}
+
+	const TRIANGLE_PICK_DOWN = {
+		hasBorder: true,
+		borderColour: Colour.Black,
+		draw: (atom) => {
+			atom.colour = atom.value? Colour.Silver : Colour.Black
+			TRIANGLE_DOWN.draw(atom)
+		},
+		click: (atom) => {
+			
+			const triangle = atom.parent
+			triangle.upPick.value = false
+			triangle.rightPick.value = false
+			triangle.downPick.value = false
+			
+			triangle.direction = "down"
+			atom.value = true
+
+		},
+		offscreen: TRIANGLE_DOWN.offscreen,
+		overlaps: TRIANGLE_DOWN.overlaps,
+		
+		value: false,
+		size: COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5,
+		grab: (atom) => atom.parent,
+		x: TRIANGLE_PAD.x + TRIANGLE_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5)/2,
+		y: TRIANGLE_PAD.y + TRIANGLE_PAD.height - (COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5) - OPTION_MARGIN/2,
 	}
 	
 	const SYMMETRY_TOGGLE_X = {
