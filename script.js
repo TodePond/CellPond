@@ -1,4 +1,29 @@
 
+const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenRevealed")
+
+let secretScore = 0
+const tickSecret = () => {
+	secretScore++
+	if (secretScore === 999) {
+		localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
+
+		// WOAH WOAH! You can't come snooping in the source code for secrets!!
+		// I'm just kidding :)
+		// For your curiosity, you WIN entry to the semi-secret TodePond discord server: https://discord.gg/AYDXBVPAzz
+
+		if (confirm(`Congratulations! You have been using CellPond for ${secretScore} frames!\nAs a reward, you have won entry into the semi-secret TodePond discord server!\n\nDo you accept this (one-time-only) prize?`)) {
+			window.location.href='https://discord.gg/AYDXBVPAzz';
+		}
+	}
+	requestAnimationFrame(tickSecret)
+	
+}
+
+if (secretHasAlreadyBeenRevealed !== "true") {
+	requestAnimationFrame(tickSecret)
+}
+
+
 //========//
 // COLOUR //
 //========//
