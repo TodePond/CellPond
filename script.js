@@ -3428,7 +3428,7 @@ on.load(() => {
 
 			atom.highlightedAtom = undefined
 
-			if (hand.content === atom) {
+			if (hand.content === atom && hand.state === HAND.DRAGGING) {
 
 				const left = x
 				const top = y
