@@ -3357,11 +3357,16 @@ on.load(() => {
 			if (atom.blue) deleteChild(atom, atom.blue)
 		},
 
-		receiveNumber: (atom, number, channel = number.channel) => {
+		receiveNumber: (atom, number, channel = number.channel, {expanded} = {}) => {
 			
 			atom.redExpanded = atom.red && atom.red.expanded
 			atom.greenExpanded = atom.green && atom.green.expanded
 			atom.blueExpanded = atom.blue && atom.blue.expanded
+
+			if (expanded !== undefined) {
+				const channelName = CHANNEL_NAMES[channel]
+				atom[`${channelName}Expanded`] = expanded
+			}
 
 			atom.value.channels[channel] = number
 
@@ -3940,6 +3945,12 @@ on.load(() => {
 		blue: 2,
 	}
 
+	const CHANNEL_NAMES = [
+		"red",
+		"green",
+		"blue",
+	]
+
 	const COLOURTODE_PICKER_CHANNEL = {
 		
 		//behindChildren: true,
@@ -4084,7 +4095,7 @@ on.load(() => {
 			}
 
 			atom.highlightedAtom = undefined
-			if (hand.content === atom) {
+			if (hand.content === atom && hand.state === HAND.DRAGGING) {
 
 				const {x, y} = getAtomPosition(atom)
 				const left = x
@@ -4157,6 +4168,21 @@ on.load(() => {
 				atom.highlight = undefined
 			}
 
+		},
+
+		drop: (atom) => {
+			if (atom.highlight !== undefined) {
+				const square = atom.highlightedAtom
+				const slotId = CHANNEL_IDS[atom.highlightedSlot]
+				/*giveChild(square, atom)
+				atom.dx = 0
+				atom.dy = 0
+				square[atom.highlightedSlot] = atom
+				atom.y = OPTION_MARGIN
+				atom.x = square.size + OPTION_MARGIN*2 + slotId*(OPTION_MARGIN*square.size)*/
+				square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
+				deleteAtom(atom)
+			}
 		},
 
 		click: (atom) => {
