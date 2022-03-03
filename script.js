@@ -3140,9 +3140,10 @@ on.load(() => {
 	//=======================//
 	// COLOURTODE - CHILDREN //
 	//=======================//
-	const createChild = (parent, element) => {
+	const createChild = (parent, element, {bottom = false} = {}) => {
 		const child = makeAtom(element)
-		parent.children.push(child)
+		if (!bottom) parent.children.push(child)
+		else parent.children.unshift(child)
 		child.parent = parent
 		return child
 	}
@@ -3457,7 +3458,7 @@ on.load(() => {
 
 					if (paddle.cellAtoms.length === 0) {
 
-						atom.highlight = createChild(atom, HIGHLIGHT)
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
 						atom.highlight.hasBorder = true
 						atom.highlight.colour = Colour.Grey
 						atom.highlight.x = paddle.x
@@ -3518,7 +3519,7 @@ on.load(() => {
 
 						const {x: cx, y: cy} = getAtomPosition(winningCellAtom)
 
-						atom.highlight = createChild(atom, HIGHLIGHT)
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
 						if (winningSide === "left" || winningSide === "right") {
 							atom.highlight.width = HIGHLIGHT_THICKNESS
 							atom.highlight.height = winningCellAtom.height
@@ -4081,6 +4082,81 @@ on.load(() => {
 			} else {
 				atom.colourTicker++
 			}
+
+			atom.highlightedAtom = undefined
+			if (hand.content === atom) {
+
+				const {x, y} = getAtomPosition(atom)
+				const left = x
+				const top = y
+				const right = x + atom.width
+				const bottom = y + atom.height
+
+				if (atom.highlight !== undefined) {
+					deleteChild(atom, atom.highlight)
+					atom.highlight = undefined
+				}
+
+				let winningDistance = Infinity
+				let winningSquare = undefined
+				let winningSlot = undefined
+
+				for (const square of state.colourTode.atoms) {
+					if (!square.isSquare) continue
+					if (!square.expanded) continue
+
+					const {x: px, y: py} = getAtomPosition(square.pickerPad)
+
+					const pleft = px
+					const pright = px + square.pickerPad.width
+					const ptop = py
+					const pbottom = py + square.pickerPad.height
+
+					if (left > pright) continue
+					if (right < pleft) continue
+					if (bottom < ptop) continue
+					if (top > pbottom) continue
+
+					const slots = ["red", "green", "blue"].filter(slot => square[slot] === undefined)
+					if (slots.length === 0) continue
+					
+					const {x: ax, y: ay} = getAtomPosition(square)
+
+					for (const slot of slots) {
+						const slotId = CHANNEL_IDS[slot]
+						const sx = ax + square.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+						const sy = ay + OPTION_MARGIN
+						const distance = Math.hypot(x - sx, y - sy)
+						if (distance < winningDistance) {
+							winningDistance = distance
+							winningSquare = square
+							winningSlot = slot
+						}
+					}
+
+				}
+
+				if (winningSquare !== undefined) {
+
+					const {x: ax, y: ay} = getAtomPosition(winningSquare)
+					const slotId = CHANNEL_IDS[winningSlot]
+
+					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+					atom.highlight.hasBorder = true
+					atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
+					atom.highlight.y = ay
+					atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
+					atom.highlightedAtom = winningSquare
+					atom.highlightedSlot = winningSlot
+				}
+
+			}
+			
+			if (atom.highlightedAtom === undefined && atom.highlight !== undefined) {
+				deleteChild(atom, atom.highlight)
+				atom.highlight = undefined
+			}
+
 		},
 
 		click: (atom) => {
@@ -4854,7 +4930,7 @@ on.load(() => {
 						deleteChild(atom, atom.highlightPaddle)
 					}
 
-					atom.highlightPaddle = createChild(atom, HIGHLIGHT)
+					atom.highlightPaddle = createChild(atom, HIGHLIGHT, {bottom: true})
 					atom.highlightPaddle.width = HIGHLIGHT_THICKNESS
 					atom.highlightPaddle.height = paddle.height
 					atom.highlightPaddle.y = ptop
@@ -5247,7 +5323,7 @@ on.load(() => {
 	addMenuTool(COLOURTODE_SQUARE)
 	addMenuTool(COLOURTODE_TRIANGLE)
 	addMenuTool(SYMMETRY_CIRCLE)
-	addMenuTool(COLOURTODE_PICKER_CHANNEL)
+	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
 	createPaddle()
 
