@@ -3974,6 +3974,7 @@ on.load(() => {
 				const channelId = CHANNEL_IDS[atom.channelSlot]
 				square.receiveNumber(square, undefined, channelId)
 				freeChild(square, atom)
+				atom.channelSlot = CHANNEL_NAMES[atom.value.channel]
 				atom.updateColours(atom)
 			}
 			return atom
@@ -4223,9 +4224,9 @@ on.load(() => {
 				if (greenNumber === undefined) greenNumber = makeNumber({channel: 1, values: [true, false, false, false, false, false, false, false, false, false]})
 				if (blueNumber === undefined) blueNumber = makeNumber({channel: 2, values: [true, false, false, false, false, false, false, false, false, false]})
 
-				parentR = makeNumber({values: [...redNumber.values], channel: 0})
-				parentG = makeNumber({values: [...greenNumber.values], channel: 1})
-				parentB = makeNumber({values: [...blueNumber.values], channel: 2})
+				parentR = makeNumber({values: [...redNumber.values], channel: redNumber.channel})
+				parentG = makeNumber({values: [...greenNumber.values], channel: greenNumber.channel})
+				parentB = makeNumber({values: [...blueNumber.values], channel: blueNumber.channel})
 			}
 			else {
 				const values = [true, false, false, false, false, false, false, false, false, false]
@@ -4235,12 +4236,14 @@ on.load(() => {
 			}
 
 			const parentChannels = [parentR, parentG, parentB]
-			const mainParentChannel = parentChannels[atom.value.channel]
+			const mainParentChannel = parentChannels[CHANNEL_IDS[atom.channelSlot]]
 			mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
 
 			if (atom.options !== undefined && atom.options.length > 0) {
 				for (let i = 0; i < 10; i++) {
 
+					const option = atom.options[i]
+					
 					mainParentChannel.values[9-i] = true
 					if (i > 0) mainParentChannel.values[9-i+1] = false
 
@@ -4248,7 +4251,6 @@ on.load(() => {
 
 					const colours = getSplashesArrayFromArray(baseArray)
 
-					const option = atom.options[i]
 					option.colours = colours
 					option.colourTicker = Infinity
 					//option.needsColoursUpdate = true
@@ -4419,7 +4421,8 @@ on.load(() => {
 			
 			if (atom.parent.parent !== COLOURTODE_BASE_PARENT) {
 				const square = atom.parent.parent
-				square.receiveNumber(square, number, number.channel)
+				const channel = CHANNEL_IDS[atom.parent.channelSlot]
+				square.receiveNumber(square, number, channel)
 			}
 
 			
@@ -4506,7 +4509,8 @@ on.load(() => {
 
 			if (parent.parent !== COLOURTODE_BASE_PARENT) {
 				const square = parent.parent
-				square.receiveNumber(square, number, number.channel)
+				const channel = CHANNEL_IDS[parent.channelSlot]
+				square.receiveNumber(square, number, channel)
 			}
 		},
 
