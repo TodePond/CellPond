@@ -1,10 +1,17 @@
 
+const urlParams = new URLSearchParams(window.location.search)
+const NO_SECRET_MODE = urlParams.has("nosecret")
+if (NO_SECRET_MODE) {
+	localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
+}
+
 const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenRevealed")
+
 
 let secretScore = 0
 const tickSecret = () => {
 	secretScore++
-	if (secretScore === 999) {
+	if (secretScore === 9999) {
 		localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
 
 		// WOAH WOAH! You can't come snooping in the source code for secrets!!
@@ -21,6 +28,27 @@ const tickSecret = () => {
 
 if (secretHasAlreadyBeenRevealed !== "true") {
 	requestAnimationFrame(tickSecret)
+
+	const secretMessageDelay = 1300
+	let secretMessageTimer = 0
+	setTimeout(() => console.log("Are you tinkering with CellPond?"), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("Congratulations, you've gained access to the semi-secret TodePond discord!"), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("Here's the link: https://discord.gg/AYDXBVPAzz"), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("This message will self-destruct in 10..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("9..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("8..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("7..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("6..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("5..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("4..."), secretMessageTimer += secretMessageDelay)
+	const nosecreturl = window.location.href.includes("&")? `${window.location.href}&nosecret` : `${window.location.href}?nosecret`
+	setTimeout(() => console.log(`By the way, you can disable this secret message FOREVER by clicking this link:\n${nosecreturl}`), secretMessageTimer)
+	setTimeout(() => console.log("3..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("2..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("1..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("0..."), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.log("RIBBIT!"), secretMessageTimer += secretMessageDelay)
+	setTimeout(() => console.clear(), secretMessageTimer += secretMessageDelay)
 }
 
 
