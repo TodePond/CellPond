@@ -1636,7 +1636,11 @@ on.load(() => {
 	const getSplashesArrayFromArray = (array) => {
 
 		const splashes = []
-		const [reds, greens, blues] = array.channels
+		let [reds, greens, blues] = array.channels
+
+		if (reds === undefined) reds = makeNumber({channel: 0, values: [true, false, false, false, false, false, false, false, false, false]})
+		if (greens === undefined) greens = makeNumber({channel: 1, values: [true, false, false, false, false, false, false, false, false, false]})
+		if (blues === undefined) blues = makeNumber({channel: 2, values: [true, false, false, false, false, false, false, false, false, false]})
 
 		for (let r = 0; r < reds.values.length; r++) {
 			const red = reds.values[r]
@@ -3244,53 +3248,66 @@ on.load(() => {
 
 		unexpand: (atom) => {
 			atom.expanded = false
-			atom.redExpanded = atom.red.expanded
-			atom.greenExpanded = atom.green.expanded
-			atom.blueExpanded = atom.blue.expanded
+			atom.redExpanded = atom.red && atom.red.expanded
+			atom.greenExpanded = atom.green && atom.green.expanded
+			atom.blueExpanded = atom.blue && atom.blue.expanded
 			atom.deletePicker(atom)
 		},
 
 		createPicker: (atom) => {
-			//const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
-			//atom.pickerPad = pickerPad
+			const pickerHandle = createChild(atom, SYMMETRY_HANDLE)
+			atom.pickerHandle = pickerHandle
+			
+			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
+			atom.pickerPad = pickerPad
 
-			const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-			red.x += COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
-			red.value = atom.value.channels[0]
-			red.needsColoursUpdate = true
-			red.grab = () => atom
-			atom.red = red
-			if (atom.redExpanded) atom.red.click(atom.red)
+			if (atom.value.channels[0] !== undefined) {
+				const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+				red.channelSlot = "red" //note: a colour doesn't necessarily have to be in its own channel slot
+				red.x += COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
+				red.value = atom.value.channels[0]
+				red.needsColoursUpdate = true
+				//red.grab = () => atom
+				atom.red = red
+				if (atom.redExpanded) atom.red.click(atom.red)
+			}
 
-			const green = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-			green.x += 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-			green.value = atom.value.channels[1]
-			green.needsColoursUpdate = true
-			green.grab = () => atom
-			atom.green = green
-			if (atom.greenExpanded) atom.green.click(atom.green)
+			if (atom.value.channels[1] !== undefined) {
+				const green = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+				green.channelSlot = "green" //note: a colour doesn't necessarily have to be in its own channel slot
+				green.x += COLOURTODE_PICKER_PAD_MARGIN + 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+				green.value = atom.value.channels[1]
+				green.needsColoursUpdate = true
+				//green.grab = () => atom
+				atom.green = green
+				if (atom.greenExpanded) atom.green.click(atom.green)
+			}
 
-			const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-			blue.x += 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-			blue.value = atom.value.channels[2]
-			blue.needsColoursUpdate = true
-			blue.grab = () => atom
-			atom.blue = blue
-			if (atom.blueExpanded) atom.blue.click(atom.blue)
+			if (atom.value.channels[2] !== undefined) {
+				const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+				blue.channelSlot = "blue" //note: a colour doesn't necessarily have to be in its own channel slot
+				blue.x += COLOURTODE_PICKER_PAD_MARGIN + 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+				blue.value = atom.value.channels[2]
+				blue.needsColoursUpdate = true
+				//blue.grab = () => atom
+				atom.blue = blue
+				if (atom.blueExpanded) atom.blue.click(atom.blue)
+			}
 		},
 
 		deletePicker: (atom) => {
-			//deleteChild(atom, atom.pickerPad)
-			deleteChild(atom, atom.red)
-			deleteChild(atom, atom.green)
-			deleteChild(atom, atom.blue)
+			deleteChild(atom, atom.pickerPad)
+			deleteChild(atom, atom.pickerHandle)
+			if (atom.red) deleteChild(atom, atom.red)
+			if (atom.green) deleteChild(atom, atom.green)
+			if (atom.blue) deleteChild(atom, atom.blue)
 		},
 
 		receiveNumber: (atom, number, channel = number.channel) => {
 			
-			atom.redExpanded = atom.red.expanded
-			atom.greenExpanded = atom.green.expanded
-			atom.blueExpanded = atom.blue.expanded
+			atom.redExpanded = atom.red && atom.red.expanded
+			atom.greenExpanded = atom.green && atom.green.expanded
+			atom.blueExpanded = atom.blue && atom.blue.expanded
 
 			atom.value.channels[channel] = number
 
@@ -3855,14 +3872,19 @@ on.load(() => {
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		grab: (atom) => atom.parent,
 		colour: Colour.Grey,
-		width: COLOURTODE_SQUARE.size + SQUARE_OPTION_MARGIN * 2,
-		height: COLOURTODE_SQUARE.size + SQUARE_OPTION_MARGIN * 2,
-		y: -SQUARE_OPTION_MARGIN,
-		x: -SQUARE_OPTION_MARGIN,
+		width: COLOURTODE_PICKER_PAD_MARGIN + 3*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN),
+		height: COLOURTODE_SQUARE.size,
+		y: 0,
+		x: COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN,
 		dragOnly: true,
 	}
 
 	
+	const CHANNEL_IDS = {
+		red: 0,
+		green: 1,
+		blue: 2,
+	}
 
 	const COLOURTODE_PICKER_CHANNEL = {
 		
@@ -3871,10 +3893,26 @@ on.load(() => {
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
-		grab: (atom) => atom,
 		width: COLOURTODE_SQUARE.size,
 		y: (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2,
 		height: CHANNEL_HEIGHT,
+		
+		grab: (atom) => {
+			//if (atom.parent.isSquare) return atom.parent
+			return atom
+		},
+
+		drag: (atom) => {
+			if (atom.parent.isSquare) {
+				const square = atom.parent
+				square[atom.channelSlot] = undefined
+				const channelId = CHANNEL_IDS[atom.channelSlot]
+				square.receiveNumber(square, undefined, channelId)
+				freeChild(square, atom)
+				atom.updateColours(atom)
+			}
+			return atom
+		},
 
 		construct: (atom) => {
 			const values = [false, false, false, false, false, false, false, false, false, true]
@@ -4022,9 +4060,13 @@ on.load(() => {
 
 			if (atom.parent.isSquare) {
 
-				const redNumber = atom.parent.value.channels[0]
-				const greenNumber = atom.parent.value.channels[1]
-				const blueNumber = atom.parent.value.channels[2]
+				let redNumber = atom.parent.value.channels[0]
+				let greenNumber = atom.parent.value.channels[1]
+				let blueNumber = atom.parent.value.channels[2]
+
+				if (redNumber === undefined) redNumber = makeNumber({channel: 0, values: [true, false, false, false, false, false, false, false, false, false]})
+				if (greenNumber === undefined) greenNumber = makeNumber({channel: 1, values: [true, false, false, false, false, false, false, false, false, false]})
+				if (blueNumber === undefined) blueNumber = makeNumber({channel: 2, values: [true, false, false, false, false, false, false, false, false, false]})
 
 				parentR = makeNumber({values: [...redNumber.values], channel: 0})
 				parentG = makeNumber({values: [...greenNumber.values], channel: 1})
@@ -4041,19 +4083,21 @@ on.load(() => {
 			const mainParentChannel = parentChannels[atom.value.channel]
 			mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
 
-			for (let i = 0; i < 10; i++) {
+			if (atom.options !== undefined && atom.options.length > 0) {
+				for (let i = 0; i < 10; i++) {
 
-				mainParentChannel.values[9-i] = true
-				if (i > 0) mainParentChannel.values[9-i+1] = false
+					mainParentChannel.values[9-i] = true
+					if (i > 0) mainParentChannel.values[9-i+1] = false
 
-				const baseArray = makeArray({channels: parentChannels})
+					const baseArray = makeArray({channels: parentChannels})
 
-				const colours = getSplashesArrayFromArray(baseArray)
+					const colours = getSplashesArrayFromArray(baseArray)
 
-				const option = atom.options[i]
-				option.colours = colours
-				option.colourTicker = Infinity
-				//option.needsColoursUpdate = true
+					const option = atom.options[i]
+					option.colours = colours
+					option.colourTicker = Infinity
+					//option.needsColoursUpdate = true
+				}
 			}
 		},
 
@@ -5150,7 +5194,7 @@ on.load(() => {
 	addMenuTool(COLOURTODE_SQUARE)
 	addMenuTool(COLOURTODE_TRIANGLE)
 	addMenuTool(SYMMETRY_CIRCLE)
-	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
+	addMenuTool(COLOURTODE_PICKER_CHANNEL)
 
 	createPaddle()
 
