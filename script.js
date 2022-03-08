@@ -4006,7 +4006,7 @@ on.load(() => {
 			atom.dx = 0
 			atom.dy = 0
 			updatePaddleSize(paddle)
-			
+
 			if (atom.expanded) {
 				atom.unexpand(atom)
 			}
@@ -4680,6 +4680,7 @@ on.load(() => {
 		construct: (paddle) => {
 
 			paddle.cellAtoms = []
+			paddle.slots = []
 
 			const handle = createChild(paddle, PADDLE_HANDLE)
 			paddle.handle = handle
@@ -4732,9 +4733,18 @@ on.load(() => {
 		}
 	}
 
+	const SLOT = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		colour: Colour.Black,
+		size: COLOURTODE_SQUARE.size,
+		grab: (atom) => atom.parent,
+		dragOnly: true,
+	}
+
 	const updatePaddleSize = (paddle) => {
 		
-
 		let width = PADDLE.width
 		let height = PADDLE.size
 
@@ -4789,6 +4799,12 @@ on.load(() => {
 
 		}
 
+		
+		for (const slot of paddle.slots) {
+			deleteChild(paddle, slot)
+		}
+		paddle.slots = []
+
 		if (paddle.rightTriangle !== undefined) {
 			paddle.rightTriangle.x = width
 			paddle.rightTriangle.y = height/2 - paddle.rightTriangle.height/2
@@ -4803,6 +4819,23 @@ on.load(() => {
 		paddle.height = height
 		paddle.setLimits(paddle)
 
+		//=============================//
+		// ARRANGING PADDLE's CHILDREN //
+		//=============================//
+
+		if (paddle.rightTriangle !== undefined) {
+			for (const cellAtom of paddle.cellAtoms) {
+
+				const slot = createChild(paddle, SLOT)
+				cellAtom.slot = slot
+				paddle.slots.push(slot)
+
+				slot.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width
+				slot.y = cellAtom.y
+
+			}
+		}
+
 		if (paddle.symmetryCircle !== undefined) {
 			paddle.symmetryCircle.x = paddle.width - paddle.symmetryCircle.width/2
 			paddle.symmetryCircle.y = paddle.height/2 - paddle.symmetryCircle.height/2
@@ -4811,7 +4844,6 @@ on.load(() => {
 		paddle.handle.y = paddle.height/2 - paddle.handle.height/2
 
 		updatePaddleRule(paddle)
-
 		positionPaddles()
 	}
 
