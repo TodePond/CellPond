@@ -3307,6 +3307,14 @@ on.load(() => {
 		},
 	}
 
+	const isCellAtomSpotFilled = (paddle, [sx, sy]) => {
+		for (const cellAtom of paddle.cellAtoms) {
+			const {x, y} = getAtomPosition(cellAtom)
+			if (x === sx && y === sy) return true
+		}
+		return false
+	}
+
 	const COLOURTODE_SQUARE = {
 		isSquare: true,
 		hasBorder: true,
@@ -3538,29 +3546,30 @@ on.load(() => {
 							const spotRight = [cright, ctop]
 							const spotBelow = [cleft, cbottom]
 
+
 							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1])
-							if (dspotLeft < winningDistance) {
+							if (!isCellAtomSpotFilled(paddle, spotLeft) && dspotLeft < winningDistance) {
 								winningDistance = dspotLeft
 								winningCellAtom = cellAtom
 								winningSide = "left"
 							}
 
 							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1])
-							if (dspotAbove < winningDistance) {
+							if (!isCellAtomSpotFilled(paddle, spotAbove) && dspotAbove < winningDistance) {
 								winningDistance = dspotAbove
 								winningCellAtom = cellAtom
 								winningSide = "above"
 							}
 
 							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1])
-							if (dspotRight < winningDistance) {
+							if (!isCellAtomSpotFilled(paddle, spotRight) && dspotRight < winningDistance) {
 								winningDistance = dspotRight
 								winningCellAtom = cellAtom
 								winningSide = "right"
 							}
 
 							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1])
-							if (dspotBelow < winningDistance) {
+							if (!isCellAtomSpotFilled(paddle, spotBelow) && dspotBelow < winningDistance) {
 								winningDistance = dspotBelow
 								winningCellAtom = cellAtom
 								winningSide = "below"
