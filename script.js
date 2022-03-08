@@ -3919,7 +3919,7 @@ on.load(() => {
 		direction: "right",
 		click: (atom) => {
 			
-			if (atom.attached) {
+			if (atom.parent.isPaddle) {
 				return
 			}
 
@@ -3958,6 +3958,8 @@ on.load(() => {
 
 		// Returns what atom to highlight when being hovered over stuff
 		hover: (atom) => {
+
+			if (atom.direction !== "right") return undefined
 
 			// Get my bounds
 			const {x, y} = getAtomPosition(atom)
@@ -4004,19 +4006,32 @@ on.load(() => {
 			atom.dx = 0
 			atom.dy = 0
 			updatePaddleSize(paddle)
+			
+			if (atom.expanded) {
+				atom.unexpand(atom)
+			}
 
 		},
 
 		drag: (atom) => {
-			if (atom.direction === "right") {
-				if (!atom.parent.isPaddle) return atom
-				const paddle = atom.parent
-				freeChild(paddle, atom)
-				paddle.rightTriangle = undefined
-				updatePaddleSize(paddle)
+			if (!atom.parent.isPaddle) return atom
+			const paddle = atom.parent
+			if (paddle.pinhole.locked) {
+				const clone = makeAtom(COLOURTODE_TRIANGLE)
+				clone.direction = atom.direction
+				const {x, y} = getAtomPosition(atom)
+				hand.offset.x -= atom.x - x
+				hand.offset.y -= atom.y - y
+				clone.x = x
+				clone.y = y
+				registerAtom(clone)
+				return clone
 			}
+			freeChild(paddle, atom)
+			paddle.rightTriangle = undefined
+			updatePaddleSize(paddle)
 			return atom
-		}
+		},
 
 	}
 
@@ -4772,6 +4787,12 @@ on.load(() => {
 			width = desiredWidth
 			height = desiredHeight
 
+		}
+
+		if (paddle.rightTriangle !== undefined) {
+			paddle.rightTriangle.x = width
+			paddle.rightTriangle.y = height/2 - paddle.rightTriangle.height/2
+			width = width+width + paddle.rightTriangle.width
 		}
 		
 		if (paddle.hasSymmetry) {
