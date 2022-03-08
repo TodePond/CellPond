@@ -693,13 +693,19 @@ on.load(() => {
 	}
 
 	const ZOOM = 0.05
+	let CT_SCALE = 1.0
 	on.mousewheel((e) => {
 
 		const dy = e.deltaY / 100
 
-		if (Keyboard.Control) {
+		if (Keyboard.Alt) {
 			PADDLE.scroll -= 50 * dy
 			positionPaddles()
+			e.preventDefault()
+		}
+
+		else if (Keyboard.Control) {
+			CT_SCALE -= dy * 0.1
 			e.preventDefault()
 		}
 		
@@ -712,6 +718,10 @@ on.load(() => {
 			doZoom(dy, ...Mouse.position)
 		}
 		
+	}, {passive: false})
+
+	on.keydown(e => {
+		if (e.key === "Alt") e.preventDefault()
 	}, {passive: false})
 
 	const doZoom = (dy, centerX, centerY) => {
@@ -2629,7 +2639,7 @@ on.load(() => {
 		}
 
 		if (Mouse.position !== undefined && Mouse.position[0] !== undefined && hand.previous.x !== undefined) {
-			const [x, y] = Mouse.position
+			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
 			const dx = x - hand.previous.x
 			const dy = y - hand.previous.y
 			const velocity = {x: dx, y: dy}
@@ -2681,7 +2691,7 @@ on.load(() => {
 			return
 		}
 
-		const [mx, my] = Mouse.position
+		const [mx, my] = Mouse.position.map(n => n / CT_SCALE)
 		if (hand.state.atommove) hand.state.atommove(atom, mx, my)
 	}
 
@@ -2715,9 +2725,11 @@ on.load(() => {
 
 	const colourTodeDraw = () => {
 		colourTodeContext.clearRect(0, 0, colourTodeCanvas.width, colourTodeCanvas.height)
+		colourTodeContext.scale(CT_SCALE, CT_SCALE)
 		for (const atom of state.colourTode.atoms) {
 			drawAtom(atom)
 		}
+		colourTodeContext.scale(1/CT_SCALE, 1/CT_SCALE)
 	}
 
 	requestAnimationFrame(colourTodeTick)
@@ -2731,8 +2743,8 @@ on.load(() => {
 		cursor: "auto",
 
 		mousemove: (e) => {
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
@@ -2775,7 +2787,7 @@ on.load(() => {
 			else changeHandState(HAND.HOVER)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position
+			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
@@ -2786,8 +2798,8 @@ on.load(() => {
 	HAND.BRUSH = {
 		cursor: "crosshair",
 		mousemove: (e) => {
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
@@ -2812,7 +2824,7 @@ on.load(() => {
 			else changeHandState(HAND.FREE)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position
+			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -2823,8 +2835,8 @@ on.load(() => {
 	HAND.BRUSHING = {
 		cursor: "crosshair",
 		mousemove: (e) => {
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -2834,7 +2846,7 @@ on.load(() => {
 			changeHandState(HAND.BRUSH)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position
+			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -2857,10 +2869,10 @@ on.load(() => {
 		
 		mousedown: (e) => {
 
-			const atom = getAtom(e.clientX, e.clientY)
+			const atom = getAtom(e.clientX / CT_SCALE, e.clientY / CT_SCALE)
 			if (atom === undefined) return
 			if (!atom.grabbable) return
-			grabAtom(atom, e.clientX, e.clientY)
+			grabAtom(atom, e.clientX / CT_SCALE, e.clientY / CT_SCALE)
 			
 			if (atom.dragOnly) {
 				hand.hasStartedDragging = false
@@ -2871,8 +2883,8 @@ on.load(() => {
 		},
 
 		mousemove: (e) => {
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
@@ -2908,8 +2920,8 @@ on.load(() => {
 		cursor: "pointer",
 		mousemove: (e) => {
 			if (e.movementX === 0 && e.movementY === 0) return
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			if (hand.content.draggable) {				
 				changeHandState(HAND.DRAGGING)
 				hand.content = hand.content.drag(hand.content, x, y)
@@ -2942,8 +2954,8 @@ on.load(() => {
 			hand.content.dy = 0
 			hand.content = undefined
 
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
@@ -2960,14 +2972,14 @@ on.load(() => {
 
 			if (!hand.hasStartedDragging) {
 				hand.hasStartedDragging = true
-				hand.content = hand.content.drag(hand.content, e.clientX, e.clientY)
+				hand.content = hand.content.drag(hand.content, e.clientX / CT_SCALE, e.clientY / CT_SCALE)
 			}
 
 			const oldX = hand.content.x
 			const oldY = hand.content.y
 
-			if (!hand.content.dragLockX) hand.content.x = e.clientX + hand.offset.x
-			if (!hand.content.dragLockY) hand.content.y = e.clientY + hand.offset.y
+			if (!hand.content.dragLockX) hand.content.x = e.clientX / CT_SCALE + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = e.clientY / CT_SCALE + hand.offset.y
 
 			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
 			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
@@ -2988,8 +3000,8 @@ on.load(() => {
 				hand.content.place(hand.content, hand.content.highlightedAtom)
 			}
 			hand.content = undefined
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
