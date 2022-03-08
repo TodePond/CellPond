@@ -2765,10 +2765,11 @@ on.load(() => {
 				return
 			}
 
-			if (x < state.view.left) return
-			if (x > state.view.right) return
-			if (y < state.view.top) return
-			if (y > state.view.bottom) return
+			const [mx, my] = Mouse.position
+			if (mx < state.view.left) return
+			if (mx > state.view.right) return
+			if (my < state.view.top) return
+			if (my > state.view.bottom) return
 			if (Mouse.Left) changeHandState(HAND.BRUSHING)
 			else changeHandState(HAND.BRUSH)
 		},
@@ -2787,7 +2788,7 @@ on.load(() => {
 			else changeHandState(HAND.HOVER)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
+			const [x, y] = Mouse.position
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
@@ -2810,7 +2811,9 @@ on.load(() => {
 				else changeHandState(HAND.FREE)
 				return
 			}
-			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+			const mx = e.clientX
+			const my = e.clientY
+			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				return
 			}
 			changeHandState(HAND.FREE)
@@ -2824,7 +2827,7 @@ on.load(() => {
 			else changeHandState(HAND.FREE)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
+			const [x, y] = Mouse.position
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -2835,8 +2838,8 @@ on.load(() => {
 	HAND.BRUSHING = {
 		cursor: "crosshair",
 		mousemove: (e) => {
-			const x = e.clientX / CT_SCALE
-			const y = e.clientY / CT_SCALE
+			const x = e.clientX
+			const y = e.clientY
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -2846,10 +2849,11 @@ on.load(() => {
 			changeHandState(HAND.BRUSH)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
-			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+			const [mx, my] = Mouse.position
+			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				return
 			}
+			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
 			const atom = getAtom(x, y)
 			if (atom !== undefined) {
 				if (atom.grabbable) {
@@ -2895,7 +2899,9 @@ on.load(() => {
 				else changeHandState(HAND.FREE)
 				return
 			}
-			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+			const mx = e.clientX
+			const my = e.clientY
+			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
 			}
@@ -2908,7 +2914,8 @@ on.load(() => {
 			if (newAtom !== undefined) {
 				return
 			}
-			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+			const [mx, my] = Mouse.position
+			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
 			}
@@ -2939,6 +2946,8 @@ on.load(() => {
 				else changeHandState(HAND.FREE)
 				return
 			}
+			const mx = e.clientX
+			const my = e.clientY
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
