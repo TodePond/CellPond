@@ -3683,7 +3683,8 @@ on.load(() => {
 
 				const id = paddle.cellAtoms.indexOf(atom)
 				paddle.cellAtoms.splice(id, 1)
-
+				
+				atom.slot = undefined
 				updatePaddleSize(paddle)
 
 			}
