@@ -3954,10 +3954,6 @@ on.load(() => {
 			atom.expanded = false
 		},
 
-		update: (atom) => {
-			
-		},
-
 		highlighter: true,
 
 		// Returns what atom to highlight when being hovered over stuff
@@ -3974,8 +3970,10 @@ on.load(() => {
 
 			for (const paddle of paddles) {
 
-				// Don't pick hidden or locked paddles
-				if (!paddle.expanded || paddle.pinhole.locked) continue
+				// Don't pick hidden or locked or filled paddles
+				if (!paddle.expanded) continue
+				if (paddle.pinhole.locked) continue
+				if (paddle.rightTriangle !== undefined) continue
 
 				// Get paddle bounds
 				const {x: px, y: py} = getAtomPosition(paddle)
@@ -3999,7 +3997,26 @@ on.load(() => {
 
 		place: (atom, paddle) => {
 			
+			giveChild(paddle, atom)
+			paddle.rightTriangle = atom
+			atom.x = PADDLE.width/2 - atom.width/2
+			atom.y = PADDLE.height/2 - atom.height/2
+			atom.dx = 0
+			atom.dy = 0
+			updatePaddleSize(paddle)
+
 		},
+
+		drag: (atom) => {
+			if (atom.direction === "right") {
+				if (!atom.parent.isPaddle) return atom
+				const paddle = atom.parent
+				freeChild(paddle, atom)
+				paddle.rightTriangle = undefined
+				updatePaddleSize(paddle)
+			}
+			return atom
+		}
 
 	}
 
