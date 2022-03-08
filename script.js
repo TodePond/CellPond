@@ -2656,6 +2656,11 @@ on.load(() => {
 			updateAtom(child, false)
 		}
 
+		// HIGHLIGHT
+		if (atom.highlighter) {
+			updateAtomHighlight(atom)
+		}
+
 		atom.update(atom)
 
 		// MOVEMENT
@@ -2678,6 +2683,34 @@ on.load(() => {
 
 		const [mx, my] = Mouse.position
 		if (hand.state.atommove) hand.state.atommove(atom, mx, my)
+	}
+
+	const updateAtomHighlight = (atom) => {
+		// Remove the previous highlight
+		atom.highlightedAtom = undefined
+		if (atom.highlight !== undefined) {
+			deleteChild(atom, atom.highlight)
+			atom.highlight = undefined
+		}
+
+		// Only highlight if I'm being dragged
+		if (hand.content !== atom) return
+		if (hand.state !== HAND.DRAGGING) return
+
+		const highlightedAtom = atom.hover(atom)
+
+		// Create the highlight
+		if (highlightedAtom === undefined) return
+		const highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+		highlight.hasBorder = true
+		highlight.colour = Colour.Grey
+		highlight.x = highlightedAtom.x
+		highlight.y = highlightedAtom.y
+		highlight.width = highlightedAtom.width
+		highlight.height = highlightedAtom.height
+
+		atom.highlight = highlight
+		atom.highlightedAtom = highlightedAtom
 	}
 
 	const colourTodeDraw = () => {
@@ -2951,6 +2984,9 @@ on.load(() => {
 			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
 			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
 			hand.content.drop(hand.content)
+			if (hand.content.highlighter && hand.content.highlightedAtom !== undefined) {
+				hand.content.place(hand.content, hand.content.highlightedAtom)
+			}
 			hand.content = undefined
 			const x = e.clientX
 			const y = e.clientY
@@ -3011,6 +3047,9 @@ on.load(() => {
 			overlaps = () => false,
 			grab = (a) => a, // Fires when you start a clock on the atom - returns atom that gets dragged
 			touch = (a) => a, // Fires when you start a click on the atom - returns atom that handles the click
+			highlighter = false, // If true, enables the hover and place events
+			hover = () => {}, // Fires whenever you are dragging the atom - returns what atom should get highlighted (if any)
+			place = (a) => {}, // Fires whenever you drop the atom onto a highlighted atom
 			x = 0,
 			y = 0,
 			dx = 0,
@@ -3029,7 +3068,7 @@ on.load(() => {
 			hasInner = true,
 			...properties
 		} = {}, ...args) => {
-		const atom = {hasInner, move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {highlighter, place, hover, hasInner, move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
 		atom.construct(atom, ...args)
 		return atom
 	}
@@ -3916,8 +3955,10 @@ on.load(() => {
 		},
 
 		update: (atom) => {
-			atom.updateHighlight(atom)
+			
 		},
+
+		highlighter: true,
 
 		// Returns what atom to highlight when being hovered over stuff
 		hover: (atom) => {
@@ -3956,35 +3997,9 @@ on.load(() => {
 			return undefined
 		},
 
-		updateHighlight: (atom) => {
-
-			// Remove the previous highlight
-			atom.highlightedAtom = undefined
-			if (atom.highlight !== undefined) {
-				deleteChild(atom, atom.highlight)
-				atom.highlight = undefined
-			}
-
-			// Only highlight if I'm being dragged
-			if (hand.content !== atom) return
-			if (hand.state !== HAND.DRAGGING) return
-
-			const highlightedAtom = atom.hover(atom)
-
-			// Create the highlight
-			if (highlightedAtom === undefined) return
-			const highlight = createChild(atom, HIGHLIGHT, {bottom: true})
-			highlight.hasBorder = true
-			highlight.colour = Colour.Grey
-			highlight.x = highlightedAtom.x
-			highlight.y = highlightedAtom.y
-			highlight.width = highlightedAtom.width
-			highlight.height = highlightedAtom.height
-
-			atom.highlight = highlight
-			atom.highlightedAtom = highlightedAtom
-
-		}
+		place: (atom, paddle) => {
+			
+		},
 
 	}
 
