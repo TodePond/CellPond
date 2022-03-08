@@ -3915,14 +3915,82 @@ on.load(() => {
 			atom.expanded = false
 		},
 
+		update: (atom) => {
+			atom.updateHighlight(atom)
+		},
+
+		// Returns what atom to highlight when being hovered over stuff
+		hover: (atom) => {
+
+			// Get my bounds
+			const {x, y} = getAtomPosition(atom)
+			const left = x
+			const top = y
+			const right = x + atom.width
+			const bottom = y + atom.height
+
+			// HIGHLIGHT SELECTION CODE GOES HERE!!!
+
+			for (const paddle of paddles) {
+
+				// Don't pick hidden or locked paddles
+				if (!paddle.expanded || paddle.pinhole.locked) continue
+
+				// Get paddle bounds
+				const {x: px, y: py} = getAtomPosition(paddle)
+				const pleft = px
+				const pright = px + paddle.width
+				const ptop = py
+				const pbottom = py + paddle.height
+
+				// Check if I am hovering over the paddle
+				if (left > pright) continue
+				if (right < pleft) continue
+				if (top > pbottom) continue
+				if (bottom < ptop) continue
+
+				// Return the highlight and the highlighted atom (the paddle)
+				return paddle
+			}
+
+			return undefined
+		},
+
+		updateHighlight: (atom) => {
+
+			// Remove the previous highlight
+			atom.highlightedAtom = undefined
+			if (atom.highlight !== undefined) {
+				deleteChild(atom, atom.highlight)
+				atom.highlight = undefined
+			}
+
+			// Only highlight if I'm being dragged
+			if (hand.content !== atom) return
+			if (hand.state !== HAND.DRAGGING) return
+
+			const highlightedAtom = atom.hover(atom)
+
+			// Create the highlight
+			if (highlightedAtom === undefined) return
+			const highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+			highlight.hasBorder = true
+			highlight.colour = Colour.Grey
+			highlight.x = highlightedAtom.x
+			highlight.y = highlightedAtom.y
+			highlight.width = highlightedAtom.width
+			highlight.height = highlightedAtom.height
+
+			atom.highlight = highlight
+			atom.highlightedAtom = highlightedAtom
+
+		}
+
 	}
 
 	const OPTION_MARGIN = 10
 	const CHANNEL_HEIGHT = COLOURTODE_SQUARE.size - OPTION_MARGIN*2
 	const OPTION_SPACING = CHANNEL_HEIGHT + OPTION_MARGIN
-	const SQUARE_OPTION_MARGIN = OPTION_MARGIN
-
-	
 
 	const COLOURTODE_PICKER_PAD_MARGIN = OPTION_MARGIN
 	const COLOURTODE_PICKER_PAD = {
@@ -3938,7 +4006,6 @@ on.load(() => {
 		dragOnly: true,
 	}
 
-	
 	const CHANNEL_IDS = {
 		red: 0,
 		green: 1,
