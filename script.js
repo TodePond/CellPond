@@ -4799,7 +4799,6 @@ on.load(() => {
 
 		}
 
-		
 		for (const slot of paddle.slots) {
 			deleteChild(paddle, slot)
 		}
@@ -4825,6 +4824,8 @@ on.load(() => {
 
 		if (paddle.rightTriangle !== undefined) {
 			for (const cellAtom of paddle.cellAtoms) {
+
+				print(cellAtom.slot)
 
 				const slot = createChild(paddle, SLOT)
 				cellAtom.slot = slot
