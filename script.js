@@ -3685,6 +3685,7 @@ on.load(() => {
 				paddle.cellAtoms.splice(id, 1)
 				
 				atom.slot = undefined
+				atom.slotted = undefined
 				updatePaddleSize(paddle)
 
 			}
@@ -4826,15 +4827,17 @@ on.load(() => {
 		if (paddle.rightTriangle !== undefined) {
 			for (const cellAtom of paddle.cellAtoms) {
 
-				print(cellAtom.slot)
-
-				const slot = createChild(paddle, SLOT)
+				const slot = createChild(paddle, SLOT, {bottom: true})
 				cellAtom.slot = slot
 				paddle.slots.push(slot)
-
 				slot.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width
 				slot.y = cellAtom.y
 
+				if (cellAtom.slotted !== undefined) {
+					cellAtom.slotted.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width
+					cellAtom.slotted.y = cellAtom.y
+				}
+				
 			}
 		}
 
