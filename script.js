@@ -3494,7 +3494,7 @@ on.load(() => {
 					const pright = px + paddle.width
 					const ptop = py
 					const pbottom = py + paddle.height
-					
+
 					if (left > pright) continue
 					if (right < pleft) continue
 					if (top > pbottom) continue
@@ -3515,11 +3515,17 @@ on.load(() => {
 						break
 
 					}
+
+					else if (paddle.rightTriangle !== undefined && left > pleft + paddle.rightTriangle.x) {
+
+						break
+					}
 					
 					else {
 						let winningDistance = Infinity
 						let winningSide = undefined
 						let winningCellAtom = undefined
+
 						for (const cellAtom of paddle.cellAtoms) {
 							const {x: cx, y: cy} = getAtomPosition(cellAtom)
 							const cleft = cx
