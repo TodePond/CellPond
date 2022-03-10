@@ -3606,7 +3606,7 @@ on.load(() => {
 
 				for (const paddle of paddles) {
 
-					if (!paddle.expanded || paddle.pinhole.locked) continue
+					if (!paddle.expanded) continue
 
 					const {x: px, y: py} = getAtomPosition(paddle)
 					const pleft = px
@@ -3771,10 +3771,6 @@ on.load(() => {
 					atom.dy = 0
 					
 					updatePaddleSize(paddle)
-					if (paddle.pinhole.locked) {
-						alert("ERROR: Atom somehow attached to a locked paddle! This should never happen! Please tell @todepond! :)")
-						if (atom.expanded) atom.unexpand(atom)
-					}
 
 					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
 						registerAtom(atom.slotted)
