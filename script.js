@@ -2758,7 +2758,7 @@ on.load(() => {
 	//===================//
 	// COLOURTODE - HAND //
 	//===================//
-	const DRAG_PITY = 70
+	const DRAG_PITY = 15
 	const DRAG_PITY_TIME = 100
 	const DRAG_UNPITY_SPEED = 10
 
