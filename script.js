@@ -1896,18 +1896,24 @@ on.load(() => {
 		// Get Redundant Rules!
 		const redundantRules = []
 		for (const transformedRule of transformedRules) {
-			const _redundantRules = getRedundantRules(transformedRule)
-			redundantRules.push(..._redundantRules)
+			const redundantTransformedRules = getRedundantRules(transformedRule)
+			redundantRules.push(...redundantTransformedRules)
 		}
 
 		// Make behave functions!!!
+		const behaveFunctions = []
 		for (const redundantRule of redundantRules) {
 			const behaveFunction = makeBehaveFunction(redundantRule)
+			behaveFunctions.push(behaveFunction)
 			state.dragon.behaves.push(behaveFunction)
 		}
 
-		return [redundantRules, transformedRules]
+		return {redundantRules, transformedRules, behaveFunctions}
 
+	}
+
+	const unregisterRegistry = ({behaveFunctions}) => {
+		state.dragon.behaves = state.dragon.behaves.filter(behaveFunction => !behaveFunctions.includes(behaveFunction))
 	}
 
 	// For one rule, we could take its 'origin' as any of the cells in the first step
@@ -2108,6 +2114,7 @@ on.load(() => {
 
 		return instruction
 	}
+	DRAGON_INSTRUCTION.recolour.type = "RECOLOUR"
 
 	// A SPLIT REQUIRES THE CORRECT NUMBER OF RECOLOUR COMMANDS AFTER IT
 	// IF YOU DON'T, IT WILL GO WRONG
@@ -2131,6 +2138,7 @@ on.load(() => {
 		return instruction
 
 	}
+	DRAGON_INSTRUCTION.split.type = "SPLIT"
 
 	DRAGON_INSTRUCTION.merge = (cell) => {
 
@@ -2155,6 +2163,7 @@ on.load(() => {
 		return instruction
 
 	}
+	DRAGON_INSTRUCTION.merge.type = "MERGE"
 
 	//=================//
 	// DRAGON - ORIGIN //
@@ -2206,6 +2215,38 @@ on.load(() => {
 					print(cell)
 				}
 			}
+		}
+	}
+
+	const debugRule = (rule) => {
+		for (const step of rule.steps) {
+			print("")
+			print(">> STEP >>")
+			print("=== LEFT ===")
+			for (const cell of step.left) {
+				debugDiagramCell(cell, {read: true})
+			}
+			print("=== RIGHT ===")
+			for (const cell of step.right) {
+				debugDiagramCell(cell)
+			}
+		}
+	}
+
+	const debugDiagramCell = (cell, {read = false} = {}) => {
+		if (read) {
+			print("CHECK", "at", cell.x, cell.y, "with size", cell.width, cell.height)
+			print("for", getSplashesArrayFromArray(cell.content))
+		}
+		else {
+			print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height)
+			print("to", getSplashesArrayFromArray(cell.content))
+		}
+		if (cell.instruction.type === "SPLIT") {
+			print("split", cell.splitX, cell.splitY)
+		}
+		if (cell.instruction.type === "MERGE") {
+			print("merge", cell.splitX, cell.splitY)
 		}
 	}
 
@@ -4830,6 +4871,7 @@ on.load(() => {
 			if (distanceFromMax < distanceFromMin) {
 				paddle.x = paddle.maxX
 				paddle.expanded = true
+				updatePaddleRule(paddle)
 
 				if (paddles.last === paddle) {
 					createPaddle()
@@ -4838,6 +4880,7 @@ on.load(() => {
 			} else {
 				paddle.x = paddle.minX
 				paddle.expanded = false
+				updatePaddleRule(paddle)
 
 				if (paddles.last !== paddle) {
 					deletePaddle(paddle)
@@ -4977,6 +5020,8 @@ on.load(() => {
 
 	const updatePaddleRule = (paddle) => {
 
+		if (!paddle.expanded) return
+
 		let transformations = DRAGON_TRANSFORMATIONS.NONE
 		if (paddle.hasSymmetry) {
 			const [x, y, r] = getXYR(paddle.symmetryCircle.value)
@@ -4994,20 +5039,27 @@ on.load(() => {
 
 		const origin = paddle.cellAtoms[0]
 		const left = []
+		const right = []
 		for (const cellAtom of paddle.cellAtoms) {
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 			const diagramCell = makeDiagramCell({x, y, content: cellAtom.value})
 			left.push(diagramCell)
+
+			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
+			const rightDiagramCell = makeDiagramCell({x, y, content: rightContent})
+			right.push(rightDiagramCell)
 		}
 		
-		const diagram = makeDiagram({
-			left,
-		})
+		const diagram = makeDiagram({left, right})
 
 		const locked = paddle.pinhole.locked
 		const rule = makeRule({steps: [diagram], transformations, locked})
 		paddle.rule = rule
+		if (paddle.registry !== undefined) {
+			unregisterRegistry(paddle.registry)
+		}
+		if (locked) paddle.registry = registerRule(rule)
 	}
 
 	const positionPaddles = () => {
@@ -5026,6 +5078,9 @@ on.load(() => {
 
 	const deletePaddle = (paddle, id = paddles.indexOf(paddle)) => {
 		paddles.splice(id, 1)
+		if (paddle.registry !== undefined) {
+			unregisterRegistry(paddle.registry)
+		}
 		deleteAtom(paddle)
 		positionPaddles()
 	}
@@ -5115,6 +5170,7 @@ on.load(() => {
 				paddle.draggable = true
 				atom.draggable = true
 				//paddle.dragOnly = true
+				updatePaddleRule(paddle)
 			} 
 
 			else {
