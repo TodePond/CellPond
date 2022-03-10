@@ -5030,7 +5030,7 @@ on.load(() => {
 			const isY = y > 0
 			const isR = r > 0
 
-			let key = `${isX? "X" : ""}${isY? "Y" : ""}${isR? "R" : ""}`
+			let key = `${isY? "X" : ""}${isX? "Y" : ""}${isR? "R" : ""}`
 			if (key === "") key = "NONE"
 			else if (key === "XR" || key === "YR") key = "XYR"
 
