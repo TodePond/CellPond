@@ -2758,6 +2758,10 @@ on.load(() => {
 	//===================//
 	// COLOURTODE - HAND //
 	//===================//
+	const DRAG_PITY = 70
+	const DRAG_PITY_TIME = 100
+	const DRAG_UNPITY_SPEED = 10
+
 	const HAND = {}
 	HAND_RELEASE = 0.5
 	HAND.FREE = {
@@ -2777,9 +2781,12 @@ on.load(() => {
 					else {
 						if (atom.grabbable && atom.draggable) {
 							grabAtom(atom, x, y)
-							changeHandState(HAND.DRAGGING)
-							hand.content = hand.content.drag(hand.content, x, y)
-							HAND.DRAGGING.mousemove(e)
+							hand.pityStartX = e.clientX
+							hand.pityStartY = e.clientY
+							hand.pityStartT = Date.now()
+							changeHandState(HAND.TOUCHING)
+							//hand.content = hand.content.drag(hand.content, x, y)
+							HAND.TOUCHING.mousemove(e)
 						}
 					}
 				}
@@ -2903,7 +2910,12 @@ on.load(() => {
 				hand.hasStartedDragging = false
 				changeHandState(HAND.DRAGGING)
 			}
-			else changeHandState(HAND.TOUCHING)
+			else {
+				hand.pityStartX = e.clientX
+				hand.pityStartY = e.clientY
+				hand.pityStartT = Date.now()
+				changeHandState(HAND.TOUCHING)
+			}
 
 		},
 
@@ -2944,15 +2956,62 @@ on.load(() => {
 		}
 	}
 
+	const dampen = (n, noReally) => {
+		if (noReally) return n * 0.4
+		return n
+	}
+
 	HAND.TOUCHING = {
 		cursor: "pointer",
 		mousemove: (e) => {
 			if (e.movementX === 0 && e.movementY === 0) return
+
+			const distanceFromPityStart = Math.hypot(e.clientX - hand.pityStartX, e.clientY - hand.pityStartY)
+			const pity = DRAG_PITY
+
+			const dx = e.clientX - hand.pityStartX
+			const dy = e.clientY - hand.pityStartY
+			
+			if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, hand.content.attached)) / CT_SCALE + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, hand.content.attached)) / CT_SCALE + hand.offset.y
+
+			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
+			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
+
+			if (distanceFromPityStart < pity) {
+				return
+			}
+
+			const timeSincePityStart = Date.now() - hand.pityStartT
+			if (timeSincePityStart < DRAG_PITY_TIME) {
+				const handSpeed = Math.hypot(hand.velocity.x, hand.velocity.y)
+				if (handSpeed <= DRAG_UNPITY_SPEED) return
+			}
+
+			if (!hand.content.dragLockX) hand.content.x = hand.pityStartX / CT_SCALE + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = hand.pityStartY / CT_SCALE + hand.offset.y
+
+			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
+			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
+
 			const x = e.clientX / CT_SCALE
 			const y = e.clientY / CT_SCALE
 			if (hand.content.draggable) {				
 				changeHandState(HAND.DRAGGING)
+
+				const attached = hand.content.attached
+
 				hand.content = hand.content.drag(hand.content, x, y)
+				
+				if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, attached)) / CT_SCALE + hand.offset.x
+				if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, attached)) / CT_SCALE + hand.offset.y
+
+				hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
+				hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
+
+				/*hand.offset.x = hand.content.x - e.clientX / CT_SCALE
+				hand.offset.y = hand.content.y - e.clientY / CT_SCALE*/
+
 				HAND.DRAGGING.mousemove(e)
 				return
 			}
@@ -2969,7 +3028,7 @@ on.load(() => {
 			}
 			const mx = e.clientX
 			const my = e.clientY
-			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
+			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
 			}
@@ -2980,6 +3039,12 @@ on.load(() => {
 			hand.clickContent.dx = 0
 			hand.clickContent.dy = 0
 			hand.clickContent = undefined
+
+			if (hand.content.attached) {
+				hand.content.x = hand.pityStartX / CT_SCALE + hand.offset.x
+				hand.content.y = hand.pityStartY / CT_SCALE + hand.offset.y
+			}
+
 			hand.content.dx = 0
 			hand.content.dy = 0
 			hand.content = undefined
@@ -3399,6 +3464,7 @@ on.load(() => {
 
 		createPicker: (atom) => {
 			const pickerHandle = createChild(atom, SYMMETRY_HANDLE)
+			pickerHandle.width += OPTION_MARGIN
 			atom.pickerHandle = pickerHandle
 			
 			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
@@ -3413,6 +3479,7 @@ on.load(() => {
 				//red.grab = () => atom
 				atom.red = red
 				if (atom.redExpanded) atom.red.click(atom.red)
+				atom.red.attached = true
 			}
 
 			if (atom.value.channels[1] !== undefined) {
@@ -3424,6 +3491,7 @@ on.load(() => {
 				//green.grab = () => atom
 				atom.green = green
 				if (atom.greenExpanded) atom.green.click(atom.green)
+				atom.green.attached = true
 			}
 
 			if (atom.value.channels[2] !== undefined) {
@@ -3435,6 +3503,7 @@ on.load(() => {
 				//blue.grab = () => atom
 				atom.blue = blue
 				if (atom.blueExpanded) atom.blue.click(atom.blue)
+				atom.blue.attached = true
 			}
 		},
 
@@ -4146,6 +4215,8 @@ on.load(() => {
 				atom.unexpand(atom)
 			}
 
+			atom.attached = true
+
 		},
 
 		drag: (atom) => {
@@ -4162,6 +4233,9 @@ on.load(() => {
 				registerAtom(clone)
 				return clone
 			}
+
+			
+			atom.attached = false
 			freeChild(paddle, atom)
 			paddle.rightTriangle = undefined
 
@@ -4233,6 +4307,7 @@ on.load(() => {
 				freeChild(square, atom)
 				atom.channelSlot = CHANNEL_NAMES[atom.value.channel]
 				atom.updateColours(atom)
+				atom.attached = false
 			}
 			return atom
 		},
@@ -4301,7 +4376,7 @@ on.load(() => {
 		positionSelectionBack: (atom) => {
 			atom.selectionBack.x = -COLOURTODE_CHANNEL_SELECTION_END.height
 			atom.selectionBack.y = atom.selectionTop.y
-			atom.selectionBack.height = atom.selectionBottom.y - atom.selectionTop.y
+			atom.selectionBack.height = atom.selectionBottom.y - atom.selectionTop.y + atom.selectionTop.height
 			atom.selectionBack.width = atom.width + COLOURTODE_CHANNEL_SELECTION_END.height*2
 		},
 
@@ -4638,7 +4713,7 @@ on.load(() => {
 		width: COLOURTODE_SQUARE.size + OPTION_MARGIN*2,
 		x: - OPTION_MARGIN,
 		//grabbable: false,
-		dragOnly: false,
+		dragOnly: true,
 		grab: (atom) => atom.parent.expanded? atom : atom.parent,
 		touch: (atom) => atom.parent.expanded? atom : atom.parent,
 		cursor: (atom) => {
@@ -4806,6 +4881,7 @@ on.load(() => {
 
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
+		attached: true,
 		isPaddle: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -5075,6 +5151,7 @@ on.load(() => {
 	}
 
 	const PADDLE_HANDLE = {
+		attached: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -5119,6 +5196,7 @@ on.load(() => {
 	}
 
 	const PIN_HOLE = {
+		attached: true,
 		locked: false,
 		borderScale: 1/2,
 		borderColour: Colour.Black,
@@ -5230,6 +5308,7 @@ on.load(() => {
 		expand: (atom) => {
 			atom.pad = createChild(atom, SYMMETRY_PAD)
 			atom.handle = createChild(atom, SYMMETRY_HANDLE)
+			atom.handle.width += OPTION_MARGIN
 			atom.expanded = true
 
 			const [x, y, r] = getXYR(atom.value)
@@ -5661,6 +5740,7 @@ on.load(() => {
 			y += (COLOURTODE_SQUARE.size - height)/2
 		}
 		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: menuRight, y, element})
+		atom.attached = true
 		registerAtom(atom)
 		menuRight += width
 		menuRight += OPTION_MARGIN
