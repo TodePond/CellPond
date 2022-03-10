@@ -2185,40 +2185,20 @@ on.load(() => {
 	//================//
 	// DRAGON - DEBUG //
 	//================//
-	const debugRegistry = (registry) => {
-		const [debugged, transformed] = registry
-		for (const rule of debugged) {
+	debugRegistry = (registry) => {
+		const {redundantRules, transformedRules} = registry
+		for (const rule of redundantRules) {
 			print("REDUNDANT RULE")
-			for (const step of rule.steps) {
-				print("STEP >>")
-				print("left")
-				for (const cell of step.left) {
-					print(cell)
-				}
-				print("right")
-				for (const cell of step.right) {
-					print(cell)
-				}
-			}
+			debugRule(rule)
 		}
 		print("")
-		for (const rule of transformed) {
+		for (const rule of transformedRules) {
 			print("TRANSFORMED RULE")
-			for (const step of rule.steps) {
-				print("STEP >>")
-				print("left")
-				for (const cell of step.left) {
-					print(cell)
-				}
-				print("right")
-				for (const cell of step.right) {
-					print(cell)
-				}
-			}
+			debugRule(rule)
 		}
 	}
 
-	const debugRule = (rule) => {
+	debugRule = (rule) => {
 		for (const step of rule.steps) {
 			print("")
 			print(">> STEP >>")
@@ -2233,7 +2213,7 @@ on.load(() => {
 		}
 	}
 
-	const debugDiagramCell = (cell, {read = false} = {}) => {
+	debugDiagramCell = (cell, {read = false} = {}) => {
 		if (read) {
 			print("CHECK", "at", cell.x, cell.y, "with size", cell.width, cell.height)
 			print("for", getSplashesArrayFromArray(cell.content))
@@ -2474,11 +2454,11 @@ on.load(() => {
 	})
 	
 	//registerRule(makeRule({steps: [ROCK_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
-	registerRule(makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
+	/*registerRule(makeRule({steps: [SAND_FALL_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.NONE}))
 	registerRule(makeRule({steps: [SAND_SLIDE_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 
 	registerRule(makeRule({steps: [WATER_DARK_FALL], transformations: DRAGON_TRANSFORMATIONS.NONE}))
-	registerRule(makeRule({steps: [WATER_DARK_SLIP], transformations: DRAGON_TRANSFORMATIONS.X}))
+	registerRule(makeRule({steps: [WATER_DARK_SLIP], transformations: DRAGON_TRANSFORMATIONS.X}))*/
 
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPAWN_DIAGRAM], transformations: DRAGON_TRANSFORMATIONS.X}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_FALL], transformations: DRAGON_TRANSFORMATIONS.X}))
@@ -5059,7 +5039,7 @@ on.load(() => {
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked) paddle.registry = registerRule(rule)
+		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
 	}
 
 	const positionPaddles = () => {
