@@ -5245,11 +5245,11 @@ on.load(() => {
 					}
 				}
 
-				if (paddle.hasSymmetry) {
+				/*if (paddle.hasSymmetry) {
 					if (paddle.symmetryCircle.expanded) {
 						paddle.symmetryCircle.unexpand(paddle.symmetryCircle)
 					}
-				}
+				}*/
 
 				if (paddle.cellAtoms.length === 0) {
 					paddle.grabbable = false
@@ -5299,9 +5299,7 @@ on.load(() => {
 
 			else {
 
-				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
-					atom.expand(atom)	
-				}
+				atom.expand(atom)
 			}
 		},
 
@@ -5348,7 +5346,7 @@ on.load(() => {
 				const ptop = py
 				const pbottom = py + paddle.height
 
-				if (paddle.pinhole.locked) continue
+				//if (paddle.pinhole.locked) continue
 
 				if (!paddle.hasSymmetry && paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
@@ -5389,9 +5387,9 @@ on.load(() => {
 					atom.dx = 0
 					atom.dy = 0
 
-					if (paddle.pinhole.locked && atom.expanded) {
+					/*if (paddle.pinhole.locked && atom.expanded) {
 						atom.unexpand(atom)
-					}
+					}*/
 
 				}
 			}
@@ -5403,7 +5401,7 @@ on.load(() => {
 			if (atom.attached) {
 				const paddle = atom.parent
 
-				if (paddle.pinhole.locked) {
+				/*if (paddle.pinhole.locked) {
 					const clone = makeAtom(SYMMETRY_CIRCLE)
 					clone.value = atom.value
 					const {x, y} = getAtomPosition(atom)
@@ -5413,7 +5411,7 @@ on.load(() => {
 					clone.y = y
 					registerAtom(clone)
 					return clone
-				}
+				}*/
 
 				atom.attached = false
 				freeChild(paddle, atom)
