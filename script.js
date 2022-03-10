@@ -680,9 +680,33 @@ on.load(() => {
 
 	}
 
+	let dropperStartX = undefined
+	let dropperStartY = undefined
 	const updatePan = () => {
-		if (!Mouse.Right) return
+		if (!Mouse.Right) {
+
+			if (dropperStartX !== undefined) {
+				const [x, y] = Mouse.position
+				const dropperDistance = Math.hypot(x - dropperStartX, y - dropperStartY)
+				if (dropperDistance < 30) {
+					const cell = pickCell(...getCursorView(x, y))
+					state.brush.colour = cell.colour
+				} 
+			}
+
+			dropperStartX = undefined
+			dropperStartY = undefined
+			return
+		}
+
 		const [x, y] = Mouse.position
+		
+		if (dropperStartX === undefined) {
+			dropperStartX = x
+			dropperStartY = y
+		}
+
+
 		const {x: px, y: py} = state.cursor.previous
 		if (px === undefined || py === undefined) return
 		if (x === undefined || y === undefined) return
