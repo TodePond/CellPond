@@ -3774,6 +3774,7 @@ on.load(() => {
 					atom.slottee = false
 					freeChild(paddle, atom)
 					atom.cellAtom.slotted = undefined
+					atom.cellAtom = undefined
 					return atom
 				}
 				
