@@ -3549,6 +3549,7 @@ on.load(() => {
 						let winningDistance = Infinity
 						let winningSlot = undefined
 						for (const cellAtom of paddle.cellAtoms) {
+							if (cellAtom.slotted !== undefined) continue
 							const {x: cx, y: cy} = getAtomPosition(cellAtom.slot)
 							
 							const distance = Math.hypot(x - cx, y - cy)
@@ -3558,6 +3559,8 @@ on.load(() => {
 							}
 
 						}
+
+						if (winningSlot === undefined) break
 
 						const {x: cx, y: cy} = getAtomPosition(winningSlot)
 						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
@@ -3755,11 +3758,20 @@ on.load(() => {
 					const dragonArray = cloneDragonArray(atom.value)
 					clone.value = dragonArray
 					registerAtom(clone)
+
+					if (atom.slotted !== undefined) {
+						clone.slotted = makeAtom(COLOURTODE_SQUARE)
+						const slottedDragonArray = cloneDragonArray(atom.slotted.value)
+						clone.slotted.value = slottedDragonArray
+						registerAtom(clone)
+					}
+
 					return clone
 				}
 
 				if (atom.slottee) {
 					atom.attached = false
+					atom.slottee = false
 					freeChild(paddle, atom)
 					atom.cellAtom.slotted = undefined
 					return atom
@@ -5073,7 +5085,7 @@ on.load(() => {
 	const PIN_HOLE = {
 		locked: false,
 		borderScale: 1/2,
-		borderColour: Colour.Void,
+		borderColour: Colour.Black,
 		draw: (atom) => {
 			if (atom.locked) {
 				atom.hasBorder = true
