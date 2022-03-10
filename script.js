@@ -3546,6 +3546,26 @@ on.load(() => {
 					}
 
 					else if (paddle.rightTriangle !== undefined && left > pleft + paddle.rightTriangle.x) {
+						let winningDistance = Infinity
+						let winningSlot = undefined
+						for (const cellAtom of paddle.cellAtoms) {
+							const {x: cx, y: cy} = getAtomPosition(cellAtom.slot)
+							
+							const distance = Math.hypot(x - cx, y - cy)
+							if (distance < winningDistance) {
+								winningDistance = distance
+								winningSlot = cellAtom.slot
+							}
+
+						}
+
+						const {x: cx, y: cy} = getAtomPosition(winningSlot)
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+						atom.highlight.x = cx
+						atom.highlight.y = cy
+						atom.highlight.hasBorder = true
+						atom.highlight.colour = Colour.Grey
+						atom.highlightedAtom = winningSlot
 
 						break
 					}
@@ -3566,7 +3586,6 @@ on.load(() => {
 							const spotAbove = [cleft, ctop - cellAtom.height]
 							const spotRight = [cright, ctop]
 							const spotBelow = [cleft, cbottom]
-
 
 							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1])
 							if (!isCellAtomSpotFilled(paddle, spotLeft) && dspotLeft < winningDistance) {
@@ -3663,6 +3682,26 @@ on.load(() => {
 						alert("ERROR: Atom somehow attached to a locked paddle! This should never happen! Please tell @todepond! :)")
 						if (atom.expanded) atom.unexpand(atom)
 					}
+
+					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
+						registerAtom(atom.slotted)
+						giveChild(paddle, atom.slotted)
+					}
+				}
+				else if (atom.highlightedAtom.isSlot) {
+					const slot = atom.highlightedAtom
+					const paddle = slot.parent
+					atom.attached = true
+					giveChild(paddle, atom)
+					atom.x = slot.x
+					atom.y = slot.y
+					atom.dx = 0
+					atom.dy = 0
+					slot.cellAtom.slotted = atom
+					atom.cellAtom = slot.cellAtom
+					atom.slottee = true
+
+					updatePaddleSize(slot.parent)
 				}
 				else {
 
@@ -3684,6 +3723,11 @@ on.load(() => {
 					} else if (atom.highlightedSide === "below") {
 						atom.x = square.x
 						atom.y = square.y + square.height
+					}
+
+					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
+						registerAtom(atom.slotted)
+						giveChild(paddle, atom.slotted)
 					}
 
 					atom.dx = 0
@@ -3713,6 +3757,13 @@ on.load(() => {
 					registerAtom(clone)
 					return clone
 				}
+
+				if (atom.slottee) {
+					atom.attached = false
+					freeChild(paddle, atom)
+					atom.cellAtom.slotted = undefined
+					return atom
+				}
 				
 				atom.attached = false
 				freeChild(paddle, atom)
@@ -3721,7 +3772,11 @@ on.load(() => {
 				paddle.cellAtoms.splice(id, 1)
 				
 				atom.slot = undefined
-				atom.slotted = undefined
+				if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
+					freeChild(paddle, atom.slotted)
+					deleteAtom(atom.slotted)
+				}
+				//atom.slotted = undefined
 				updatePaddleSize(paddle)
 
 			}
@@ -4043,6 +4098,14 @@ on.load(() => {
 			atom.y = PADDLE.height/2 - atom.height/2
 			atom.dx = 0
 			atom.dy = 0
+
+			for (const cellAtom of paddle.cellAtoms) {
+				if (cellAtom.slotted !== undefined) {
+					registerAtom(cellAtom.slotted)
+					giveChild(paddle, cellAtom.slotted)
+				}
+			}
+
 			updatePaddleSize(paddle)
 
 			if (atom.expanded) {
@@ -4067,6 +4130,14 @@ on.load(() => {
 			}
 			freeChild(paddle, atom)
 			paddle.rightTriangle = undefined
+
+			for (const cellAtom of paddle.cellAtoms) {
+				if (cellAtom.slotted !== undefined) {
+					freeChild(paddle, cellAtom.slotted)
+					deleteAtom(cellAtom.slotted)
+				}
+			}
+
 			updatePaddleSize(paddle)
 			return atom
 		},
@@ -4772,6 +4843,8 @@ on.load(() => {
 	}
 
 	const SLOT = {
+		isSlot: true,
+		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -4837,11 +4910,6 @@ on.load(() => {
 
 		}
 
-		for (const slot of paddle.slots) {
-			deleteChild(paddle, slot)
-		}
-		paddle.slots = []
-
 		if (paddle.rightTriangle !== undefined) {
 			paddle.rightTriangle.x = width
 			paddle.rightTriangle.y = height/2 - paddle.rightTriangle.height/2
@@ -4859,6 +4927,11 @@ on.load(() => {
 		//=============================//
 		// ARRANGING PADDLE's CHILDREN //
 		//=============================//
+		
+		for (const slot of paddle.slots) {
+			deleteChild(paddle, slot)
+		}
+		paddle.slots = []
 
 		if (paddle.rightTriangle !== undefined) {
 			for (const cellAtom of paddle.cellAtoms) {
@@ -4868,6 +4941,7 @@ on.load(() => {
 				paddle.slots.push(slot)
 				slot.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width
 				slot.y = cellAtom.y
+				slot.cellAtom = cellAtom
 
 				if (cellAtom.slotted !== undefined) {
 					cellAtom.slotted.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width
