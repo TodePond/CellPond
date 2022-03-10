@@ -4168,9 +4168,9 @@ on.load(() => {
 
 			for (const paddle of paddles) {
 
-				// Don't pick hidden or locked or filled paddles
+				// Don't pick hidden or filled paddles
 				if (!paddle.expanded) continue
-				if (paddle.pinhole.locked) continue
+				//if (paddle.pinhole.locked) continue
 				if (paddle.rightTriangle !== undefined) continue
 
 				// Get paddle bounds
@@ -4222,7 +4222,7 @@ on.load(() => {
 		drag: (atom) => {
 			if (!atom.parent.isPaddle) return atom
 			const paddle = atom.parent
-			if (paddle.pinhole.locked) {
+			/*if (paddle.pinhole.locked) {
 				const clone = makeAtom(COLOURTODE_TRIANGLE)
 				clone.direction = atom.direction
 				const {x, y} = getAtomPosition(atom)
@@ -4232,7 +4232,7 @@ on.load(() => {
 				clone.y = y
 				registerAtom(clone)
 				return clone
-			}
+			}*/
 
 			
 			atom.attached = false
