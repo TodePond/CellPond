@@ -1742,24 +1742,9 @@ on.load(() => {
 	
 	const getSplashesSetFromArray = (array) => {
 
-		const splashes = new Set()
-		const [reds, greens, blues] = array.channels
+		const splashesArray = getSplashesArrayFromArray(array)
 
-		for (let r = 0; r < reds.values.length; r++) {
-			const red = reds.values[r]
-			if (!red) continue
-			for (let g = 0; g < greens.values.length; g++) {
-				const green = greens.values[g]
-				if (!green) continue
-				for (let b = 0; b < blues.values.length; b++) {
-					const blue = blues.values[b]
-					if (!blue) continue
-					const splash = r*100 + g*10 + b*1
-					splashes.add(splash)
-				}
-			}
-		}
-
+		const splashes = new Set(splashesArray)
 		return splashes
 	}
 	
@@ -1797,14 +1782,14 @@ on.load(() => {
 		const blueValues = [false, false, false, false, false, false, false, false, false, false]
 
 		for (let i = 0; i < 10; i++) {
-			redValues[i] = array.channels[0].values[i]
-			greenValues[i] = array.channels[1].values[i]
-			blueValues[i] = array.channels[2].values[i]
+			if (array.channels[0] !== undefined) redValues[i] = array.channels[0].values[i]
+			if (array.channels[1] !== undefined) greenValues[i] = array.channels[1].values[i]
+			if (array.channels[2] !== undefined) blueValues[i] = array.channels[2].values[i]
 		}
 
-		const red = makeNumber({values: redValues, channel: 0})
-		const green = makeNumber({values: greenValues, channel: 1})
-		const blue = makeNumber({values: blueValues, channel: 2})
+		const red = array.channels[0] !== undefined? makeNumber({values: redValues, channel: 0}) : undefined
+		const green = array.channels[1] !== undefined? makeNumber({values: greenValues, channel: 1}) : undefined
+		const blue = array.channels[2] !== undefined? makeNumber({values: blueValues, channel: 2}) : undefined
 
 		const clone = makeArray({channels: [red, green, blue]})
 		return clone
@@ -3440,6 +3425,8 @@ on.load(() => {
 							W += BORDER_THICKNESS
 							H += BORDER_THICKNESS
 							Y -= BORDER_THICKNESS/2
+						} else if (atom.width === atom.height) {
+							border *= 1.5
 						}
 					}
 					else {
