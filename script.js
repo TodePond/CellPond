@@ -1,4 +1,34 @@
 
+/*
+
+Welcome traveller.
+Welcome to the SOURCE of the CellPond.
+
+If you venture further, may tode be with you.
+What you are about to discover...
+	... is a single javascript file ...
+		... of gargantuan size ...
+			... over 5000 lines ...
+				... globally scoped ...
+
+	>>> There is no room for fear here! <<<
+
+Be brave.
+	Trust no comments.
+		Trust no names.
+
+A simple seed ... grown into a mountain ...
+Coding CellPond is a performance ...
+	and by reading this you join the performance ...
+
+
+
+
+I'm just kidding.
+That would be ridiculous.
+
+*/
+
 const urlParams = new URLSearchParams(window.location.search)
 const NO_SECRET_MODE = urlParams.has("nosecret")
 if (NO_SECRET_MODE) {
@@ -272,6 +302,7 @@ const state = {
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
 		colour: Colour.Grey.splash,
+		colour: Colour.Green.splash,
 		size: 1,
 	},
 
@@ -5731,7 +5762,9 @@ on.load(() => {
 
 	const COLOURTODE_TOOL = {
 		element: COLOURTODE_SQUARE,
-		draw: (atom) => atom.element.draw(atom),
+		draw: (atom) => {
+			atom.element.draw(atom)
+		},
 		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
 		grab: (atom, x, y) => {
 			return atom
@@ -5762,13 +5795,13 @@ on.load(() => {
 		registerAtom(atom)
 		menuRight += width
 		menuRight += OPTION_MARGIN
+		return atom
 	}
 
-	addMenuTool(COLOURTODE_SQUARE)
+	const squareTool = addMenuTool(COLOURTODE_SQUARE)
 	addMenuTool(COLOURTODE_TRIANGLE)
 	addMenuTool(SYMMETRY_CIRCLE)
 	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
-
 	createPaddle()
 
 })
