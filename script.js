@@ -297,12 +297,12 @@ const state = {
 	},
 
 	brush: {
-		colour: 999,
 		colour: Colour.Purple.splash,
 		colour: Colour.Rose.splash,
 		colour: Colour.Yellow.splash,
 		colour: Colour.Grey.splash,
 		colour: Colour.Green.splash,
+		colour: 999,
 		size: 1,
 	},
 
@@ -577,6 +577,12 @@ on.load(() => {
 
 	const updateBrush = () => {
 		if (state.colourTode.hand.state !== HAND.BRUSHING) return
+
+		/*if (Mouse.Middle) {
+			const [x, y] = Mouse.position
+			const cell = pickCell(...getCursorView(x, y))
+		}*/
+
 		if (!Mouse.Left) return
 		let [x, y] = getCursorView(...Mouse.position)
 		if (x === undefined || y === undefined) {
@@ -713,15 +719,18 @@ on.load(() => {
 
 	let dropperStartX = undefined
 	let dropperStartY = undefined
+	let dropperStartT = undefined
+
 	const updatePan = () => {
 		if (!Mouse.Right) {
 
 			if (dropperStartX !== undefined) {
 				const [x, y] = Mouse.position
 				const dropperDistance = Math.hypot(x - dropperStartX, y - dropperStartY)
-				if (dropperDistance < 30) {
+				const dropperTime = Date.now() - dropperStartT
+				if (dropperTime < 100 || dropperDistance <= 0) {
 					const cell = pickCell(...getCursorView(x, y))
-					state.brush.colour = cell.colour
+					if (cell !== undefined)	state.brush.colour = cell.colour
 				} 
 			}
 
@@ -730,11 +739,14 @@ on.load(() => {
 			return
 		}
 
+
 		const [x, y] = Mouse.position
 		
 		if (dropperStartX === undefined) {
 			dropperStartX = x
 			dropperStartY = y
+			dropperStartT = Date.now()
+			dropperMovement = 0
 		}
 
 
@@ -3387,12 +3399,24 @@ on.load(() => {
 	const borderColours = []
 	for (let i = 0; i < 1000; i++) {
 		const colour = Colour.splash(i)
-		let borderColour = Colour.add(colour, {lightness: -20})
-		/*if (colour.lightness <= Colour.Black.lightness) {
-			borderColour = Colour.add(colour, {lightness: 20})
-		}*/
+		let borderColour = undefined
+		//let borderColour = Colour.add(colour, {lightness: -20})
+		const darkness = 100 - colour.lightness
+		borderColour = Colour.add(colour, {lightness: darkness * 0.5})
 		borderColours.push(borderColour)
 	}
+	//borderColours[000] = Colour.Grey
+
+	const toolBorderColours = borderColours
+	/*for (let i = 0; i < 1000; i++) {
+		const colour = Colour.splash(i)
+		//let borderColour = Colour.add(colour, {lightness: -20})
+		//if (colour.lightness <= Colour.Silver.lightness) {
+		let borderColour = Colour.add(colour, {lightness: 15})
+		//}
+		toolBorderColours.push(borderColour)
+	}
+	toolBorderColours[000] = Colour.Grey*/
 
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
@@ -3400,15 +3424,23 @@ on.load(() => {
 
 			let X = Math.round(x)
 			let Y = Math.round(y)
-			const W = Math.round(atom.width)
-			const H = Math.round(atom.height)
+			let W = Math.round(atom.width)
+			let H = Math.round(atom.height)
 
 			if (atom.hasBorder) {
 
 				if (atom.hasInner) {
 
+					let border = BORDER_THICKNESS
 					if (atom.borderColour === undefined) {
 						colourTodeContext.fillStyle = borderColours[atom.colour.splash]
+						if (atom.isTool) {
+							colourTodeContext.fillStyle = toolBorderColours[atom.colour.splash]
+							border *= 1.5
+							W += BORDER_THICKNESS
+							H += BORDER_THICKNESS
+							Y -= BORDER_THICKNESS/2
+						}
 					}
 					else {
 						colourTodeContext.fillStyle = atom.borderColour
@@ -3416,7 +3448,7 @@ on.load(() => {
 					colourTodeContext.fillRect(X, Y, W, H)
 
 					colourTodeContext.fillStyle = atom.colour
-					colourTodeContext.fillRect(X+BORDER_THICKNESS, Y+BORDER_THICKNESS, W-BORDER_THICKNESS*2, H-BORDER_THICKNESS*2)
+					colourTodeContext.fillRect(X+border, Y+border, W-border*2, H-border*2)
 				}
 
 				else {
@@ -3596,6 +3628,10 @@ on.load(() => {
 				updatePaddleRule(paddle)
 			}
 
+			squareTool.toolbarNeedsColourUpdate = true
+			triangleTool.toolbarNeedsColourUpdate = true
+			circleTool.toolbarNeedsColourUpdate = true
+
 		},
 
 		construct: (atom) => {
@@ -3608,8 +3644,12 @@ on.load(() => {
 			const b = Random.Uint8 % 10*/
 			//atom.value = makeArrayFromSplash(r*100 + g*10 + b)
 			//atom.value = makeArrayFromSplash(555)
-			const splash = TODEPOND_COLOURS[Random.Uint8 % TODEPOND_COLOURS.length]
-			atom.value = makeArrayFromSplash(splash)
+			//const splash = TODEPOND_COLOURS[Random.Uint8 % TODEPOND_COLOURS.length]
+			if (typeof state.brush.colour === "number") {
+				atom.value = makeArrayFromSplash(state.brush.colour)
+			} else {
+				atom.value = cloneDragonArray(state.brush.colour.left[0].content)
+			}
 			
 			atom.colourId = 0
 			atom.dcolourId = 1
@@ -3949,12 +3989,16 @@ on.load(() => {
 
 			const {x, y} = getAtomPosition(atom)
 
-			const height = atom.size
-			const width = atom.size * Math.sqrt(3)/2
+			let size = atom.size
+			if (atom.isTool) size -= BORDER_THICKNESS
+
+			const height = size
+			const width = size * Math.sqrt(3)/2
 			
 			const left = x
 			const right = left + width
-			const top = y
+			let top = y
+			if (atom.isTool) top += BORDER_THICKNESS/2
 			const bottom = top + height
 			const middleY = top + height/2
 
@@ -3970,6 +4014,11 @@ on.load(() => {
 			if (atom.hasBorder) {
 				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
 				colourTodeContext.strokeStyle = atom.borderColour
+
+				if (atom.isTool) {
+					//colourTodeContext.lineWidth = BORDER_THICKNESS*1.0
+					colourTodeContext.strokeStyle = toolBorderColours[atom.colour.splash]
+				}
 				colourTodeContext.stroke(path)
 			}
 		},
@@ -5227,7 +5276,10 @@ on.load(() => {
 			let R = (atom.width/2)
 
 			if (atom.hasBorder) {
-				colourTodeContext.fillStyle = atom.borderColour? atom.borderColour : Colour.Void
+				if (atom.isTool) {
+					atom.borderColour = toolBorderColours[atom.colour.splash]
+				}
+				colourTodeContext.fillStyle = atom.borderColour !== undefined? atom.borderColour : Colour.Void
 				colourTodeContext.beginPath()
 				colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
 				colourTodeContext.fill()
@@ -5790,8 +5842,16 @@ on.load(() => {
 		if (height < COLOURTODE_SQUARE.size) {
 			y += (COLOURTODE_SQUARE.size - height)/2
 		}
+		y += BORDER_THICKNESS
+
 		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: menuRight, y, element})
 		atom.attached = true
+		atom.isTool = true
+		atom.previousBrushColour = undefined
+		atom.colourId = 0
+		atom.dcolourId = 1
+		atom.colourTicker = Infinity
+		atom.hasBorder = true
 		registerAtom(atom)
 		menuRight += width
 		menuRight += OPTION_MARGIN
@@ -5799,9 +5859,51 @@ on.load(() => {
 	}
 
 	const squareTool = addMenuTool(COLOURTODE_SQUARE)
-	addMenuTool(COLOURTODE_TRIANGLE)
-	addMenuTool(SYMMETRY_CIRCLE)
+	menuRight += BORDER_THICKNESS*2
+	const triangleTool = addMenuTool(COLOURTODE_TRIANGLE)
+	//menuRight -= BORDER_THICKNESS
+	const circleTool = addMenuTool(SYMMETRY_CIRCLE)
 	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
 	createPaddle()
+
+	circleTool.borderScale = 1
+	
+	squareTool.update = (atom) => {
+
+		if (typeof state.brush.colour === "number") {
+			atom.value = makeArrayFromSplash(state.brush.colour)
+		} else {
+			atom.value = cloneDragonArray(state.brush.colour.left[0].content)
+		}
+
+		if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
+			atom.toolbarNeedsColourUpdate = false
+			atom.colours = getSplashesArrayFromArray(atom.value)
+			atom.colourTicker = Infinity
+			atom.previousBrushColour = state.brush.colour
+		}
+
+		if (atom.colourTicker >= getColourCycleLength(atom)) {
+			atom.colourTicker = 0
+
+			atom.colourId += atom.dcolourId
+			if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
+				atom.dcolourId *= -1
+			}
+			if (atom.colourId >= atom.colours.length) {
+				atom.dcolourId = -1
+				atom.colourId = atom.colours.length-1
+			}
+			if (atom.colourId < 0) {
+				atom.dcolourId = 1
+				atom.colourId = 0
+			}
+			atom.colour = Colour.splash(atom.colours[atom.colourId])
+		}
+		else atom.colourTicker++
+	}
+
+	triangleTool.update = squareTool.update
+	circleTool.update = squareTool.update
 
 })
