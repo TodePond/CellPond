@@ -3386,8 +3386,8 @@ on.load(() => {
 		const colour = Colour.splash(i)
 		let borderColour = undefined
 		//let borderColour = Colour.add(colour, {lightness: -20})
-		const darkness = 100 - colour.lightness
-		borderColour = Colour.add(colour, {lightness: darkness * 0.5})
+		const darkness = 75 - colour.lightness
+		borderColour = Colour.add(colour, {lightness: darkness * 1.0})
 		borderColours.push(borderColour)
 	}
 	//borderColours[000] = Colour.Grey
