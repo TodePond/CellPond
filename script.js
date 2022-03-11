@@ -3386,22 +3386,22 @@ on.load(() => {
 		const colour = Colour.splash(i)
 		let borderColour = undefined
 		//let borderColour = Colour.add(colour, {lightness: -20})
-		const darkness = 75 - colour.lightness
-		borderColour = Colour.add(colour, {lightness: darkness * 1.0})
+		const darkness = 70 - colour.lightness
+		borderColour = Colour.add(colour, {lightness: -20})
 		borderColours.push(borderColour)
 	}
-	//borderColours[000] = Colour.Grey
 
-	const toolBorderColours = borderColours
-	/*for (let i = 0; i < 1000; i++) {
+	const toolBorderColours = []
+	
+	for (let i = 0; i < 1000; i++) {
 		const colour = Colour.splash(i)
-		//let borderColour = Colour.add(colour, {lightness: -20})
-		//if (colour.lightness <= Colour.Silver.lightness) {
-		let borderColour = Colour.add(colour, {lightness: 15})
-		//}
+		let borderColour = Colour.add(colour, {lightness: -20})
+		if (colour.lightness <= 35) {
+			borderColour = Colour.add(colour, {lightness: 15})
+		}
 		toolBorderColours.push(borderColour)
 	}
-	toolBorderColours[000] = Colour.Grey*/
+	toolBorderColours[000] = Colour.Grey
 
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
