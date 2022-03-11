@@ -41,7 +41,7 @@ const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenR
 let secretScore = 0
 const tickSecret = () => {
 	secretScore++
-	if (secretScore === 9999) {
+	if (secretScore === 99999) {
 		localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
 
 		// WOAH WOAH! You can't come snooping in the source code for secrets!!
