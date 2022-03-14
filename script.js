@@ -5284,6 +5284,7 @@ on.load(() => {
 
 			paddle.y = previous.y + previous.height + PADDLE_MARGIN
 			previous = paddle
+			//bringAtomToBack(paddle) //causes bug where circle tool disappears but really shouldn't :(
 		}
 	}
 
@@ -5510,7 +5511,7 @@ on.load(() => {
 				const ptop = py
 				const pbottom = py + paddle.height
 
-				//if (paddle.pinhole.locked) continue
+				if (paddle.pinhole.locked) continue
 
 				if (!paddle.hasSymmetry && paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
@@ -5565,7 +5566,7 @@ on.load(() => {
 			if (atom.attached) {
 				const paddle = atom.parent
 
-				/*if (paddle.pinhole.locked) {
+				if (paddle.pinhole.locked) {
 					const clone = makeAtom(SYMMETRY_CIRCLE)
 					clone.value = atom.value
 					const {x, y} = getAtomPosition(atom)
@@ -5575,7 +5576,7 @@ on.load(() => {
 					clone.y = y
 					registerAtom(clone)
 					return clone
-				}*/
+				}
 
 				atom.attached = false
 				freeChild(paddle, atom)
