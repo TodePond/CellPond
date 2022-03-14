@@ -24,8 +24,10 @@ Coding CellPond is a performance ...
 
 
 
-I'm just kidding.
-That would be ridiculous.
+I'm just joking.
+That would be ridiculous!
+
+don't take it too seriously
 
 */
 
@@ -118,6 +120,27 @@ const clamp = (number, min, max) => {
 	if (number > max) return max
 	return number
 }
+
+let brushColourCycleIndex = 0
+const brushColourCycle = [
+	Colour.White.splash,
+
+	Colour.Green.splash,
+	Colour.Blue.splash,
+	Colour.Red.splash,
+	Colour.Yellow.splash,
+
+	Colour.Black.splash,
+	
+	Colour.Rose.splash,
+	Colour.Cyan.splash,
+	Colour.Orange.splash,
+	Colour.Purple.splash,
+	Colour.Pink.splash,
+	
+	Colour.Grey.splash,
+	Colour.Silver.splash,
+]
 
 //======//
 // CELL //
@@ -725,13 +748,38 @@ on.load(() => {
 		if (!Mouse.Right) {
 
 			if (dropperStartX !== undefined) {
+
 				const [x, y] = Mouse.position
+
 				const dropperDistance = Math.hypot(x - dropperStartX, y - dropperStartY)
 				const dropperTime = Date.now() - dropperStartT
 				if (dropperTime < 100 || dropperDistance <= 0) {
-					const cell = pickCell(...getCursorView(x, y))
-					if (cell !== undefined)	state.brush.colour = cell.colour
-				} 
+					
+					if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING) {
+						const cell = pickCell(...getCursorView(x, y))
+						if (cell !== undefined)	state.brush.colour = cell.colour
+					}
+
+					else {
+						const atom = getAtom(x / CT_SCALE, y / CT_SCALE)
+	
+						if (atom === undefined) {
+							brushColourCycleIndex++
+							if (brushColourCycleIndex >= brushColourCycle.length) {
+								brushColourCycleIndex = 0
+							}
+	
+							state.brush.colour = brushColourCycle[brushColourCycleIndex]
+						}
+	
+						else {
+							state.brush.colour = atom.colour.splash
+						}
+	
+					}
+				}
+
+				
 			}
 
 			dropperStartX = undefined
