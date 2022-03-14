@@ -5115,7 +5115,7 @@ on.load(() => {
 		draw: COLOURTODE_RECTANGLE.draw,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
-		colour: Colour.Grey,
+		colour: Colour.Black,
 		size: COLOURTODE_SQUARE.size,
 		grab: (atom) => atom.parent,
 		dragOnly: true,
