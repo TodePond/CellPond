@@ -5384,6 +5384,12 @@ on.load(() => {
 					if (cellAtom.expanded) {
 						cellAtom.unexpand(cellAtom)
 					}
+					if (cellAtom.slotted !== undefined) {
+						const slotted = cellAtom.slotted
+						if (slotted.expanded) {
+							slotted.unexpand(slotted)
+						}
+					}
 				}
 
 				/*if (paddle.hasSymmetry) {
