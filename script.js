@@ -3615,6 +3615,9 @@ on.load(() => {
 				updatePaddleRule(paddle)
 			}
 
+			const brushDiagramCell = makeDiagramCell({content: atom.value})
+			state.brush.colour = makeDiagram({left: [brushDiagramCell]})
+
 			squareTool.toolbarNeedsColourUpdate = true
 			triangleTool.toolbarNeedsColourUpdate = true
 			circleTool.toolbarNeedsColourUpdate = true
