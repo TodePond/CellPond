@@ -3739,7 +3739,7 @@ on.load(() => {
 
 				for (const paddle of paddles) {
 
-					if (!paddle.expanded) continue
+					if (!paddle.expanded || paddle.pinhole.locked) continue
 
 					const {x: px, y: py} = getAtomPosition(paddle)
 					const pleft = px
