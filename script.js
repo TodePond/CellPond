@@ -3356,7 +3356,8 @@ on.load(() => {
 		grabbed.dx = 0
 		grabbed.dy = 0
 
-		bringAtomToFront(grabbed)
+		if (atom.stayAtBack) bringAtomToBack(grabbed)
+		else bringAtomToFront(grabbed)
 
 		return grabbed
 	}
@@ -3371,7 +3372,23 @@ on.load(() => {
 			const childId = grabbed.parent.children.indexOf(grabbed)
 			grabbed.parent.children.splice(childId, 1)
 			grabbed.parent.children.push(grabbed)
-			bringAtomToFront(grabbed.parent)
+			if (grabbed.parent.stayAtBack) bringAtomToBack(grabbed.parent)
+			else bringAtomToFront(grabbed.parent)
+		}
+	}
+
+	const bringAtomToBack = (grabbed) => {
+		if (grabbed.parent === COLOURTODE_BASE_PARENT) {
+			const id = state.colourTode.atoms.indexOf(grabbed)
+			state.colourTode.atoms.splice(id, 1)
+			state.colourTode.atoms.unshift(grabbed)
+		}
+		else {
+			const childId = grabbed.parent.children.indexOf(grabbed)
+			grabbed.parent.children.splice(childId, 1)
+			grabbed.parent.children.unshift(grabbed)
+			if (grabbed.parent.stayAtBack) bringAtomToBack(grabbed.parent)
+			else bringAtomToFront(grabbed.parent)
 		}
 	}
 
@@ -5019,6 +5036,7 @@ on.load(() => {
 
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
+		stayAtBack: true,
 		attached: true,
 		isPaddle: true,
 		behindChildren: true,
