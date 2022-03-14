@@ -763,17 +763,17 @@ on.load(() => {
 	let CT_SCALE = 1.0
 	on.mousewheel((e) => {
 
+		e.preventDefault()
+
 		const dy = e.deltaY / 100
 
 		if (Keyboard.Alt) {
 			PADDLE.scroll -= 50 * dy
 			positionPaddles()
-			e.preventDefault()
 		}
 
 		else if (Keyboard.Control) {
 			CT_SCALE -= dy * 0.1
-			e.preventDefault()
 		}
 		
 		else if (Keyboard.Shift) {
