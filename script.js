@@ -3995,12 +3995,12 @@ on.load(() => {
 					clone.value = dragonArray
 					registerAtom(clone)
 
-					if (atom.slotted !== undefined) {
+					/*if (atom.slotted !== undefined) {
 						clone.slotted = makeAtom(COLOURTODE_SQUARE)
 						const slottedDragonArray = cloneDragonArray(atom.slotted.value)
 						clone.slotted.value = slottedDragonArray
-						registerAtom(clone)
-					}
+						//registerAtom(clone)
+					}*/
 
 					return clone
 				}
