@@ -123,7 +123,7 @@ const clamp = (number, min, max) => {
 
 let brushColourCycleIndex = 0
 const brushColourCycle = [
-	Colour.splash(0),
+	999,
 
 	Colour.Green.splash,
 	Colour.Blue.splash,
