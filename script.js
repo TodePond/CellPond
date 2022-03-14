@@ -3420,7 +3420,8 @@ on.load(() => {
 	
 	const giveChild = (parent, atom) => {
 		deleteAtom(atom)
-		parent.children.push(atom)
+		if (atom.stayAtBack || atom.behindOtherChildren) parent.children.unshift(atom)
+		else parent.children.push(atom)
 		atom.parent = parent
 	}
 
@@ -4255,6 +4256,7 @@ on.load(() => {
 	}
 
 	const COLOURTODE_TRIANGLE = {
+		behindOtherChildren: true,
 		expanded: false,
 		draw: (atom) => {
 			if (atom.direction === "right") TRIANGLE_RIGHT.draw(atom)
@@ -5113,7 +5115,7 @@ on.load(() => {
 		isSlot: true,
 		behindChildren: true,
 		draw: (atom) => {
-			//atom.colour = atom.cellAtom.borderColour
+			//atom.colour = borderColours[atom.cellAtom.colour.splash]
 			COLOURTODE_RECTANGLE.draw(atom)
 		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
