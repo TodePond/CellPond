@@ -123,7 +123,7 @@ const clamp = (number, min, max) => {
 
 let brushColourCycleIndex = 0
 const brushColourCycle = [
-	Colour.White.splash,
+	Colour.splash(0),
 
 	Colour.Green.splash,
 	Colour.Blue.splash,
@@ -765,7 +765,7 @@ on.load(() => {
 	
 						if (atom === undefined) {
 							brushColourCycleIndex++
-							if (brushColourCycleIndex >= brushColourCycle.length) {
+							if (brushColourCycleIndex >= brushColourCycle.length - 1) {
 								brushColourCycleIndex = 0
 							}
 	
