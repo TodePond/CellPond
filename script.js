@@ -3457,7 +3457,10 @@ on.load(() => {
 		borderColours.push(borderColour)
 	}
 
-	const toolBorderColours = []
+	const toolBorderColours = borderColours.clone
+	toolBorderColours[000] = Colour.Grey
+
+	/*const toolBorderColours = []
 	
 	for (let i = 0; i < 1000; i++) {
 		const colour = Colour.splash(i)
@@ -3467,7 +3470,7 @@ on.load(() => {
 		}
 		toolBorderColours.push(borderColour)
 	}
-	toolBorderColours[000] = Colour.Grey
+	toolBorderColours[000] = Colour.Grey*/
 
 	const COLOURTODE_RECTANGLE = {
 		draw: (atom) => {
@@ -5111,12 +5114,76 @@ on.load(() => {
 		}
 	}
 
+	const fillPoints = (colour, points) => {
+		
+		const path = new Path2D()
+		const [head, ...tail] = points
+		path.moveTo(...head.map(n => Math.round(n)))
+		for (const point of tail) {
+			path.lineTo(...point.map(n => Math.round(n)))
+		}
+		path.closePath()
+
+		colourTodeContext.fillStyle = colour
+		colourTodeContext.fill(path)
+	}
+
 	const SLOT = {
 		isSlot: true,
 		behindChildren: true,
+		//hasBorder: true,
+		//borderColour: Colour.Silver,
 		draw: (atom) => {
 			//atom.colour = borderColours[atom.cellAtom.colour.splash]
 			COLOURTODE_RECTANGLE.draw(atom)
+			
+			const [x, y] = getAtomPosition(atom)
+
+			const left = x
+			const right = x + atom.width
+			const top = y
+			const bottom = y + atom.height
+
+			const swidth = atom.width/10
+			const sheight = atom.height/10
+
+			const stripes = [
+				[
+					[left, top],
+					[left + swidth*1, top],
+					[left, top + sheight*1],
+				],
+				[
+					[left + swidth*4, top],
+					[left + swidth*6, top],
+					[left, top + swidth*6],
+					[left, top + swidth*4],
+				],
+				[
+					[left + swidth*9, top],
+					[right, top],
+					[right, top + sheight],
+					[left + swidth, bottom],
+					[left, bottom],
+					[left, top + swidth*9],
+				],
+				[
+					[left + swidth*9, bottom],
+					[right, top + sheight * 9],
+					[right, bottom],
+				],
+				[
+					[left + swidth*4, bottom],
+					[left + swidth*6, bottom],
+					[right, top + sheight * 6],
+					[right, top + sheight * 4],
+				],
+			]
+
+			for (const stripe of stripes) {
+				fillPoints(Colour.Black, stripe)
+			}
+
 		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
