@@ -5144,7 +5144,7 @@ on.load(() => {
 			const top = y
 			const bottom = y + atom.height
 
-			const swidth = atom.width/10
+			/*const swidth = atom.width/10
 			const sheight = atom.height/10
 
 			const stripes = [
@@ -5182,12 +5182,23 @@ on.load(() => {
 
 			for (const stripe of stripes) {
 				fillPoints(Colour.Black, stripe)
-			}
+			}*/
+
+			colourTodeContext.fillStyle = Colour.Black
+			/*colourTodeContext.beginPath()
+			colourTodeContext.arc(x + atom.width/2, y+atom.height/2, atom.width / 5, 0, 2*Math.PI)
+			colourTodeContext.fill()*/
+
+			const w = atom.width/3
+			const h = atom.width/3
+			const X = x + atom.width/2 - w/2
+			const Y = y + atom.height/2 - h/2
+			colourTodeContext.fillRect(...[X, Y, w, h].map(n => Math.round(n)))
 
 		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
-		colour: Colour.Void,
+		colour: Colour.Grey,
 		size: COLOURTODE_SQUARE.size,
 		grab: (atom) => atom.parent,
 		dragOnly: true,
