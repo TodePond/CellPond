@@ -1770,7 +1770,7 @@ on.load(() => {
 		return {channels, stamp}
 	}
 
-	const makeArrayFromSplash = (splash) => {
+	makeArrayFromSplash = (splash) => {
 		let [r, g, b] = getRGB(splash)
 		r /= 100
 		g /= 10
@@ -1863,26 +1863,26 @@ on.load(() => {
 	// or you can make an invalid side by giving it two cells in the same place
 
 	// Right can be undefined to represent a single-sided diagram
-	const makeDiagram = ({left = [], right} = {}) => {
+	makeDiagram = ({left = [], right} = {}) => {
 		return {left, right, isDiagram: true}
 	}
 
 	// Content can be a dragon-array or another dragon-diagram
-	const makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray(), instruction = DRAGON_INSTRUCTION.recolour, splitX = 1, splitY = 1} = {}) => {
+	makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray(), instruction = DRAGON_INSTRUCTION.recolour, splitX = 1, splitY = 1} = {}) => {
 		return {x, y, width, height, content, instruction, splitX, splitY}
 	}
 
 	//===============//
 	// DRAGON - RULE //
 	//===============//
-	const makeRule = ({steps = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
+	makeRule = ({steps = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
 		return {steps, transformations, locked}
 	}
 
 	//==========================//
 	// DRAGON - TRANSFORMATIONS //
 	//==========================//
-	const DRAGON_TRANSFORMATIONS = {
+	DRAGON_TRANSFORMATIONS = {
 		NONE: [
 			(x, y, w, h, W, H) => [x, y],
 		],
@@ -1984,7 +1984,7 @@ on.load(() => {
 	// Note: This function doesn't check for safety
 	// eg: If it is a locked-in rule or not
 	// Or if the left side matches the shape of the right side
-	const registerRule = (rule) => {
+	registerRule = (rule) => {
 
 		// Apply Symmetry!
 		const transformedRules = []
@@ -2196,7 +2196,7 @@ on.load(() => {
 	//======================//
 	// These are the different types of instructions available for the right-hand-side of rules
 	// Default is recolour
-	const DRAGON_INSTRUCTION = {}
+	DRAGON_INSTRUCTION = {}
 	DRAGON_INSTRUCTION.recolour = (cell) => {
 
 		const splashes = getSplashesArrayFromArray(cell.content)
@@ -2573,6 +2573,45 @@ on.load(() => {
 
 	//registerRule(makeRule({steps: [], transformations: DRAGON_TRANSFORMATIONS.X}))
 	//registerRule(makeRule({steps: [WATER_RIGHT_SPIN], transformations: DRAGON_TRANSFORMATIONS.X}))
+
+	/*
+
+	registerRule(
+		makeRule({
+			transformations: DRAGON_TRANSFORMATIONS.R,
+			steps: [
+				makeDiagram({
+					left: [
+						makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(999)}),
+						makeDiagramCell({x: 1, y: 0, content: makeArrayFromSplash(000)}),
+					],
+					right: [
+						makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(000)}),
+						makeDiagramCell({x: 1, y: 0, content: makeArrayFromSplash(999)}),
+					],
+				})
+			],
+		}),
+	)
+
+	registerRule(
+		makeRule({
+			transformations: DRAGON_TRANSFORMATIONS.X,
+			steps: [
+				makeDiagram({
+					left: [
+						makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(999)}),
+					],
+					right: [
+						makeDiagramCell({x: 0, y: 0, width: 0.5, splitX: 2, splitY: 1, content: makeArrayFromSplash(Colour.Blue.splash), instruction: DRAGON_INSTRUCTION.split}),
+						makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: makeArrayFromSplash(Colour.Red.splash), instruction: DRAGON_INSTRUCTION.recolour}),
+					],
+				})
+			],
+		}),
+	)
+
+	*/
 
 	const RAINBOW = makeArray()
 	RAINBOW.channels = [makeNumber(), makeNumber(), makeNumber()]
