@@ -2576,40 +2576,40 @@ on.load(() => {
 
 	/*
 
-	registerRule(
-		makeRule({
-			transformations: DRAGON_TRANSFORMATIONS.R,
-			steps: [
-				makeDiagram({
-					left: [
-						makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(999)}),
-						makeDiagramCell({x: 1, y: 0, content: makeArrayFromSplash(000)}),
-					],
-					right: [
-						makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(000)}),
-						makeDiagramCell({x: 1, y: 0, content: makeArrayFromSplash(999)}),
-					],
-				})
-			],
-		}),
-	)
+registerRule(
+	makeRule({
+		transformations: DRAGON_TRANSFORMATIONS.R,
+		steps: [
+			makeDiagram({
+				left: [
+					makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(999)}),
+					makeDiagramCell({x: 1, y: 0, content: makeArrayFromSplash(000)}),
+				],
+				right: [
+					makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(000)}),
+					makeDiagramCell({x: 1, y: 0, content: makeArrayFromSplash(999)}),
+				],
+			})
+		],
+	}),
+)
 
-	registerRule(
-		makeRule({
-			transformations: DRAGON_TRANSFORMATIONS.X,
-			steps: [
-				makeDiagram({
-					left: [
-						makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(999)}),
-					],
-					right: [
-						makeDiagramCell({x: 0, y: 0, width: 0.5, splitX: 2, splitY: 1, content: makeArrayFromSplash(Colour.Blue.splash), instruction: DRAGON_INSTRUCTION.split}),
-						makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: makeArrayFromSplash(Colour.Red.splash), instruction: DRAGON_INSTRUCTION.recolour}),
-					],
-				})
-			],
-		}),
-	)
+registerRule(
+	makeRule({
+		transformations: DRAGON_TRANSFORMATIONS.X,
+		steps: [
+			makeDiagram({
+				left: [
+					makeDiagramCell({x: 0, y: 0, content: makeArrayFromSplash(999)}),
+				],
+				right: [
+					makeDiagramCell({x: 0, y: 0, width: 0.5, splitX: 2, splitY: 1, content: makeArrayFromSplash(Colour.Blue.splash), instruction: DRAGON_INSTRUCTION.split}),
+					makeDiagramCell({x: 0.5, y: 0, width: 0.5, content: makeArrayFromSplash(Colour.Red.splash), instruction: DRAGON_INSTRUCTION.recolour}),
+				],
+			})
+		],
+	}),
+)
 
 	*/
 
