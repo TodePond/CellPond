@@ -765,7 +765,7 @@ on.load(() => {
 	
 						if (atom === undefined) {
 							brushColourCycleIndex++
-							if (brushColourCycleIndex >= brushColourCycle.length - 1) {
+							if (brushColourCycleIndex >= brushColourCycle.length) {
 								brushColourCycleIndex = 0
 							}
 	
