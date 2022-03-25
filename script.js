@@ -1799,6 +1799,7 @@ on.load(() => {
 	const getSplashesArrayFromArray = (array) => {
 
 		const splashes = []
+		//if (array.channels === undefined) print(array)
 		let [reds, greens, blues] = array.channels
 
 		if (reds === undefined) reds = makeNumber({channel: 0, values: [true, false, false, false, false, false, false, false, false, false]})
@@ -3493,7 +3494,12 @@ registerRule(
 	const BORDER_THICKNESS = 3
 
 	const getColourCycleLength = (atom) => {
-		return Math.max(COLOUR_CYCLE_LENGTH / atom.colours.length, COLOUR_CYCLE_SPEED)
+		let length = Math.max(COLOUR_CYCLE_LENGTH / atom.colours.length, COLOUR_CYCLE_SPEED)
+		/*if (atom.joins !== undefined && atom.joins.length > 0) {
+			length *= 3
+		}*/
+		//if (atom.joins !== undefined && atom.joins.length > 0 && atom.joinExpanded !== false) return Infinity
+		return length
 	}
 
 	// prepare border colours
@@ -3629,10 +3635,12 @@ registerRule(
 		click: (atom) => {
 
 			if (atom.joins.length > 0) {
-				if (atom.joinExpanded) {
-					atom.joinUnepxand(atom)
-				} else {
-					atom.joinExpand(atom)
+				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
+					if (atom.joinExpanded) {
+						atom.joinUnepxand(atom)
+					} else {
+						atom.joinExpand(atom)
+					}
 				}
 			}
 
@@ -3773,13 +3781,44 @@ registerRule(
 			atom.dcolourId = 1
 			atom.colourTicker = Infinity
 			atom.joins = []
+			atom.joinColourIds = []
 
 		},
 
 		update: (atom) => {
+			
+
+			if (atom.joinDrawId === undefined) {
+				atom.joinDrawId = -1
+				atom.joinDrawTimer = 0
+			}
+
+			atom.joinDrawTimer++
+			if (atom.joinDrawTimer >= 45) {
+				atom.joinDrawId++
+				atom.needsColoursUpdate = true
+				atom.colourTicker = Infinity
+				if (atom.joinDrawId >= atom.joins.length) {
+					atom.joinDrawId = -1
+				}
+				atom.joinDrawTimer = 0
+			}
+
 			if (atom.needsColoursUpdate) {
-				atom.colours = getSplashesArrayFromArray(atom.value)
+
+				let drawTarget = atom.value
+				if (atom.joins.length > 0 && !atom.joinExpanded) {
+					if (atom.joinDrawId >= 0) {
+						drawTarget = atom.joins[atom.joinDrawId].value
+					}
+				}
+
+				const valueClone = cloneDragonArray(drawTarget)
+				if (atom.value === drawTarget) valueClone.joins = []
+				atom.colours = getSplashesArrayFromArray(valueClone)
+				atom.colourId = Random.Uint32 % atom.colours.length
 				atom.needsColoursUpdate = false
+
 			}
 
 			if (atom.colourTicker >= getColourCycleLength(atom)) {
@@ -3801,6 +3840,7 @@ registerRule(
 			}
 			else atom.colourTicker++
 
+			
 			const {x, y} = getAtomPosition(atom)
 
 			atom.highlightedAtom = undefined
@@ -4099,6 +4139,11 @@ registerRule(
 					
 					joinee.joinExpand(joinee)
 					
+					joinee.value.joins.push(joiner.value)
+					joinee.needsColoursUpdate = true
+					joinee.colourTicker = Infinity
+					
+					
 				}
 
 			}
@@ -4126,8 +4171,12 @@ registerRule(
 				joiner.dy = 0
 				joiner.touch = (atom) => atom.parent
 				joiner.grab = (atom) => atom.parent
+				
 			}
-
+			
+			atom.needsColoursUpdate = true
+			atom.colourTicker = Infinity
+			
 		},
 
 		joinUnepxand: (atom) => {
@@ -4138,6 +4187,10 @@ registerRule(
 				const joiner = atom.joins[i]
 				deleteChild(atom, joiner)
 			}
+			
+			atom.needsColoursUpdate = true
+			atom.colourTicker = Infinity
+
 		},
 
 		drag: (atom) => {
@@ -5650,6 +5703,9 @@ registerRule(
 							slotted.unexpand(slotted)
 						}
 					}
+					if (cellAtom.joins.length > 0 && cellAtom.joinExpanded) {
+						cellAtom.joinUnepxand(cellAtom)
+					}
 				}
 
 				/*if (paddle.hasSymmetry) {
@@ -6174,15 +6230,46 @@ registerRule(
 	
 	squareTool.update = (atom) => {
 
+		if (atom.joinDrawId === undefined) {
+			atom.joinDrawId = -1
+			atom.joinDrawTimer = 0
+		}
+
 		if (typeof state.brush.colour === "number") {
 			atom.value = makeArrayFromSplash(state.brush.colour)
+			atom.joins = []
 		} else {
-			atom.value = cloneDragonArray(state.brush.colour.left[0].content)
+			const content = state.brush.colour.left[0].content
+			atom.value = cloneDragonArray(content)
+			atom.joins = content.joins.map(j => ({value: j}))
+			//atom.joins.map(j => getSplashesArrayFromArray(j.value)).d
+		}
+
+		atom.joinDrawTimer++
+		if (atom.joinDrawTimer >= 45) {
+			atom.joinDrawId++
+			atom.toolbarNeedsColourUpdate = true
+			atom.colourTicker = Infinity
+			if (atom.joinDrawId >= atom.joins.length) {
+				atom.joinDrawId = -1
+			}
+			atom.joinDrawTimer = 0
 		}
 
 		if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
 			atom.toolbarNeedsColourUpdate = false
-			atom.colours = getSplashesArrayFromArray(atom.value)
+
+			let drawTarget = atom.value
+			if (atom.joins.length > 0) {
+				if (atom.joinDrawId >= 0) {
+					drawTarget = atom.joins[atom.joinDrawId].value
+				}
+			}
+
+			const valueClone = cloneDragonArray(drawTarget)
+			valueClone.joins = []
+			atom.colours = getSplashesArrayFromArray(valueClone)
+			//atom.colourId = Random.Uint32 % atom.colours.length
 			atom.colourTicker = Infinity
 			atom.previousBrushColour = state.brush.colour
 		}
