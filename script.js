@@ -1844,7 +1844,13 @@ on.load(() => {
 		const green = array.channels[1] !== undefined? makeNumber({values: greenValues, channel: 1}) : undefined
 		const blue = array.channels[2] !== undefined? makeNumber({values: blueValues, channel: 2}) : undefined
 
-		const clone = makeArray({channels: [red, green, blue]})
+		const joins = []
+		for (const join of array.joins) {
+			const joinClone = cloneDragonArray(join)
+			joins.push(joinClone)
+		}
+
+		const clone = makeArray({channels: [red, green, blue], joins})
 		return clone
 	}
 
