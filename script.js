@@ -4208,6 +4208,12 @@ registerRule(
 
 					const dragonArray = cloneDragonArray(atom.value)
 					clone.value = dragonArray
+
+					for (const j of clone.value.joins) {
+						const joinAtom = makeAtom(COLOURTODE_SQUARE)
+						joinAtom.value = j
+						clone.joins.push(joinAtom)
+					}
 					registerAtom(clone)
 
 					/*if (atom.slotted !== undefined) {
@@ -6184,6 +6190,12 @@ registerRule(
 		drag: (atom) => {
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
 			registerAtom(newAtom)
+
+			for (const j of newAtom.value.joins) {
+				const joinAtom = makeAtom(COLOURTODE_SQUARE)
+				joinAtom.value = j
+				newAtom.joins.push(joinAtom)
+			}
 			
 			if (newAtom.isSquare) {
 				const diagramCell = makeDiagramCell({content: newAtom.value})
