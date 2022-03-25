@@ -3616,7 +3616,16 @@ registerRule(
 			return atom
 		},
 		click: (atom) => {
-			if (!atom.expanded) {
+
+			if (atom.joins.length > 0) {
+				if (atom.joinExpanded) {
+					atom.joinUnepxand(atom)
+				} else {
+					atom.joinExpand(atom)
+				}
+			}
+
+			else if (!atom.expanded) {
 
 				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
 					atom.expand(atom)
@@ -3752,6 +3761,7 @@ registerRule(
 			atom.colourId = 0
 			atom.dcolourId = 1
 			atom.colourTicker = Infinity
+			atom.joins = []
 
 		},
 
@@ -3940,6 +3950,36 @@ registerRule(
 
 				}
 
+				if (atom.highlightedAtom === undefined) {
+					for (const other of state.colourTode.atoms) {
+						if (other === atom) continue
+						if (!other.isSquare) continue
+						if (other.parent !== COLOURTODE_BASE_PARENT) continue
+						if (other.joins.length > 0) continue
+						
+						const {x: ox, y: oy} = getAtomPosition(other)
+						const oleft = ox
+						const oright = ox + other.width
+						const otop = oy
+						const obottom = oy + other.height
+
+						if (left > oright) continue
+						if (right < oleft) continue
+						if (bottom < otop) continue
+						if (top > obottom) continue
+
+						atom.highlightedAtom = other
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+						atom.highlight.hasBorder = true
+						atom.highlight.hasInner = false
+						atom.highlight.width = other.width
+						atom.highlight.height = other.height
+						atom.highlight.x = ox
+						atom.highlight.y = oy
+
+					}
+				}
+
 
 			}
 
@@ -3985,7 +4025,7 @@ registerRule(
 
 					updatePaddleSize(slot.parent)
 				}
-				else {
+				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle) {
 
 					const square = atom.highlightedAtom
 					const paddle = square.parent
@@ -4017,7 +4057,64 @@ registerRule(
 					updatePaddleSize(paddle)
 
 				}
+				else {
+					const joinee = atom.highlightedAtom
+					const joiner = atom
 
+					if (joinee.expanded) {
+						joinee.unexpand(joinee)
+					}
+
+					if (joiner.expanded) {
+						joiner.unexpand(joiner)
+					}
+
+					joinee.joins.push(joiner)
+					deleteAtom(joiner)
+					joinee.isJoinee = true
+
+					if (!joinee.joinExpanded) {
+						joinee.joinExpand(joinee)
+					}
+					
+				}
+
+			}
+		},
+
+		joinExpand: (atom) => {
+			atom.joinExpanded = true
+			
+			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
+			atom.pickerPad = pickerPad
+			pickerPad.width = atom.width + OPTION_MARGIN*2
+			pickerPad.x = -OPTION_MARGIN
+			pickerPad.height = (atom.joins.length+1) * (atom.height + OPTION_MARGIN) + OPTION_MARGIN
+			pickerPad.y = -OPTION_MARGIN
+			pickerPad.dragOnly = false
+			pickerPad.touch = (atom) => atom.parent
+
+			for (let i = 0; i < atom.joins.length; i++) {
+				const joiner = atom.joins[i]
+				registerAtom(joiner)
+				giveChild(atom, joiner)
+				joiner.x = 0
+				joiner.y = (i+1) * (atom.height + OPTION_MARGIN)
+				joiner.dx = 0
+				joiner.dy = 0
+				joiner.touch = (atom) => atom.parent
+				joiner.grab = (atom) => atom.parent
+			}
+
+		},
+
+		joinUnepxand: (atom) => {
+			atom.joinExpanded = false
+			deleteChild(atom, atom.pickerPad)
+
+			for (let i = 0; i < atom.joins.length; i++) {
+				const joiner = atom.joins[i]
+				deleteChild(atom, joiner)
 			}
 		},
 
