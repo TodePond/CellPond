@@ -6191,10 +6191,12 @@ registerRule(
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
 			registerAtom(newAtom)
 
-			for (const j of newAtom.value.joins) {
-				const joinAtom = makeAtom(COLOURTODE_SQUARE)
-				joinAtom.value = j
-				newAtom.joins.push(joinAtom)
+			if (newAtom.value !== undefined) {
+				for (const j of newAtom.value.joins) {
+					const joinAtom = makeAtom(COLOURTODE_SQUARE)
+					joinAtom.value = j
+					newAtom.joins.push(joinAtom)
+				}
 			}
 			
 			if (newAtom.isSquare) {
