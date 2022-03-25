@@ -3951,11 +3951,13 @@ registerRule(
 				}
 
 				if (atom.highlightedAtom === undefined) {
-					for (const other of state.colourTode.atoms) {
+					for (let other of state.colourTode.atoms) {
 						if (other === atom) continue
 						if (!other.isSquare) continue
 						if (other.parent !== COLOURTODE_BASE_PARENT) continue
-						if (other.joins.length > 0) continue
+						if (other.joins.length > 0 && other.joinExpanded) {
+							other = other.pickerPad
+						}
 						
 						const {x: ox, y: oy} = getAtomPosition(other)
 						const oleft = ox
@@ -3968,7 +3970,12 @@ registerRule(
 						if (bottom < otop) continue
 						if (top > obottom) continue
 
-						atom.highlightedAtom = other
+						if (other.isPicker) {
+							atom.highlightedAtom = other.parent
+						} else {
+							atom.highlightedAtom = other
+						}
+
 						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
 						atom.highlight.hasBorder = true
 						atom.highlight.hasInner = false
@@ -3976,6 +3983,8 @@ registerRule(
 						atom.highlight.height = other.height
 						atom.highlight.x = ox
 						atom.highlight.y = oy
+
+						break
 
 					}
 				}
@@ -4068,14 +4077,16 @@ registerRule(
 					if (joiner.expanded) {
 						joiner.unexpand(joiner)
 					}
+					
+					if (joinee.joinExpanded) {
+						joinee.joinUnepxand(joinee)
+					}
 
 					joinee.joins.push(joiner)
 					deleteAtom(joiner)
 					joinee.isJoinee = true
-
-					if (!joinee.joinExpanded) {
-						joinee.joinExpand(joinee)
-					}
+					
+					joinee.joinExpand(joinee)
 					
 				}
 
@@ -4563,6 +4574,7 @@ registerRule(
 		y: 0,
 		x: COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN,
 		dragOnly: true,
+		isPicker: true,
 	}
 
 	const CHANNEL_IDS = {
