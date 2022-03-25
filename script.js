@@ -1765,9 +1765,9 @@ on.load(() => {
 	//================//
 	// Channels[3] - what dragon numbers are in each colour channel (or undefined for a partial array)
 	// Stamp - what shape of stamp the channel has (or undefined for no stamp)
-	const makeArray = ({channels, stamp} = {}) => {
+	const makeArray = ({channels, stamp, joins = []} = {}) => {
 		if (channels === undefined) channels = [undefined, undefined, undefined]
-		return {channels, stamp}
+		return {channels, stamp, joins}
 	}
 
 	makeArrayFromSplash = (splash) => {
@@ -1818,6 +1818,11 @@ on.load(() => {
 					splashes.push(splash)
 				}
 			}
+		}
+
+		for (const join of array.joins) {
+			const joinSplashes = getSplashesArrayFromArray(join)
+			splashes.push(...joinSplashes)
 		}
 
 		return splashes
