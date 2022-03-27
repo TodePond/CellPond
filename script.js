@@ -2196,6 +2196,11 @@ on.load(() => {
 
 				const result = instruction(target, redraw, neighbours, neighbourId, stamps)
 
+				if (result.stampNameTakenFrom !== undefined) {
+					if (stamps[result.stampNameTakenFrom].length === 0) {
+						refillStampRemainer(stampRemainers, stamps, result.stampNameTakenFrom)
+					}
+				}
 
 				const {drawn: resultDrawn, bonusTargets: resultBonusTargets, skip: resultSkip} = result
 				if (resultSkip !== undefined) skip += resultSkip
@@ -2253,20 +2258,27 @@ on.load(() => {
 		const instruction = (target, redraw, neighbours, neighbourId, stamps) => {
 
 			let colour = undefined
+			let stampNameTakenFrom = undefined
 			if (cell.content.stamp === undefined) {
 				colour = splashes[Random.Uint32 % splashes.length]
 			} else {
 				const stampChoices = stamps[cell.content.stamp]
-				const stampId = Random.Uint32 % stampChoices.length
-				colour = stampChoices[stampId]
-				//stampChoices.splice(stampId)
+				if (stampChoices.length === 0) {
+					colour = splashes[Random.Uint32 % splashes.length]
+				}
+				else {
+					const stampId = Random.Uint32 % stampChoices.length
+					colour = stampChoices[stampId]
+					stampChoices.splice(stampId, 1)
+					stampNameTakenFrom = cell.content.stamp
+				}
 			}
 
 			let drawn = 0
 			if (redraw) drawn += setCellColour(target, colour, true)
 			else target.colour = colour
 
-			return {drawn}
+			return {drawn, stampNameTakenFrom}
 		}
 
 		return instruction
