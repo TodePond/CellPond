@@ -4142,6 +4142,9 @@ registerRule(
 					joinee.value.joins.push(joiner.value)
 					joinee.needsColoursUpdate = true
 					joinee.colourTicker = Infinity
+
+					const diagramCell = makeDiagramCell({content: joinee.value})
+					state.brush.colour = makeDiagram({left: [diagramCell]})
 					
 					
 				}
