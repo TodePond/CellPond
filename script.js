@@ -2055,19 +2055,33 @@ on.load(() => {
 		
 	}
 
+	const getStampNamesOfStep = (step) => {
+		const stampNames = new Set()
+		const sides = [step.left, step.right]
+		for (const side of sides) {
+			for (const diagramCell of side) {
+				const stamp = diagramCell.content.stamp
+				if (stamp === undefined) continue
+				stampNames.add(stamp)
+			}
+		}
+		return [...stampNames.values()]
+	}
+
 	const makeBehaveFunction = (rule) => {
 
 		const stepFunctions = []
 
 		for (const step of rule.steps) {
 
-			const conditionFunction = makeConditionFunction(step)
-			const resultFunction = makeResultFunction(step)
+			const stampNames = getStampNamesOfStep(step)
+			const conditionFunction = makeConditionFunction(step, stampNames)
+			const resultFunction = makeResultFunction(step, stampNames)
 
 			const stepFunction = (origin, redraw) => {
-				const neighbours = conditionFunction(origin)
+				const [neighbours, stamps] = conditionFunction(origin)
 				if (neighbours === undefined) return
-				return resultFunction(neighbours, redraw)
+				return resultFunction(neighbours, redraw, stamps)
 			}
 
 			stepFunctions.push(stepFunction)
@@ -2088,7 +2102,7 @@ on.load(() => {
 
 	}
 
-	const makeConditionFunction = (diagram) => {
+	const makeConditionFunction = (diagram, stampNames) => {
 
 		const conditions = []
 
@@ -2109,14 +2123,14 @@ on.load(() => {
 
 				const neighbour = pickCell(centerX, centerY)
 
-				if (neighbour === undefined) return undefined
-				if (neighbour.left !== x) return undefined
-				if (neighbour.top !== y) return undefined
-				if (neighbour.width !== width) return undefined
-				if (neighbour.height !== height) return undefined
-				if (!splashes.has(neighbour.colour)) return undefined
+				if (neighbour === undefined) return [undefined, undefined]
+				if (neighbour.left !== x) return [undefined, undefined]
+				if (neighbour.top !== y) return [undefined, undefined]
+				if (neighbour.width !== width) return [undefined, undefined]
+				if (neighbour.height !== height) return [undefined, undefined]
+				if (!splashes.has(neighbour.colour)) return [undefined, undefined]
 				
-				return neighbour
+				return [neighbour, cell.content.stamp]
 			}
 
 			conditions.push(condition)
@@ -2125,15 +2139,22 @@ on.load(() => {
 		const conditionFunction = (origin) => {
 
 			const neighbours = []
+			const stamps = {}
+			for (const stamp of stampNames) {
+				stamps[stamp] = []
+			}
 
 			for (const condition of conditions) {
-				const neighbour = condition(origin)
-				if (neighbour === undefined) return
+				const [neighbour, stamp] = condition(origin)
+				if (neighbour === undefined) return [undefined, undefined]
+				if (stamp !== undefined) {
+					stamps[stamp].push(neighbour.colour)
+				}
 				neighbours.push(neighbour)
 			}
 
 
-			return neighbours
+			return [neighbours, stamps]
 		}
 
 		return conditionFunction
@@ -2142,7 +2163,7 @@ on.load(() => {
 	// TODO: also support Merging (with some funky backend syntax if needed)
 	// TODO: also support Splitting (with some funky backend syntax if needed)
 	// this funky syntax could include dummy cells on the right
-	const makeResultFunction = (diagram) => {
+	const makeResultFunction = (diagram, stampNames) => {
 
 		const results = []
 		for (const cell of diagram.right) {
@@ -2150,16 +2171,32 @@ on.load(() => {
 			results.push(result)
 		}
 
-		return (neighbours, redraw) => {
+		const refillAllStampRemainers = (remainers, stamps, stampNames) => {
+			for (const stampName of stampNames) {
+				refillStampRemainer(remainers, stamps, stampName)
+			}
+		}
+
+		const refillStampRemainer = (remainers, stamps, stampName) => {
+			remainers[stampName] = [...stamps[stampName]]
+		}
+
+		return (neighbours, redraw, stamps) => {
 
 			let drawn = 0
 			let neighbourId = 0
 			let skip = 0
 			const bonusTargets = []
 
+			const stampRemainers = {}
+			refillAllStampRemainers(stampRemainers, stamps, stampNames)
+
 			for (const instruction of results) {
 				const target = bonusTargets.length > 0? bonusTargets.pop() : neighbours[neighbourId]
-				const result = instruction(target, redraw, neighbours, neighbourId)
+
+				const result = instruction(target, redraw, neighbours, neighbourId, stamps)
+
+
 				const {drawn: resultDrawn, bonusTargets: resultBonusTargets, skip: resultSkip} = result
 				if (resultSkip !== undefined) skip += resultSkip
 				drawn += resultDrawn
@@ -2213,9 +2250,17 @@ on.load(() => {
 
 		const splashes = getSplashesArrayFromArray(cell.content)
 
-		const instruction = (target, redraw) => {
+		const instruction = (target, redraw, neighbours, neighbourId, stamps) => {
 
-			const colour = splashes[Random.Uint32 % splashes.length]
+			let colour = undefined
+			if (cell.content.stamp === undefined) {
+				colour = splashes[Random.Uint32 % splashes.length]
+			} else {
+				const stampChoices = stamps[cell.content.stamp]
+				const stampId = Random.Uint32 % stampChoices.length
+				colour = stampChoices[stampId]
+				//stampChoices.splice(stampId)
+			}
 
 			let drawn = 0
 			if (redraw) drawn += setCellColour(target, colour, true)
@@ -2234,7 +2279,7 @@ on.load(() => {
 
 		const splashes = getSplashesArrayFromArray(cell.content)
 
-		const instruction = (target, redraw) => {
+		const instruction = (target, redraw, neighbours, neighbourId, stamps) => {
 			
 			const children = splitCell(target, cell.splitX, cell.splitY)
 			const [head, ...tail] = children
@@ -2258,7 +2303,7 @@ on.load(() => {
 		
 		const childCount = Math.abs(cell.splitX) * Math.abs(cell.splitY)
 
-		const instruction = (target, redraw, neighbours, neighbourId) => {
+		const instruction = (target, redraw, neighbours, neighbourId, stamps) => {
 
 			const children = neighbours.slice(neighbourId, neighbourId+childCount)
 			const merged = mergeCells(children)
@@ -5569,7 +5614,7 @@ registerRule(
 				newStamp = stampeds.length
 				stampeds.push(value)
 			}
-			value.stamp = newStamp
+			value.stamp = newStamp.toString()
 		}
 	}
 
@@ -5610,7 +5655,7 @@ registerRule(
 			right.push(rightDiagramCell)
 		}
 		
-		const diagram = makeDiagram({left, right}).d
+		const diagram = makeDiagram({left, right})
 
 		const locked = paddle.pinhole.locked
 		const rule = makeRule({steps: [diagram], transformations, locked})
