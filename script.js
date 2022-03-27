@@ -5533,6 +5533,46 @@ registerRule(
 		positionPaddles()
 	}
 
+	const isDragonArraySingleColour = (array) => {
+		const splashes = getSplashesSetFromArray(array)
+		return splashes.size === 1
+	}
+
+	const isDragonArrayEqual = (a, b) => {
+		const asplashes = getSplashesArrayFromArray(a)
+		const bsplashes = getSplashesArrayFromArray(b)
+
+		for (const asplash of asplashes) {
+			const id = bsplashes.indexOf(asplash)
+			if (id === -1) return false
+			bsplashes.splice(id, 1)
+		}
+
+		if (bsplashes.length > 0) return false
+
+		return true
+
+	}
+
+	const applyRangeStamp = (stampeds, value) => {
+		const isSingle = isDragonArraySingleColour(value)
+		if (!isSingle) {
+			let newStamp = undefined
+			for (let i = 0; i < stampeds.length; i++) {
+				const stamped = stampeds[i]
+				if (isDragonArrayEqual(stamped, value)) {
+					newStamp = i
+					break
+				}
+			}
+			if (newStamp === undefined) {
+				newStamp = stampeds.length
+				stampeds.push(value)
+			}
+			value.stamp = newStamp
+		}
+	}
+
 	const updatePaddleRule = (paddle) => {
 
 		if (!paddle.expanded) return
@@ -5555,18 +5595,22 @@ registerRule(
 		const origin = paddle.cellAtoms[0]
 		const left = []
 		const right = []
+		const stampeds = []
 		for (const cellAtom of paddle.cellAtoms) {
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
+
+			applyRangeStamp(stampeds, cellAtom.value)
 			const diagramCell = makeDiagramCell({x, y, content: cellAtom.value})
 			left.push(diagramCell)
 
 			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
+			applyRangeStamp(stampeds, rightContent)
 			const rightDiagramCell = makeDiagramCell({x, y, content: rightContent})
 			right.push(rightDiagramCell)
 		}
 		
-		const diagram = makeDiagram({left, right})
+		const diagram = makeDiagram({left, right}).d
 
 		const locked = paddle.pinhole.locked
 		const rule = makeRule({steps: [diagram], transformations, locked})
