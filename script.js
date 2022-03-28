@@ -6379,6 +6379,9 @@ registerRule(
 
 			let drawTarget = atom.value
 			if (atom.joins.length > 0) {
+				if (atom.joinDrawId >= atom.joins.length) {
+					atom.joinDrawId = 0
+				}
 				if (atom.joinDrawId >= 0) {
 					drawTarget = atom.joins[atom.joinDrawId].value
 				}
