@@ -4654,6 +4654,8 @@ registerRule(
 
 			atom.attached = true
 
+			unlockMenuTool("circle")
+
 		},
 
 		drag: (atom) => {
@@ -4749,6 +4751,8 @@ registerRule(
 				
 				atom.needsColoursUpdate = true
 				atom.colourTicker = Infinity
+
+				unlockMenuTool("wide_rectangle")
 			}
 			return atom
 		},
@@ -5716,6 +5720,11 @@ registerRule(
 	}
 
 	const positionPaddles = () => {
+
+		if (paddles.length > 1) {
+			unlockMenuTool("triangle")
+		}
+
 		let previous = undefined
 		for (const paddle of paddles) {
 			if (previous === undefined) {
@@ -6350,7 +6359,7 @@ registerRule(
 		cursor: () => "move",
 	}
 
-	const addMenuTool = (element) => {
+	const addMenuTool = (element, unlockName) => {
 		const {width = COLOURTODE_SQUARE.size, height = COLOURTODE_SQUARE.size, size} = element
 		
 		let y = COLOURTODE_PICKER_PAD_MARGIN
@@ -6367,18 +6376,36 @@ registerRule(
 		atom.dcolourId = 1
 		atom.colourTicker = Infinity
 		atom.hasBorder = true
-		registerAtom(atom)
 		menuRight += width
 		menuRight += OPTION_MARGIN
+
+		if (unlockName === undefined) {
+			registerAtom(atom)
+		} else {
+			unlocks[unlockName] = atom
+		}
+
 		return atom
+	}
+
+	const unlocks = {}
+	const unlockMenuTool = (unlockName) => {
+		const unlock = unlocks[unlockName]
+		if (unlock.unlocked) return
+		unlock.unlocked = true
+
+		registerAtom(unlock)
+		menuRight += unlock.width
+		menuRight += OPTION_MARGIN
+
 	}
 
 	const squareTool = addMenuTool(COLOURTODE_SQUARE)
 	menuRight += BORDER_THICKNESS*2
-	const triangleTool = addMenuTool(COLOURTODE_TRIANGLE)
+	const triangleTool = addMenuTool(COLOURTODE_TRIANGLE, "triangle")
 	//menuRight -= BORDER_THICKNESS
-	const circleTool = addMenuTool(SYMMETRY_CIRCLE)
-	//addMenuTool(COLOURTODE_PICKER_CHANNEL)
+	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
+	addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	createPaddle()
 
 	circleTool.borderScale = 1
