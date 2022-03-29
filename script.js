@@ -3607,7 +3607,7 @@ registerRule(
 							/*W += BORDER_THICKNESS
 							H += BORDER_THICKNESS
 							Y -= BORDER_THICKNESS/2*/
-						} else if (atom.width === atom.height || atom.isTallRectangle) {
+						} else if (atom.width === atom.height/* || atom.isTallRectangle*/) {
 							border *= 1.5
 						}
 					}
@@ -4757,6 +4757,7 @@ registerRule(
 				atom.colourTicker = Infinity
 
 				unlockMenuTool("wide_rectangle")
+				unlockMenuTool("tall_rectangle")
 			}
 			return atom
 		},
@@ -4775,10 +4776,12 @@ registerRule(
 			const selectionTop = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
 			atom.selectionTop = selectionTop
 			atom.selectionTop.isTop = true
+			selectionTop.dragOnly = false
 
 			const selectionBottom = createChild(atom, COLOURTODE_CHANNEL_SELECTION_END)
 			atom.selectionBottom = selectionBottom
 			atom.selectionBottom.isTop = false
+			selectionBottom.dragOnly = false
 
 			atom.positionSelection(atom)
 		},
