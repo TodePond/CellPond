@@ -3500,7 +3500,7 @@ registerRule(
 		}
 	}
 
-	const getAtomPosition = (atom) => {
+	getAtomPosition = (atom) => {
 		const {x, y} = atom
 		if (atom.parent === undefined) return {x, y}
 		if (atom.hasAbsolutePosition) return {x, y}
@@ -3604,10 +3604,10 @@ registerRule(
 						if (atom.isTool) {
 							colourTodeContext.fillStyle = toolBorderColours[atom.colour.splash]
 							border *= 1.5
-							W += BORDER_THICKNESS
+							/*W += BORDER_THICKNESS
 							H += BORDER_THICKNESS
-							Y -= BORDER_THICKNESS/2
-						} else if (atom.width === atom.height) {
+							Y -= BORDER_THICKNESS/2*/
+						} else if (atom.width === atom.height || atom.isTallRectangle) {
 							border *= 1.5
 						}
 					}
@@ -3656,6 +3656,10 @@ registerRule(
 		},
 		overlaps: (atom, mx, my) => {
 			const {x, y} = getAtomPosition(atom)
+			let border = BORDER_THICKNESS
+			if (atom.isTool || atom.isSquare || atom.isTallRectangle) {
+				border *= 1.5
+			}
 			const left = x
 			const right = x + atom.width
 			const top = y
@@ -4326,7 +4330,7 @@ registerRule(
 			const {x, y} = getAtomPosition(atom)
 
 			let size = atom.size
-			if (atom.isTool) size -= BORDER_THICKNESS
+			if (atom.isTool) size -= BORDER_THICKNESS*2.5
 
 			const height = size
 			const width = size * Math.sqrt(3)/2
@@ -4334,7 +4338,7 @@ registerRule(
 			const left = x
 			const right = left + width
 			let top = y
-			if (atom.isTool) top += BORDER_THICKNESS/2
+			if (atom.isTool) top += BORDER_THICKNESS*1.25
 			const bottom = top + height
 			const middleY = top + height/2
 
@@ -5340,6 +5344,15 @@ registerRule(
 		}
 	}
 
+	const COLOURTODE_TALL_RECTANGLE = {
+		draw: COLOURTODE_RECTANGLE.draw,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		width: COLOURTODE_PICKER_CHANNEL.height,
+		height: COLOURTODE_PICKER_CHANNEL.width,
+		hasBorder: true,
+		isTallRectangle: true,
+	}
 	
 	const COLOURTODE_OPTION_PADDING = {
 		draw: () => {},
@@ -6379,9 +6392,9 @@ registerRule(
 		menuRight += width
 		menuRight += OPTION_MARGIN
 
-		atom.draw = () => {
-			if (atom.unlocked) {
-				element.draw(atom)
+		atom.draw = (a) => {
+			if (a.unlocked) {
+				element.draw(a)
 			}
 		}
 
@@ -6398,7 +6411,7 @@ registerRule(
 		return atom
 	}
 
-	const unlocks = {}
+	unlocks = {}
 	const unlockMenuTool = (unlockName) => {
 		const unlock = unlocks[unlockName]
 		if (unlock.unlocked) return
@@ -6411,12 +6424,16 @@ registerRule(
 
 	}
 
-	const squareTool = addMenuTool(COLOURTODE_SQUARE)
-	menuRight += BORDER_THICKNESS*2
+	squareTool = addMenuTool(COLOURTODE_SQUARE)
+	menuRight += BORDER_THICKNESS
 	const triangleTool = addMenuTool(COLOURTODE_TRIANGLE, "triangle")
-	//menuRight -= BORDER_THICKNESS
+	//triangleTool.size -= BORDER_THICKNESS*1.5
+	//triangleTool.y += BORDER_THICKNESS*1.5 / 2
+	menuRight -= BORDER_THICKNESS
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
 	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
+	//menuRight += BORDER_THICKNESS
+	const tallRectangleTool = addMenuTool(COLOURTODE_TALL_RECTANGLE)
 	createPaddle()
 
 	circleTool.borderScale = 1
@@ -6493,6 +6510,7 @@ registerRule(
 	triangleTool.update = squareTool.update
 	circleTool.update = squareTool.update
 	wideRectangleTool.update = squareTool.update
+	tallRectangleTool.update = squareTool.update
 
 	
 
