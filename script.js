@@ -6379,9 +6379,19 @@ registerRule(
 		menuRight += width
 		menuRight += OPTION_MARGIN
 
+		atom.draw = () => {
+			if (atom.unlocked) {
+				element.draw(atom)
+			}
+		}
+
+		registerAtom(atom)
+
 		if (unlockName === undefined) {
-			registerAtom(atom)
+			atom.unlocked = true
 		} else {
+			atom.unlocked = false
+			atom.grabbable = false
 			unlocks[unlockName] = atom
 		}
 
@@ -6393,10 +6403,11 @@ registerRule(
 		const unlock = unlocks[unlockName]
 		if (unlock.unlocked) return
 		unlock.unlocked = true
+		unlock.grabbable = true
 
-		registerAtom(unlock)
+		/*registerAtom(unlock)
 		menuRight += unlock.width
-		menuRight += OPTION_MARGIN
+		menuRight += OPTION_MARGIN*/
 
 	}
 
