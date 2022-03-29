@@ -4745,6 +4745,10 @@ registerRule(
 				atom.channelSlot = CHANNEL_NAMES[atom.value.channel]
 				atom.updateColours(atom)
 				atom.attached = false
+
+				
+				atom.needsColoursUpdate = true
+				atom.colourTicker = Infinity
 			}
 			return atom
 		},
@@ -4828,18 +4832,43 @@ registerRule(
 
 			if (!atom.expanded && atom.needsColoursUpdate) {
 				atom.needsColoursUpdate = false
-				const channels = []
-				for (let i = 0; i < 3; i++) {
-					if (i === atom.value.channel) {
-						channels[i] = atom.value
+				
+				if (atom.parent.isSquare) {
+					
+					const channels = []
+
+					for (let i = 0; i < 3; i++) {
+						if (i === atom.value.channel) {
+							channels[i] = atom.value
+						}
+						else {
+							const values = [true, false, false, false, false, false, false, false, false, false]
+							channels[i] = makeNumber({values, channel: i})
+						}
 					}
-					else {
-						const values = [true, false, false, false, false, false, false, false, false, false]
-						channels[i] = makeNumber({values, channel: i})
-					}
+					
+					const array = makeArray({channels})
+					atom.colours = getSplashesArrayFromArray(array)
+
 				}
-				const array = makeArray({channels})
-				atom.colours = getSplashesArrayFromArray(array)
+				else {
+
+					let array = undefined
+
+					for (let i = 0; i < 10; i++) {
+						const v = atom.value.values[i]
+						if (v === false) continue
+						const join = makeArrayFromSplash(`${i}${i}${i}`)
+						if (array === undefined) {
+							array = join
+						} else {
+							array.joins.push(join)
+						}
+					}
+
+					atom.colours = getSplashesArrayFromArray(array)
+				}
+
 				atom.colourTicker = Infinity
 			}
 
@@ -4944,6 +4973,7 @@ registerRule(
 			if (atom.highlight !== undefined) {
 				const square = atom.highlightedAtom
 				const slotId = CHANNEL_IDS[atom.highlightedSlot]
+				atom.value.channel = slotId
 				/*giveChild(square, atom)
 				atom.dx = 0
 				atom.dy = 0
@@ -4998,7 +5028,7 @@ registerRule(
 				parentB = makeNumber({values: [...blueNumber.values], channel: blueNumber.channel})
 			}
 			else {
-				const values = [true, false, false, false, false, false, false, false, false, false]
+				const values = [false, false, false, false, false, false, false, false, false, false]
 				parentR = makeNumber({values: [...values], channel: 0})
 				parentG = makeNumber({values: [...values], channel: 1})
 				parentB = makeNumber({values: [...values], channel: 2})
@@ -5013,8 +5043,15 @@ registerRule(
 
 					const option = atom.options[i]
 					
-					mainParentChannel.values[9-i] = true
-					if (i > 0) mainParentChannel.values[9-i+1] = false
+					if (atom.parent.isSquare) {
+						mainParentChannel.values[9-i] = true
+						if (i > 0) mainParentChannel.values[9-i+1] = false
+					} else {
+						for (const c of parentChannels) {
+							c.values[9-i] = true
+							if (i > 0) c.values[9-i+1] = false
+						}
+					}
 
 					const baseArray = makeArray({channels: parentChannels})
 
