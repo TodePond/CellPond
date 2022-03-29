@@ -6433,7 +6433,7 @@ registerRule(
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
 	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	//menuRight += BORDER_THICKNESS
-	const tallRectangleTool = addMenuTool(COLOURTODE_TALL_RECTANGLE)
+	const tallRectangleTool = addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
 	createPaddle()
 
 	circleTool.borderScale = 1
