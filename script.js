@@ -5040,7 +5040,7 @@ registerRule(
 
 			const parentChannels = [parentR, parentG, parentB]
 			const mainParentChannel = parentChannels[CHANNEL_IDS[atom.channelSlot]]
-			mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
+			if (mainParentChannel !== undefined) mainParentChannel.values = [false, false, false, false, false, false, false, false, false, false]
 
 			if (atom.options !== undefined && atom.options.length > 0) {
 				for (let i = 0; i < 10; i++) {
