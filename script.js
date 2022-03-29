@@ -6405,7 +6405,7 @@ registerRule(
 	const triangleTool = addMenuTool(COLOURTODE_TRIANGLE, "triangle")
 	//menuRight -= BORDER_THICKNESS
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
-	addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
+	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	createPaddle()
 
 	circleTool.borderScale = 1
@@ -6481,5 +6481,8 @@ registerRule(
 
 	triangleTool.update = squareTool.update
 	circleTool.update = squareTool.update
+	wideRectangleTool.update = squareTool.update
+
+	
 
 })
