@@ -5476,7 +5476,7 @@ registerRule(
 
 			atom.padRight = createChild(atom, SYMMETRY_PAD)
 			atom.padRight.height = COLOURTODE_PICKER_PAD.height
-			atom.padRight.width = OPTION_MARGIN + (atom.width+OPTION_MARGIN)*3
+			atom.padRight.width = OPTION_MARGIN/2 + (atom.width+OPTION_MARGIN)*3
 			atom.padRight.y = atom.height/2 - atom.padRight.height/2
 			atom.padRight.x = atom.width + OPTION_MARGIN
 
@@ -5484,16 +5484,19 @@ registerRule(
 			atom.red.x = atom.padRight.x + OPTION_MARGIN
 			atom.red.borderColour = Colour.Red
 			atom.red.colour = Colour.Black
+			atom.red.value = "red"
 
 			atom.green = createChild(atom, DIAMOND_CHOICE)
 			atom.green.x = atom.padRight.x + OPTION_MARGIN + (atom.green.width+OPTION_MARGIN)*1
 			atom.green.borderColour = Colour.Green
 			atom.green.colour = Colour.Black
+			atom.green.value = "green"
 			
 			atom.blue = createChild(atom, DIAMOND_CHOICE)
 			atom.blue.x = atom.padRight.x + OPTION_MARGIN + (atom.blue.width+OPTION_MARGIN)*2
 			atom.blue.borderColour = Colour.Blue
 			atom.blue.colour = Colour.Black
+			atom.blue.value = "blue"
 
 			atom.winnerPin = createChild(atom, DIAMOND_PIN)
 			atom.winnerPin.x = atom[atom.variable].x + atom.winnerPin.width/2
@@ -5519,6 +5522,17 @@ registerRule(
 		height: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
 		width: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
 		grab: (atom) => atom.parent,
+		click: (atom) => {
+			if (atom.value === atom.parent.variable) return
+
+			atom.parent.variable = atom.value
+
+			atom.parent.winnerPin.x = atom.x + atom.parent.winnerPin.width/2
+			atom.parent.winnerPin.colour = atom.borderColour
+			atom.parent.winnerPin.borderColour = atom.borderColour
+
+			atom.parent.updateAppearance(atom.parent)
+		}
 	}
 	
 	const DIAMOND_PIN = {
