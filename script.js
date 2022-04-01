@@ -551,9 +551,14 @@ on.load(() => {
 
 		// Colour
 		const splash = Colour.splash(cell.colour)
-		const red = splash[0]
-		const green = splash[1]
-		const blue = splash[2]
+		let red = splash[0]
+		let green = splash[1]
+		let blue = splash[2]
+
+		const average = Math.round((red + green + blue) / 3)
+		red = average
+		green = average
+		blue = average
 
 		// Draw
 		const iy = imageWidth * 4
@@ -975,8 +980,8 @@ on.load(() => {
 		else fireRandomSpotDrawEvents()
 
 		context.putImageData(state.image.data, 0, 0)
-		context.filter = "grayscale(100%)"
-		context.drawImage(context.canvas, 0, 0, context.canvas.width, context.canvas.height)
+		//context.filter = "grayscale(100%)"
+		//context.drawImage(context.canvas, 0, 0, context.canvas.width, context.canvas.height)
 
 		// Draw void
 		context.clearRect(0, 0, state.view.left, state.view.bottom)
