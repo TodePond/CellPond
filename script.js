@@ -2212,10 +2212,10 @@ on.load(() => {
 			for (const instruction of results) {
 				const target = bonusTargets.length > 0? bonusTargets.pop() : neighbours[neighbourId]
 
-				const result = instruction(target, redraw, neighbours, neighbourId, stamps)
+				const result = instruction(target, redraw, neighbours, neighbourId, stampRemainers)
 
 				if (result.stampNameTakenFrom !== undefined) {
-					if (stamps[result.stampNameTakenFrom].length === 0) {
+					if (stampRemainers[result.stampNameTakenFrom].length === 0) {
 						refillStampRemainer(stampRemainers, stamps, result.stampNameTakenFrom)
 					}
 				}
