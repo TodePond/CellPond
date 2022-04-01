@@ -1756,7 +1756,11 @@ on.load(() => {
 	// Operations[] - any operations that this number includes
 	const makeNumber = ({values, channel = 0, operations = []} = {}) => {
 		let numberValues = undefined
+		
+		//============= TODO: this is where variables should be implemented
 		if (typeof values === "function") numberValues = [false, false, false, false, false, false, false, false, false, false]
+		//============================
+
 		else numberValues = values
 		return {values: numberValues, channel, operations}
 	}
@@ -3399,7 +3403,7 @@ registerRule(
 			touch = (a) => a, // Fires when you start a click on the atom - returns atom that handles the click
 			highlighter = false, // If true, enables the hover and place events
 			hover = () => {}, // Fires whenever you are dragging the atom - returns what atom should get highlighted (if any)
-			place = (a) => {}, // Fires whenever you drop the atom onto a highlighted atom
+			place = () => {}, // Fires whenever you drop the atom onto a highlighted atom
 			x = 0,
 			y = 0,
 			dx = 0,
@@ -5390,6 +5394,75 @@ registerRule(
 	]
 
 	const COLOURTODE_TALL_RECTANGLE = {
+		highlighter: true,
+		hover: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+			const left = x
+			const top = y
+			const right = x + atom.width
+			const bottom = y + atom.height
+
+			let winningDistance = Infinity
+			let winningSquare = undefined
+			let winningSlot = undefined
+
+			for (const other of state.colourTode.atoms) {
+				if (other === atom) continue
+				if (!other.isSquare) continue
+				if (!other.expanded) continue
+
+				const {x: px, y: py} = getAtomPosition(other.pickerPad)
+				const pleft = px
+				const pright = px + other.pickerPad.width
+				const ptop = py
+				const pbottom = py + other.pickerPad.height
+
+				if (left > pright) continue
+				if (right < pleft) continue
+				if (bottom < ptop) continue
+				if (top > pbottom) continue
+
+				const slots = ["red", "green", "blue"].filter(slot => other[slot] === undefined)
+				if (slots.length === 0) continue
+				const {x: ax, y: ay} = getAtomPosition(other)
+
+				for (const slot of slots) {
+					const slotId = CHANNEL_IDS[slot]
+					const sx = ax + other.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+					const sy = ay + OPTION_MARGIN
+					const distance = Math.hypot(x - sx, y - sy)
+					if (distance < winningDistance) {
+						winningDistance = distance
+						winningSlot = slot
+						winningSquare = other
+					}
+				}
+
+				if (winningSquare !== undefined) {
+
+					const {x: ax, y: ay} = getAtomPosition(winningSquare)
+					const slotId = CHANNEL_IDS[winningSlot]
+
+					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+					atom.highlight.hasBorder = true
+					atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
+					atom.highlight.y = ay
+					atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
+					atom.highlightedAtom = winningSquare
+					atom.highlightedSlot = winningSlot
+				}
+				
+				return
+			}
+		},
+		place: (atom) => {
+			const square = atom.highlightedAtom
+			const slotId = CHANNEL_IDS[atom.highlightedSlot]
+			square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
+			deleteAtom(atom)
+			alert("I haven't coded this feature yet!!")
+		},
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 
@@ -5508,6 +5581,13 @@ registerRule(
 		},
 		unexpand: (atom) => {
 			atom.expanded = false
+
+			deleteChild(atom, atom.red)
+			deleteChild(atom, atom.green)
+			deleteChild(atom, atom.blue)
+
+			deleteChild(atom, atom.winnerPin)
+
 		}
 	}
 
