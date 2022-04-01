@@ -5399,23 +5399,21 @@ registerRule(
 			const height = size
 			const width = size
 			
-			const left = Math.round(x)
-			let right = left + Math.round(width)
-			if (atom.isTool) right = left + Math.round(width) - 1
-			let top = Math.round(y)
+			const left = (x)
+			let right = left + (width)
+			let top = (y)
 			//if (atom.isTool) top += BORDER_THICKNESS*1.25
-			let bottom = top + Math.round(height)
-			if (atom.isTool) bottom = top + Math.round(height)-1
-			const middleY = top + Math.round(height/2)
-			const middleX = left + Math.round(width/2)
+			let bottom = top + (height)
+			const middleY = top + (height/2)
+			const middleX = left + (width/2)
 
 			colourTodeContext.fillStyle = atom.colour
 			const path = new Path2D()
 
-			path.moveTo(...[middleX, top].map(n => Math.round(n)))
-			path.lineTo(...[right, middleY].map(n => Math.round(n)))
-			path.lineTo(...[middleX, bottom].map(n => Math.round(n)))
-			path.lineTo(...[left, middleY].map(n => Math.round(n)))
+			path.moveTo(...[middleX, top].map(n => (n)))
+			path.lineTo(...[right, middleY].map(n => (n)))
+			path.lineTo(...[middleX, bottom].map(n => (n)))
+			path.lineTo(...[left, middleY].map(n => (n)))
 
 			path.closePath()
 			colourTodeContext.fillStyle = atom.colour
@@ -5451,11 +5449,11 @@ registerRule(
 		},
 		updateAppearance: (atom) => {
 			if (atom.variable === "red") {
-				atom.colour = Colour.splash(900)
+				atom.colour = Colour.Red
 			} else if (atom.variable === "green") {
-				atom.colour = Colour.splash(090)
+				atom.colour = Colour.Green
 			} else if (atom.variable === "blue") {
-				atom.colour = Colour.splash(009)
+				atom.colour = Colour.Blue
 			}
 
 			atom.borderColour = borderColours[atom.colour.splash]
@@ -5482,10 +5480,59 @@ registerRule(
 			atom.padRight.y = atom.height/2 - atom.padRight.height/2
 			atom.padRight.x = atom.width + OPTION_MARGIN
 
+			atom.red = createChild(atom, DIAMOND_CHOICE)
+			atom.red.x = atom.padRight.x + OPTION_MARGIN
+			atom.red.borderColour = Colour.Red
+			atom.red.colour = Colour.Black
+
+			atom.green = createChild(atom, DIAMOND_CHOICE)
+			atom.green.x = atom.padRight.x + OPTION_MARGIN + (atom.green.width+OPTION_MARGIN)*1
+			atom.green.borderColour = Colour.Green
+			atom.green.colour = Colour.Black
+			
+			atom.blue = createChild(atom, DIAMOND_CHOICE)
+			atom.blue.x = atom.padRight.x + OPTION_MARGIN + (atom.blue.width+OPTION_MARGIN)*2
+			atom.blue.borderColour = Colour.Blue
+			atom.blue.colour = Colour.Black
+
+			atom.winnerPin = createChild(atom, DIAMOND_PIN)
+			atom.winnerPin.x = atom[atom.variable].x + atom.winnerPin.width/2
+			atom.winnerPin.y = atom.winnerPin.height/2
+			atom.winnerPin.colour = atom[atom.variable].borderColour
+			atom.winnerPin.borderColour = atom.winnerPin.colour
+
+
 		},
 		unexpand: (atom) => {
 			atom.expanded = false
 		}
+	}
+
+	const DIAMOND_CHOICE = {
+		draw: (atom) => {
+			COLOURTODE_TALL_RECTANGLE.draw(atom)
+		},
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		hasBorder: true,
+		size: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
+		height: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
+		width: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
+		grab: (atom) => atom.parent,
+	}
+	
+	const DIAMOND_PIN = {
+		draw: (atom) => {
+			COLOURTODE_TALL_RECTANGLE.draw(atom)
+		},
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		hasBorder: true,
+		size: (CHANNEL_HEIGHT + OPTION_MARGIN/3*2) / 2,
+		height: (CHANNEL_HEIGHT + OPTION_MARGIN/3*2) / 2,
+		width: (CHANNEL_HEIGHT + OPTION_MARGIN/3*2) / 2,
+		grab: (atom) => atom.parent,
+		touch: (atom) => atom.parent,
 	}
 	
 	const COLOURTODE_OPTION_PADDING = {
@@ -6515,7 +6562,7 @@ registerRule(
 		}
 		y += BORDER_THICKNESS
 
-		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: menuRight, y, element})
+		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: Math.round(menuRight), y, element})
 		atom.attached = true
 		atom.isTool = true
 		atom.previousBrushColour = undefined
