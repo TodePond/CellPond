@@ -3197,7 +3197,7 @@ registerRule(
 	}
 
 	const dampen = (n, noReally) => {
-		if (noReally) return n * 0.4
+		if (noReally) return n * 0.6
 		return n
 	}
 
@@ -4791,7 +4791,6 @@ registerRule(
 				atom.colourTicker = Infinity
 
 				unlockMenuTool("wide_rectangle")
-				unlockMenuTool("tall_rectangle")
 			}
 			return atom
 		},
@@ -5028,6 +5027,8 @@ registerRule(
 				square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
 				deleteAtom(atom)
 			}
+			
+			unlockMenuTool("tall_rectangle")
 		},
 
 		click: (atom) => {
@@ -5381,14 +5382,75 @@ registerRule(
 		}
 	}
 
+	const CHANNEL_VARIABLES = [
+		"red",
+		"green",
+		"blue",
+	]
+
 	const COLOURTODE_TALL_RECTANGLE = {
-		draw: COLOURTODE_RECTANGLE.draw,
+		draw: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+
+			let size = atom.size
+			//if (atom.isTool) size -= BORDER_THICKNESS*2.5
+
+			const height = size
+			const width = size
+			
+			const left = x
+			const right = left + width
+			let top = y
+			//if (atom.isTool) top += BORDER_THICKNESS*1.25
+			const bottom = top + height
+			const middleY = top + height/2
+			const middleX = left + width/2
+
+			colourTodeContext.fillStyle = atom.colour
+			const path = new Path2D()
+
+			path.moveTo(middleX, top)
+			path.lineTo(right, middleY)
+			path.lineTo(middleX, bottom)
+			path.lineTo(left, middleY)
+			path.closePath()
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+			if (atom.hasBorder) {
+				colourTodeContext.lineWidth = BORDER_THICKNESS
+				colourTodeContext.strokeStyle = atom.borderColour
+
+				if (atom.isTool) {
+					colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
+					colourTodeContext.strokeStyle = toolBorderColours[atom.colour.splash]
+				}
+				colourTodeContext.stroke(path)
+			}
+		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		width: COLOURTODE_PICKER_CHANNEL.height,
 		height: COLOURTODE_PICKER_CHANNEL.width,
 		hasBorder: true,
 		isTallRectangle: true,
+		size: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
+		height: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
+		width: CHANNEL_HEIGHT + OPTION_MARGIN/3*2,
+		construct: (atom) => {
+			atom.variable = CHANNEL_VARIABLES[Random.Uint8 % 3]
+			atom.updateAppearance(atom)
+		},
+		updateAppearance: (atom) => {
+			if (atom.variable === "red") {
+				atom.colour = Colour.splash(900)
+			} else if (atom.variable === "green") {
+				atom.colour = Colour.splash(090)
+			} else if (atom.variable === "blue") {
+				atom.colour = Colour.splash(009)
+			}
+
+			atom.borderColour = borderColours[atom.colour.splash]
+		}
 	}
 	
 	const COLOURTODE_OPTION_PADDING = {
