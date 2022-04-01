@@ -43,7 +43,7 @@ const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenR
 let secretScore = 0
 const tickSecret = () => {
 	secretScore++
-	if (secretScore === 99999) {
+	if (secretScore === Infinity) {
 		localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
 
 		// WOAH WOAH! You can't come snooping in the source code for secrets!!
@@ -973,7 +973,10 @@ on.load(() => {
 		//state.dragon.behaves.shuffle()
 		if (!show.paused) fireRandomSpotEvents()
 		else fireRandomSpotDrawEvents()
+
 		context.putImageData(state.image.data, 0, 0)
+		context.filter = "grayscale(100%)"
+		context.drawImage(context.canvas, 0, 0, context.canvas.width, context.canvas.height)
 
 		// Draw void
 		context.clearRect(0, 0, state.view.left, state.view.bottom)
@@ -2954,6 +2957,7 @@ registerRule(
 
 	const colourTodeDraw = () => {
 		colourTodeContext.clearRect(0, 0, colourTodeCanvas.width, colourTodeCanvas.height)
+		colourTodeContext.filter = "grayscale(100%)"
 		colourTodeContext.scale(CT_SCALE, CT_SCALE)
 		for (const atom of state.colourTode.atoms) {
 			drawAtom(atom)
