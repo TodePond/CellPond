@@ -606,13 +606,21 @@ on.load(() => {
 		
 	}
 
+	let pencilled = false
 	const updateBrush = () => {
-		if (state.colourTode.hand.state !== HAND.BRUSHING) return
 
-		/*if (Mouse.Middle) {
+		if (!Mouse.Middle) {
+			pencilled = false
+		}
+
+		if (state.colourTode.hand.state !== HAND.BRUSHING && state.colourTode.hand.state !== HAND.PENCILLING) return
+
+		if (Mouse.Middle && !pencilled) {
 			const [x, y] = Mouse.position
 			const cell = pickCell(...getCursorView(x, y))
-		}*/
+			setCellColour(cell, state.brush.colour)
+			pencilled = true
+		}
 
 		if (!Mouse.Left) return
 		let [x, y] = getCursorView(...Mouse.position)
@@ -763,7 +771,7 @@ on.load(() => {
 				const dropperTime = Date.now() - dropperStartT
 				if (dropperTime < 100 || dropperDistance <= 0) {
 					
-					if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING) {
+					if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
 						const cell = pickCell(...getCursorView(x, y))
 						if (cell !== undefined)	state.brush.colour = cell.colour
 					}
@@ -3021,6 +3029,7 @@ registerRule(
 			if (my < state.view.top) return
 			if (my > state.view.bottom) return
 			if (Mouse.Left) changeHandState(HAND.BRUSHING)
+			else if (Mouse.Middle) changeHandState(HAND.PENCILLING)
 			else changeHandState(HAND.BRUSH)
 		},
 
@@ -3071,6 +3080,9 @@ registerRule(
 		mousedown: (e) => {
 			changeHandState(HAND.BRUSHING)
 		},
+		middlemousedown: (e) => {
+			changeHandState(HAND.PENCILLING)
+		},
 		atommove: (atom, mx, my) => {
 			if (!isAtomOverlapping(atom, mx, my)) return
 			if (atom.grabbable) changeHandState(HAND.HOVER)
@@ -3116,6 +3128,13 @@ registerRule(
 			}
 			changeHandState(HAND.FREE)
 		},
+	}
+
+	HAND.PENCILLING = {
+		cursor: "crosshair",
+		mousemove: HAND.BRUSHING.mousemove,
+		middlemouseup: HAND.BRUSHING.mouseup,
+		camerapan: HAND.BRUSHING.camerapan,
 	}
 
 	HAND.HOVER = {
@@ -3344,12 +3363,14 @@ registerRule(
 
 	on.mousemove(e => hand.state.mousemove? hand.state.mousemove(e) : undefined)
 	on.mousedown(e => {
-		if (e.button !== 0) return
-		if (hand.state.mousedown) hand.state.mousedown(e)
+
+		if (e.button === 0) if (hand.state.mousedown) hand.state.mousedown(e)
+		if (e.button === 1) if (hand.state.middlemousedown) hand.state.middlemousedown(e)
 	})
 	on.mouseup(e => {
-		if (e.button !== 0) return
-		if (hand.state.mouseup) hand.state.mouseup(e)
+		if (e.button === 0) if (hand.state.mouseup) hand.state.mouseup(e)
+		if (e.button === 1) if (hand.state.middlemouseup) hand.state.middlemouseup(e)
+		
 	})
 
 	hand.state = HAND.FREE
