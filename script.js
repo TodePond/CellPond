@@ -617,8 +617,7 @@ on.load(() => {
 
 		if (Mouse.Middle && !pencilled) {
 			const [x, y] = Mouse.position
-			const cell = pickCell(...getCursorView(x, y))
-			setCellColour(cell, state.brush.colour)
+			brush(...getCursorView(x, y))
 			pencilled = true
 		}
 
