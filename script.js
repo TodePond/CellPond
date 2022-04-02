@@ -33,7 +33,7 @@ don't take it too seriously
 
 const urlParams = new URLSearchParams(window.location.search)
 const NO_SECRET_MODE = urlParams.has("nosecret")
-const NO_FOOLS_MODE = false
+const NO_FOOLS_MODE = urlParams.has("nofools")
 const UNLOCK_MODE = urlParams.has("unlock")
 if (NO_SECRET_MODE) {
 	localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
@@ -557,12 +557,12 @@ on.load(() => {
 		let green = splash[1]
 		let blue = splash[2]
 
-		if (!NO_FOOLS_MODE) {
+		/*if (!NO_FOOLS_MODE) {
 			const average = Math.round((red + green + blue) / 3)
 			red = average
 			green = average
 			blue = average
-		}
+		}*/
 
 		// Draw
 		const iy = imageWidth * 4
@@ -2977,9 +2977,9 @@ registerRule(
 
 	const colourTodeDraw = () => {
 		colourTodeContext.clearRect(0, 0, colourTodeCanvas.width, colourTodeCanvas.height)
-		if (!NO_FOOLS_MODE) {
+		/*if (!NO_FOOLS_MODE) {
 			colourTodeContext.filter = "grayscale(100%)"
-		}
+		}*/
 		colourTodeContext.scale(CT_SCALE, CT_SCALE)
 		for (const atom of state.colourTode.atoms) {
 			drawAtom(atom)
