@@ -1876,9 +1876,9 @@ on.load(() => {
 		//if (array.channels === undefined) print(array)
 		let [reds, greens, blues] = array.channels
 
-		if (reds === undefined) reds = makeNumber({channel: 0, values: [true, false, false, false, false, false, false, false, false, false]})
-		if (greens === undefined) greens = makeNumber({channel: 1, values: [true, false, false, false, false, false, false, false, false, false]})
-		if (blues === undefined) blues = makeNumber({channel: 2, values: [true, false, false, false, false, false, false, false, false, false]})
+		if (reds === undefined) reds = makeNumber({channel: 0, variable: "red"})
+		if (greens === undefined) greens = makeNumber({channel: 1, variable: "green"})
+		if (blues === undefined) blues = makeNumber({channel: 2, variable: "blue"})
 
 		const rvalues = evaluateNumber(reds, args)
 		const gvalues = evaluateNumber(greens, args)
