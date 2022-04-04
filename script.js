@@ -5440,6 +5440,18 @@ registerRule(
 
 	const COLOURTODE_TALL_RECTANGLE = {
 		highlighter: true,
+		drag: (atom) => {
+			if (atom.parent.isSquare) {
+				const square = atom.parent
+				square[atom.channelSlot] = undefined
+				const channelId = CHANNEL_IDS[atom.channelSlot]
+				square.receiveNumber(square, undefined, channelId)
+				freeChild(square, atom)
+				atom.updateAppearance(atom)
+				atom.attached = false
+			}
+			return atom
+		},
 		hover: (atom) => {
 
 			const {x, y} = getAtomPosition(atom)
