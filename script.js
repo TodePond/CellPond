@@ -1763,7 +1763,9 @@ on.load(() => {
 		let numberValues = undefined
 		
 		if (variable !== undefined) {
+			// placeholder for places in the codebase that don't specify a source!
 			numberValues = [true, true, true, true, true, true, true, true, true, true]
+			//numberValues = [false, false, false, false, false, false, false, false, false, false]
 		}
 		
 		else numberValues = values
@@ -1796,19 +1798,28 @@ on.load(() => {
 	
 	const VARIABLE_EVALUATOR = {}
 	
-	VARIABLE_EVALUATOR.red = (number, {source = state.brush.hoverColour.splash} = {}) => {
+	VARIABLE_EVALUATOR.red = (number, {source} = {}) => {
+		if (source === undefined) {
+			return [true, true, true, true, true, true, true, true, true, true]
+		}
 		const [r, g, b] = getRGB(source.colour)
 		const values = makeValuesFromInt(r / 100)
 		return values
 	}
 	
-	VARIABLE_EVALUATOR.green = (number, {source = state.brush.hoverColour.splash} = {}) => {
+	VARIABLE_EVALUATOR.green = (number, {source} = {}) => {
+		if (source === undefined) {
+			return [true, true, true, true, true, true, true, true, true, true]
+		}
 		const [r, g, b] = getRGB(source.colour)
 		const values = makeValuesFromInt(g / 10)
 		return values
 	}
 	
-	VARIABLE_EVALUATOR.blue = (number, {source = state.brush.hoverColour.splash} = {}) => {
+	VARIABLE_EVALUATOR.blue = (number, {source} = {}) => {
+		if (source === undefined) {
+			return [true, true, true, true, true, true, true, true, true, true]
+		}
 		const [r, g, b] = getRGB(source.colour)
 		const values = makeValuesFromInt(b)
 		return values
@@ -1898,19 +1909,27 @@ on.load(() => {
 
 	const cloneDragonArray = (array) => {
 
-		const redValues = [false, false, false, false, false, false, false, false, false, false]
-		const greenValues = [false, false, false, false, false, false, false, false, false, false]
-		const blueValues = [false, false, false, false, false, false, false, false, false, false]
+		let red = undefined
+		let green = undefined
+		let blue = undefined
 
-		for (let i = 0; i < 10; i++) {
-			if (array.channels[0] !== undefined) redValues[i] = array.channels[0].values[i]
-			if (array.channels[1] !== undefined) greenValues[i] = array.channels[1].values[i]
-			if (array.channels[2] !== undefined) blueValues[i] = array.channels[2].values[i]
+		if (array.channels[0] !== undefined) {
+			const values = array.channels[0].values
+			const variable = array.channels[0].variable
+			red = makeNumber({values, variable, channel: 0})
 		}
-
-		const red = array.channels[0] !== undefined? makeNumber({values: redValues, channel: 0}) : undefined
-		const green = array.channels[1] !== undefined? makeNumber({values: greenValues, channel: 1}) : undefined
-		const blue = array.channels[2] !== undefined? makeNumber({values: blueValues, channel: 2}) : undefined
+		
+		if (array.channels[1] !== undefined) {
+			const values = array.channels[1].values
+			const variable = array.channels[1].variable
+			green = makeNumber({values, variable, channel: 1})
+		}
+		
+		if (array.channels[2] !== undefined) {
+			const values = array.channels[2].values
+			const variable = array.channels[2].variable
+			blue = makeNumber({values, variable, channel: 2})
+		}
 
 		const joins = []
 		for (const join of array.joins) {
@@ -6832,7 +6851,7 @@ registerRule(
 			const content = state.brush.colour.left[0].content
 			atom.value = cloneDragonArray(content)
 			atom.joins = content.joins.map(j => ({value: j}))
-			//atom.joins.map(j => getSplashesArrayFromArray(j.value)).d
+			//atom.joins.map(j => getSplashesArrayFromArray(j.value))
 		}
 
 		atom.joinDrawTimer++
@@ -6846,22 +6865,24 @@ registerRule(
 			atom.joinDrawTimer = 0
 		}
 
+		
+		let drawTarget = atom.value
+		if (atom.joins.length > 0) {
+			if (atom.joinDrawId >= atom.joins.length) {
+				atom.joinDrawId = 0
+			}
+			if (atom.joinDrawId >= 0) {
+				drawTarget = atom.joins[atom.joinDrawId].value
+			}
+		}
+		const valueClone = cloneDragonArray(drawTarget)
+		valueClone.joins = []
+		atom.colours = getSplashesArrayFromArray(valueClone)
+
 		if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
 			atom.toolbarNeedsColourUpdate = false
 
-			let drawTarget = atom.value
-			if (atom.joins.length > 0) {
-				if (atom.joinDrawId >= atom.joins.length) {
-					atom.joinDrawId = 0
-				}
-				if (atom.joinDrawId >= 0) {
-					drawTarget = atom.joins[atom.joinDrawId].value
-				}
-			}
 
-			const valueClone = cloneDragonArray(drawTarget)
-			valueClone.joins = []
-			atom.colours = getSplashesArrayFromArray(valueClone)
 			//atom.colourId = Random.Uint32 % atom.colours.length
 			atom.colourTicker = Infinity
 			atom.previousBrushColour = state.brush.colour
@@ -6882,9 +6903,10 @@ registerRule(
 				atom.dcolourId = 1
 				atom.colourId = 0
 			}
-			atom.colour = Colour.splash(atom.colours[atom.colourId])
 		}
 		else atom.colourTicker++
+		
+		atom.colour = Colour.splash(atom.colours[atom.colourId])
 	}
 
 	triangleTool.update = squareTool.update
