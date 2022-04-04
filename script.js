@@ -5586,6 +5586,8 @@ registerRule(
 			deleteChild(atom, atom.green)
 			deleteChild(atom, atom.blue)
 
+			deleteChild(atom, atom.padRight)
+			deleteChild(atom, atom.handleRight)
 			deleteChild(atom, atom.winnerPin)
 
 		}
