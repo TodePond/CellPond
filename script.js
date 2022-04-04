@@ -3780,30 +3780,32 @@ registerRule(
 			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
 			atom.pickerPad = pickerPad
 
-			if (atom.value.channels[0] !== undefined) {
-				if (atom.value.channels[0].variable === undefined) {
-					const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-					red.channelSlot = "red" //note: a colour doesn't necessarily have to be in its own channel slot
-					red.x += COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
-					red.value = atom.value.channels[0]
-					red.needsColoursUpdate = true
-					//red.grab = () => atom
-					atom.red = red
-					if (atom.redExpanded) atom.red.click(atom.red)
-					atom.red.attached = true
+			
+
+			if (atom.value.channels[2] !== undefined) {
+				if (atom.value.channels[2].variable === undefined) {
+					const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+					blue.channelSlot = "blue" //note: a colour doesn't necessarily have to be in its own channel slot
+					blue.x += COLOURTODE_PICKER_PAD_MARGIN + 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+					blue.value = atom.value.channels[2]
+					blue.needsColoursUpdate = true
+					//blue.grab = () => atom
+					atom.blue = blue
+					if (atom.blueExpanded) atom.blue.click(atom.blue)
+					atom.blue.attached = true
 				} else {
 					const diamond = createChild(atom, COLOURTODE_TALL_RECTANGLE)
-					diamond.variable = atom.value.channels[0].variable
-					diamond.value = atom.value.channels[0].value
-					diamond.channelSlot = "red"
+					diamond.variable = atom.value.channels[2].variable
+					diamond.value = atom.value.channels[2].value
+					diamond.channelSlot = "blue"
 					diamond.updateAppearance(diamond)
-					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
+					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*3 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
 					diamond.y = atom.height/2 - diamond.height/2
-					diamond.value = atom.value.channels[0]
+					diamond.value = atom.value.channels[2]
 					diamond.attached = true
 
-					atom.red = diamond
-					//if (atom.redExpanded) diamond.expand(diamond)
+					atom.blue = diamond
+					if (atom.blueExpanded) diamond.expand(diamond)
 				}
 			}
 
@@ -3830,34 +3832,34 @@ registerRule(
 					diamond.attached = true
 
 					atom.green = diamond
-					//if (atom.greenExpanded) diamond.expand(diamond)
+					if (atom.greenExpanded) diamond.expand(diamond)
 				}
 			}
 
-			if (atom.value.channels[2] !== undefined) {
-				if (atom.value.channels[2].variable === undefined) {
-					const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
-					blue.channelSlot = "blue" //note: a colour doesn't necessarily have to be in its own channel slot
-					blue.x += COLOURTODE_PICKER_PAD_MARGIN + 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-					blue.value = atom.value.channels[2]
-					blue.needsColoursUpdate = true
-					//blue.grab = () => atom
-					atom.blue = blue
-					if (atom.blueExpanded) atom.blue.click(atom.blue)
-					atom.blue.attached = true
+			if (atom.value.channels[0] !== undefined) {
+				if (atom.value.channels[0].variable === undefined) {
+					const red = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+					red.channelSlot = "red" //note: a colour doesn't necessarily have to be in its own channel slot
+					red.x += COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN
+					red.value = atom.value.channels[0]
+					red.needsColoursUpdate = true
+					//red.grab = () => atom
+					atom.red = red
+					if (atom.redExpanded) atom.red.click(atom.red)
+					atom.red.attached = true
 				} else {
 					const diamond = createChild(atom, COLOURTODE_TALL_RECTANGLE)
-					diamond.variable = atom.value.channels[2].variable
-					diamond.value = atom.value.channels[2].value
-					diamond.channelSlot = "blue"
+					diamond.variable = atom.value.channels[0].variable
+					diamond.value = atom.value.channels[0].value
+					diamond.channelSlot = "red"
 					diamond.updateAppearance(diamond)
-					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*3 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
+					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
 					diamond.y = atom.height/2 - diamond.height/2
-					diamond.value = atom.value.channels[2]
+					diamond.value = atom.value.channels[0]
 					diamond.attached = true
 
-					atom.blue = diamond
-					//if (atom.blueExpanded) diamond.expand(diamond)
+					atom.red = diamond
+					if (atom.redExpanded) diamond.expand(diamond)
 				}
 			}
 		},
