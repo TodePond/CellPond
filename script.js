@@ -760,38 +760,46 @@ on.load(() => {
 	let dropperStartY = undefined
 	let dropperStartT = undefined
 
+	state.brush.hoverColour = Colour.Void
+
 	const updatePan = () => {
+
+
+		const [x, y] = Mouse.position
+
+		if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
+			const cell = pickCell(...getCursorView(x, y))
+			if (cell !== undefined)	state.brush.hoverColour = Colour.splash(cell.colour)
+		} else {
+			const atom = getAtom(x / CT_SCALE, y / CT_SCALE)
+
+			if (atom !== undefined) {
+				state.brush.hoverColour = atom.colour
+			} else {
+				state.brush.hoverColour = Colour.Void
+			}
+		}
+
 		if (!Mouse.Right) {
 
 			if (dropperStartX !== undefined) {
 
-				const [x, y] = Mouse.position
 
 				const dropperDistance = Math.hypot(x - dropperStartX, y - dropperStartY)
 				const dropperTime = Date.now() - dropperStartT
 				if (dropperTime < 100 || dropperDistance <= 0) {
 					
-					if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
-						const cell = pickCell(...getCursorView(x, y))
-						if (cell !== undefined)	state.brush.colour = cell.colour
+					if (state.brush.hoverColour === Colour.Void) {
+						brushColourCycleIndex++
+						if (brushColourCycleIndex >= brushColourCycle.length) {
+							brushColourCycleIndex = 0
+						}
+
+						state.brush.colour = brushColourCycle[brushColourCycleIndex]
 					}
 
 					else {
-						const atom = getAtom(x / CT_SCALE, y / CT_SCALE)
-	
-						if (atom === undefined) {
-							brushColourCycleIndex++
-							if (brushColourCycleIndex >= brushColourCycle.length) {
-								brushColourCycleIndex = 0
-							}
-	
-							state.brush.colour = brushColourCycle[brushColourCycleIndex]
-						}
-	
-						else {
-							state.brush.colour = atom.colour.splash
-						}
-	
+						state.brush.colour = state.brush.hoverColour.splash
 					}
 				}
 
@@ -802,9 +810,6 @@ on.load(() => {
 			dropperStartY = undefined
 			return
 		}
-
-
-		const [x, y] = Mouse.position
 		
 		if (dropperStartX === undefined) {
 			dropperStartX = x
@@ -1135,7 +1140,7 @@ on.load(() => {
 		const children = []
 		for (const diagramCell of diagram.left) {
 
-			const colours = getSplashesArrayFromArray(diagramCell.content)
+			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell})
 			const colour = colours[Random.Uint32 % colours.length]
 
 			const child = makeCell({
@@ -1783,6 +1788,41 @@ on.load(() => {
 		}
 	}
 
+	const makeValuesFromInt = (int) => {
+		const values = [false, false, false, false, false, false, false, false, false, false]
+		values[int] = true
+		return values
+	}
+	
+	const VARIABLE_EVALUATOR = {}
+	
+	VARIABLE_EVALUATOR.red = (number, {source = state.brush.hoverColour.splash} = {}) => {
+		const [r, g, b] = getRGB(source.colour)
+		const values = makeValuesFromInt(r / 100)
+		return values
+	}
+	
+	VARIABLE_EVALUATOR.green = (number, {source = state.brush.hoverColour.splash} = {}) => {
+		const [r, g, b] = getRGB(source.colour)
+		const values = makeValuesFromInt(g / 10)
+		return values
+	}
+	
+	VARIABLE_EVALUATOR.blue = (number, {source = state.brush.hoverColour.splash} = {}) => {
+		const [r, g, b] = getRGB(source.colour)
+		const values = makeValuesFromInt(b)
+		return values
+	}
+
+	const evaluateNumber = (number, args) => {
+		if (number.variable === undefined) {
+			return number.values
+		}
+		
+		return VARIABLE_EVALUATOR[number.variable](number, args)
+		
+	}
+
 	//================//
 	// DRAGON - ARRAY //
 	//================//
@@ -1811,15 +1851,15 @@ on.load(() => {
 		return array
 	}
 	
-	const getSplashesSetFromArray = (array) => {
+	const getSplashesSetFromArray = (array, args) => {
 
-		const splashesArray = getSplashesArrayFromArray(array)
+		const splashesArray = getSplashesArrayFromArray(array, args)
 
 		const splashes = new Set(splashesArray)
 		return splashes
 	}
 	
-	const getSplashesArrayFromArray = (array) => {
+	const getSplashesArrayFromArray = (array, args) => {
 
 		const splashes = []
 		//if (array.channels === undefined) print(array)
@@ -1829,14 +1869,18 @@ on.load(() => {
 		if (greens === undefined) greens = makeNumber({channel: 1, values: [true, false, false, false, false, false, false, false, false, false]})
 		if (blues === undefined) blues = makeNumber({channel: 2, values: [true, false, false, false, false, false, false, false, false, false]})
 
-		for (let r = 0; r < reds.values.length; r++) {
-			const red = reds.values[r]
+		const rvalues = evaluateNumber(reds, args)
+		const gvalues = evaluateNumber(greens, args)
+		const bvalues = evaluateNumber(blues, args)
+
+		for (let r = 0; r < rvalues.length; r++) {
+			const red = rvalues[r]
 			if (!red) continue
-			for (let g = 0; g < greens.values.length; g++) {
-				const green = greens.values[g]
+			for (let g = 0; g < gvalues.length; g++) {
+				const green = gvalues[g]
 				if (!green) continue
-				for (let b = 0; b < blues.values.length; b++) {
-					const blue = blues.values[b]
+				for (let b = 0; b < bvalues.length; b++) {
+					const blue = bvalues[b]
 					if (!blue) continue
 					const splash = r*100 + g*10 + b*1
 					splashes.push(splash)
