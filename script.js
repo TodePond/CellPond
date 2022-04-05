@@ -3883,8 +3883,6 @@ registerRule(
 			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
 			atom.pickerPad = pickerPad
 
-			
-
 			if (atom.value.channels[2] !== undefined) {
 				if (atom.value.channels[2].variable === undefined) {
 					const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL)
@@ -4107,8 +4105,47 @@ registerRule(
 					atom.highlight = undefined
 				}
 				
+				if (atom.highlightedAtom === undefined) {
+					const atoms = getAllBaseAtoms()
+					for (let other of atoms) {
+						if (other === atom) continue
+						if (!other.isSquare) continue
+						if (other.joins.length > 0 && other.joinExpanded) {
+							other = other.pickerPad
+						}
+						
+						const {x: ox, y: oy} = getAtomPosition(other)
+						const oleft = ox
+						const oright = ox + other.width
+						const otop = oy
+						const obottom = oy + other.height
 
-				for (const paddle of paddles) {
+						if (left > oright) continue
+						if (right < oleft) continue
+						if (bottom < otop) continue
+						if (top > obottom) continue
+
+						if (other.isPicker) {
+							atom.highlightedAtom = other.parent
+						} else {
+							if (other.parent !== COLOURTODE_BASE_PARENT) continue
+							atom.highlightedAtom = other
+						}
+
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+						atom.highlight.hasBorder = true
+						atom.highlight.hasInner = false
+						atom.highlight.width = other.width
+						atom.highlight.height = other.height
+						atom.highlight.x = ox
+						atom.highlight.y = oy
+
+						break
+
+					}
+				}
+
+				if (atom.highlightedAtom === undefined) for (const paddle of paddles) {
 
 					if (!paddle.expanded || paddle.pinhole.locked) continue
 
@@ -4251,45 +4288,6 @@ registerRule(
 
 				}
 
-				if (atom.highlightedAtom === undefined) {
-					for (let other of state.colourTode.atoms) {
-						if (other === atom) continue
-						if (!other.isSquare) continue
-						if (other.parent !== COLOURTODE_BASE_PARENT) continue
-						if (other.joins.length > 0 && other.joinExpanded) {
-							other = other.pickerPad
-						}
-						
-						const {x: ox, y: oy} = getAtomPosition(other)
-						const oleft = ox
-						const oright = ox + other.width
-						const otop = oy
-						const obottom = oy + other.height
-
-						if (left > oright) continue
-						if (right < oleft) continue
-						if (bottom < otop) continue
-						if (top > obottom) continue
-
-						if (other.isPicker) {
-							atom.highlightedAtom = other.parent
-						} else {
-							atom.highlightedAtom = other
-						}
-
-						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
-						atom.highlight.hasBorder = true
-						atom.highlight.hasInner = false
-						atom.highlight.width = other.width
-						atom.highlight.height = other.height
-						atom.highlight.x = ox
-						atom.highlight.y = oy
-
-						break
-
-					}
-				}
-
 
 			}
 
@@ -4335,7 +4333,7 @@ registerRule(
 
 					updatePaddleSize(slot.parent)
 				}
-				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle) {
+				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle && !(atom.highlightedAtom.joins.length > 0 && atom.highlightedAtom.joinExpanded)) {
 
 					const square = atom.highlightedAtom
 					const paddle = square.parent
@@ -6179,6 +6177,18 @@ registerRule(
 		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
 	}
 
+	const getAllBaseAtoms = () => {
+		const atoms = [...state.colourTode.atoms]
+		for (const paddle of paddles) {
+			for (const child of paddle.children) {
+				if (child.isPinhole) continue
+				if (child.isPaddleHandle) continue
+				atoms.push(child)
+			}
+		}
+		return atoms
+	}
+
 	const positionPaddles = () => {
 
 		if (paddles.length > 1) {
@@ -6218,6 +6228,7 @@ registerRule(
 	}
 
 	const PADDLE_HANDLE = {
+		isPaddleHandle: true,
 		attached: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -6266,6 +6277,7 @@ registerRule(
 	}
 
 	const PIN_HOLE = {
+		isPinhole: true,
 		attached: true,
 		locked: false,
 		borderScale: 1/2,
@@ -6339,6 +6351,7 @@ registerRule(
 			}
 		},
 		grab: (atom) => atom.parent.parent,
+		
 	}
 
 	const SYMMETRY_TOGGLINGS = new Map()
