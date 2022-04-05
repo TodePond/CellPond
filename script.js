@@ -5108,7 +5108,8 @@ registerRule(
 				let winningSquare = undefined
 				let winningSlot = undefined
 
-				for (const square of state.colourTode.atoms) {
+				const atoms = getAllBaseAtoms()
+				for (const square of atoms) {
 					if (!square.isSquare) continue
 					if (!square.expanded) continue
 
@@ -6092,6 +6093,7 @@ registerRule(
 			const bchannel = b.channels[i]
 			if (achannel === undefined && bchannel !== undefined) return false
 			if (achannel !== undefined && bchannel === undefined) return false
+			if (achannel === undefined && bchannel === undefined) continue
 			if (achannel.variable !== bchannel.variable) return false
 		}
 
