@@ -1140,7 +1140,7 @@ on.load(() => {
 		const children = []
 		for (const diagramCell of diagram.left) {
 
-			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell})
+			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour})
 			const colour = colours[Random.Uint32 % colours.length]
 
 			const child = makeCell({
@@ -1802,7 +1802,7 @@ on.load(() => {
 		if (source === undefined) {
 			return [true, true, true, true, true, true, true, true, true, true]
 		}
-		const [r, g, b] = getRGB(source.colour)
+		const [r, g, b] = getRGB(source)
 		const values = makeValuesFromInt(r / 100)
 		return values
 	}
@@ -1811,7 +1811,7 @@ on.load(() => {
 		if (source === undefined) {
 			return [true, true, true, true, true, true, true, true, true, true]
 		}
-		const [r, g, b] = getRGB(source.colour)
+		const [r, g, b] = getRGB(source)
 		const values = makeValuesFromInt(g / 10)
 		return values
 	}
@@ -1820,7 +1820,7 @@ on.load(() => {
 		if (source === undefined) {
 			return [true, true, true, true, true, true, true, true, true, true]
 		}
-		const [r, g, b] = getRGB(source.colour)
+		const [r, g, b] = getRGB(source)
 		const values = makeValuesFromInt(b)
 		return values
 	}
@@ -1905,6 +1905,24 @@ on.load(() => {
 		}
 
 		return splashes
+	}
+
+	const fillEmptyChannels = (array) => {
+		for (let i = 0; i < 3; i++) {
+			if (array.channels[i] !== undefined) continue
+			array.channels[i] = makeNumber({
+				channel: i,
+				variable: CHANNEL_VARIABLES[i],
+			})
+		}
+	}
+
+	const isDragonArrayDynamic = (array) => {
+		for (const channel of array.channels) {
+			if (channel === undefined) return false
+			if (channel.variable !== undefined) return true
+		}
+		return false
 	}
 
 	const cloneDragonArray = (array) => {
@@ -2339,12 +2357,17 @@ on.load(() => {
 	DRAGON_INSTRUCTION = {}
 	DRAGON_INSTRUCTION.recolour = (cell) => {
 
+		fillEmptyChannels(cell.content)
+
 		const splashes = getSplashesArrayFromArray(cell.content)
+		const isDynamic = isDragonArrayDynamic(cell.content)
 
 		const instruction = (target, redraw, neighbours, neighbourId, stamps) => {
 
 			let colour = undefined
+			let source = target.colour
 			let stampNameTakenFrom = undefined
+
 			if (cell.content.stamp === undefined) {
 				colour = splashes[Random.Uint32 % splashes.length]
 			} else {
@@ -2354,9 +2377,26 @@ on.load(() => {
 				}
 				else {
 					const stampId = Random.Uint32 % stampChoices.length
-					colour = stampChoices[stampId]
+					source = stampChoices[stampId]
+					colour = source
 					stampChoices.splice(stampId, 1)
 					stampNameTakenFrom = cell.content.stamp
+				}
+			}
+
+			if (isDynamic) {
+
+				const parts = getRGB(colour)
+
+				for (let i = 0; i < cell.content.channels.length; i++) {
+					const channel = cell.content.channels[i]
+					if (channel.variable === undefined) continue
+					const results = VARIABLE_EVALUATOR[channel.variable](channel, {source})
+					const choices = results.map((v, i) => v === true? i : false).filter(v => v !== false)
+					const newPart = choices[Random.Uint8 % choices.length]
+					colour -= parts[i]
+					const m = 10 ** (2-i)
+					colour += newPart * m
 				}
 			}
 
