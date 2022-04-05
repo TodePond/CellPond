@@ -6088,6 +6088,15 @@ registerRule(
 	}
 
 	const isDragonArrayEqual = (a, b) => {
+
+		for (let i = 0; i < 3; i++) {
+			const achannel = a.channels[i]
+			const bchannel = b.channels[i]
+			if (achannel === undefined && bchannel !== undefined) return false
+			if (achannel !== undefined && bchannel === undefined) return false
+			if (achannel.variable !== bchannel.variable) return false
+		}
+
 		const asplashes = getSplashesArrayFromArray(a)
 		const bsplashes = getSplashesArrayFromArray(b)
 
