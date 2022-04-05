@@ -5568,7 +5568,8 @@ registerRule(
 			let winningSquare = undefined
 			let winningSlot = undefined
 
-			for (const other of state.colourTode.atoms) {
+			const atoms = getAllBaseAtoms()
+			for (const other of atoms) {
 				if (other === atom) continue
 				if (!other.isSquare) continue
 				if (!other.expanded) continue
