@@ -1756,10 +1756,7 @@ on.load(() => {
 	//=================//
 	// DRAGON - NUMBER //
 	//=================//
-	// Values[10] - what values this number could represent
-	// Channel - what colour channel this number uses as its base (0, 1 or 2)
-	// Operations[] - any operations that this number includes
-	const makeNumber = ({values, channel = 0, variable, operations = []} = {}) => {
+	const makeNumber = ({values, channel = 0, variable, add, subtract} = {}) => {
 		let numberValues = undefined
 		
 		if (variable !== undefined) {
@@ -1769,7 +1766,7 @@ on.load(() => {
 		}
 		
 		else numberValues = values
-		return {values: numberValues, variable, channel, operations}
+		return {values: numberValues, variable, channel, add, subtract}
 	}
 
 	const DRAGON_NUMBER_OPERATOR = {
@@ -3069,8 +3066,9 @@ registerRule(
 		const highlight = createChild(atom, HIGHLIGHT, {bottom: true})
 		highlight.hasBorder = true
 		highlight.colour = Colour.Grey
-		highlight.x = highlightedAtom.x
-		highlight.y = highlightedAtom.y
+		const {x, y} = getAtomPosition(highlightedAtom)
+		highlight.x = x
+		highlight.y = y
 		highlight.width = highlightedAtom.width
 		highlight.height = highlightedAtom.height
 
@@ -5553,6 +5551,12 @@ registerRule(
 				freeChild(square, atom)
 				atom.updateAppearance(atom)
 				atom.attached = false
+			} else if (atom.parent.isTallRectangle) {
+				const diamond = atom.parent
+				freeChild(diamond, atom)
+				diamond.operationAtoms[atom.highlightedSlot] = undefined
+				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
+				diamond[operationName] = undefined
 			}
 			return atom
 		},
@@ -5571,6 +5575,40 @@ registerRule(
 			const atoms = getAllBaseAtoms()
 			for (const other of atoms) {
 				if (other === atom) continue
+
+				if (other.isTallRectangle) {
+					if (!other.expanded) continue
+					const slotNames = ["padTop", "padBottom"]
+					for (const slotName of slotNames) {
+						
+						let endAtom = other
+
+						while (endAtom.operationAtoms[slotName] !== undefined) {
+							endAtom = endAtom.operationAtoms[slotName]
+						}
+						
+						if (!endAtom.isTallRectangle) continue
+						if (!endAtom.expanded) continue
+
+						const slot = endAtom[slotName]
+						const {x: px, y: py} = getAtomPosition(slot)
+						const pleft = px
+						const pright = px + slot.width
+						const ptop = py
+						const pbottom = py + slot.height
+
+						if (left > pright) continue
+						if (right < pleft) continue
+						if (bottom < ptop) continue
+						if (top > pbottom) continue
+
+						atom.highlightedSlot = slotName
+						return slot
+
+					}
+					continue
+				}
+
 				if (!other.isSquare) continue
 				if (!other.expanded) continue
 
@@ -5618,7 +5656,24 @@ registerRule(
 				return
 			}
 		},
-		place: (atom) => {
+		place: (atom, highlightedAtom) => {
+
+			if (!highlightedAtom.isSquare) {
+				const diamond = highlightedAtom.parent
+				diamond.unexpand(diamond)
+				
+				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
+				diamond.value[operationName] = atom.value
+				diamond.operationAtoms[atom.highlightedSlot] = atom
+				atom.x = 0
+				atom.y = highlightedAtom.y + highlightedAtom.height/2 - atom.height/2
+				atom.dx = 0
+				atom.dy = 0
+				deleteAtom(atom)
+				diamond.expand(diamond)
+				return
+			}
+
 			const square = atom.highlightedAtom
 			const slotId = CHANNEL_IDS[atom.highlightedSlot]
 			square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
@@ -5679,6 +5734,7 @@ registerRule(
 				atom.height += BORDER_THICKNESS/2
 				atom.size += BORDER_THICKNESS/2
 			}
+			atom.operationAtoms = {padTop: undefined, padBottom: undefined}
 		},
 		updateAppearance: (atom) => {
 			if (atom.variable === "red") {
@@ -5772,6 +5828,13 @@ registerRule(
 			atom.winnerPin.colour = atom[atom.variable].borderColour
 			atom.winnerPin.borderColour = atom.winnerPin.colour
 
+			for (const operation of ["padTop", "padBottom"]) {
+				const operationAtom = atom.operationAtoms[operation]
+				if (operationAtom === undefined) continue
+				registerAtom(operationAtom)
+				giveChild(atom, operationAtom)
+			}
+
 		},
 		unexpand: (atom) => {
 			atom.expanded = false
@@ -5791,6 +5854,12 @@ registerRule(
 			
 			deleteChild(atom, atom.padLeft)
 			deleteChild(atom, atom.handleLeft)
+
+			for (const operation of ["padTop", "padBottom"]) {
+				const operationAtom = atom.operationAtoms[operation]
+				if (operationAtom === undefined) continue
+				deleteChild(atom, operationAtom)
+			}
 
 		}
 	}
