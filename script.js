@@ -3659,9 +3659,12 @@ registerRule(
 		return child
 	}
 	
-	const deleteChild = (parent, child) => {
+	const deleteChild = (parent, child, {quiet = false} = {}) => {
 		const id = parent.children.indexOf(child)
-		if (id === -1) throw new Error(`Can't delete child of atom because I can't find it!`)
+		if (id === -1) {
+			if (quiet) return
+			else throw new Error(`Can't delete child of atom because I can't find it!`)
+		}
 		parent.children.splice(id, 1)
 		child.parent = COLOURTODE_BASE_PARENT
 	}
@@ -5557,6 +5560,10 @@ registerRule(
 				diamond.operationAtoms[atom.highlightedSlot] = undefined
 				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
 				diamond[operationName] = undefined
+				if (atom.expanded) {
+					atom.unexpand(atom)
+					atom.expand(atom)
+				}
 			}
 			return atom
 		},
@@ -5671,6 +5678,12 @@ registerRule(
 				atom.dy = 0
 				deleteAtom(atom)
 				diamond.expand(diamond)
+
+				if (atom.expanded) {
+					atom.unexpand(atom)
+					atom.expand(atom)
+				}
+
 				return
 			}
 
@@ -5758,29 +5771,33 @@ registerRule(
 		expand: (atom) => {
 			atom.expanded = true
 
-			atom.handleTop = createChild(atom, SYMMETRY_HANDLE)
-			atom.handleTop.width = atom.handleTop.height
-			atom.handleTop.height *= 2
-			atom.handleTop.y = atom.height/2 - atom.handleTop.height
-			atom.handleTop.x = atom.width/2 - atom.handleTop.width/2
+			if (atom.y < 0 || !(atom.parent.isTallRectangle && !atom.parent.parent.isTallRectangle)) {
+				atom.handleTop = createChild(atom, SYMMETRY_HANDLE)
+				atom.handleTop.width = atom.handleTop.height
+				atom.handleTop.height *= 2
+				atom.handleTop.y = atom.height/2 - atom.handleTop.height
+				atom.handleTop.x = atom.width/2 - atom.handleTop.width/2
 
-			atom.handleBottom = createChild(atom, SYMMETRY_HANDLE)
-			atom.handleBottom.width = atom.handleBottom.height
-			atom.handleBottom.height *= 2
-			atom.handleBottom.y = atom.height/2
-			atom.handleBottom.x = atom.width/2 - atom.handleBottom.width/2
+				atom.padTop = createChild(atom, SYMMETRY_PAD)
+				atom.padTop.height = COLOURTODE_PICKER_PAD.height
+				atom.padTop.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
+				atom.padTop.x = atom.width/2 - atom.padTop.width/2
+				atom.padTop.y = -atom.padTop.height - OPTION_MARGIN
+			}
 
-			atom.padTop = createChild(atom, SYMMETRY_PAD)
-			atom.padTop.height = COLOURTODE_PICKER_PAD.height
-			atom.padTop.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
-			atom.padTop.x = atom.width/2 - atom.padTop.width/2
-			atom.padTop.y = -atom.padTop.height - OPTION_MARGIN
+			if (atom.y > 0 || !(atom.parent.isTallRectangle && !atom.parent.parent.isTallRectangle)) {
+				atom.handleBottom = createChild(atom, SYMMETRY_HANDLE)
+				atom.handleBottom.width = atom.handleBottom.height
+				atom.handleBottom.height *= 2
+				atom.handleBottom.y = atom.height/2
+				atom.handleBottom.x = atom.width/2 - atom.handleBottom.width/2
 
-			atom.padBottom = createChild(atom, SYMMETRY_PAD)
-			atom.padBottom.height = COLOURTODE_PICKER_PAD.height
-			atom.padBottom.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
-			atom.padBottom.x = atom.width/2 - atom.padBottom.width/2
-			atom.padBottom.y = atom.height + OPTION_MARGIN
+				atom.padBottom = createChild(atom, SYMMETRY_PAD)
+				atom.padBottom.height = COLOURTODE_PICKER_PAD.height
+				atom.padBottom.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
+				atom.padBottom.x = atom.width/2 - atom.padBottom.width/2
+				atom.padBottom.y = atom.height + OPTION_MARGIN
+			}
 			
 			atom.handleRight = createChild(atom, SYMMETRY_HANDLE)
 			atom.handleRight.y = atom.height/2 - atom.handleRight.height/2
@@ -5847,10 +5864,10 @@ registerRule(
 			deleteChild(atom, atom.handleRight)
 			deleteChild(atom, atom.winnerPin)
 			
-			deleteChild(atom, atom.padTop)
-			deleteChild(atom, atom.padBottom)
-			deleteChild(atom, atom.handleTop)
-			deleteChild(atom, atom.handleBottom)
+			deleteChild(atom, atom.padTop, {quiet: true})
+			deleteChild(atom, atom.padBottom, {quiet: true})
+			deleteChild(atom, atom.handleTop, {quiet: true})
+			deleteChild(atom, atom.handleBottom, {quiet: true})
 			
 			deleteChild(atom, atom.padLeft)
 			deleteChild(atom, atom.handleLeft)
