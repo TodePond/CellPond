@@ -3538,9 +3538,12 @@ registerRule(
 	}
 
 	const drawAtom = (atom) => {
+		for (const child of atom.children) {
+			if (child.behindParent) drawAtom(child)
+		}
 		if (atom.behindChildren) atom.draw(atom)
 		for (const child of atom.children) {
-			drawAtom(child)
+			if (!child.behindParent) drawAtom(child)
 		}
 		if (!atom.behindChildren) atom.draw(atom)
 	}
@@ -3826,6 +3829,7 @@ registerRule(
 	}
 
 	const COLOURTODE_SQUARE = {
+		//behindChildren: true,
 		isSquare: true,
 		hasBorder: true,
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -3880,6 +3884,7 @@ registerRule(
 			const pickerHandle = createChild(atom, SYMMETRY_HANDLE)
 			pickerHandle.width += OPTION_MARGIN
 			atom.pickerHandle = pickerHandle
+			atom.pickerHandle.behindParent = true
 			
 			const pickerPad = createChild(atom, COLOURTODE_PICKER_PAD)
 			atom.pickerPad = pickerPad
@@ -3896,18 +3901,17 @@ registerRule(
 					if (atom.blueExpanded) atom.blue.click(atom.blue)
 					atom.blue.attached = true
 				} else {
-					const diamond = createChild(atom, COLOURTODE_TALL_RECTANGLE)
-					diamond.variable = atom.value.channels[2].variable
-					diamond.value = atom.value.channels[2].value
+					const diamond = atom.variableAtoms[2]
+					registerAtom(diamond)
+					giveChild(atom, diamond)
 					diamond.channelSlot = "blue"
 					diamond.updateAppearance(diamond)
 					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*3 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
 					diamond.y = atom.height/2 - diamond.height/2
-					diamond.value = atom.value.channels[2]
 					diamond.attached = true
 
 					atom.blue = diamond
-					if (atom.blueExpanded) diamond.expand(diamond)
+					//if (atom.redExpanded) diamond.expand(diamond)
 				}
 			}
 
@@ -3923,18 +3927,17 @@ registerRule(
 					if (atom.greenExpanded) atom.green.click(atom.green)
 					atom.green.attached = true
 				} else {
-					const diamond = createChild(atom, COLOURTODE_TALL_RECTANGLE)
-					diamond.variable = atom.value.channels[1].variable
-					diamond.value = atom.value.channels[1].value
+					const diamond = atom.variableAtoms[1]
+					registerAtom(diamond)
+					giveChild(atom, diamond)
 					diamond.channelSlot = "green"
 					diamond.updateAppearance(diamond)
-					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*2 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2  - diamond.width/3
+					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*2 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
 					diamond.y = atom.height/2 - diamond.height/2
-					diamond.value = atom.value.channels[1]
 					diamond.attached = true
 
 					atom.green = diamond
-					if (atom.greenExpanded) diamond.expand(diamond)
+					//if (atom.redExpanded) diamond.expand(diamond)
 				}
 			}
 
@@ -3950,18 +3953,17 @@ registerRule(
 					if (atom.redExpanded) atom.red.click(atom.red)
 					atom.red.attached = true
 				} else {
-					const diamond = createChild(atom, COLOURTODE_TALL_RECTANGLE)
-					diamond.variable = atom.value.channels[0].variable
-					diamond.value = atom.value.channels[0].value
+					const diamond = atom.variableAtoms[0]
+					registerAtom(diamond)
+					giveChild(atom, diamond)
 					diamond.channelSlot = "red"
 					diamond.updateAppearance(diamond)
 					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
 					diamond.y = atom.height/2 - diamond.height/2
-					diamond.value = atom.value.channels[0]
 					diamond.attached = true
 
 					atom.red = diamond
-					if (atom.redExpanded) diamond.expand(diamond)
+					//if (atom.redExpanded) diamond.expand(diamond)
 				}
 			}
 		},
@@ -3974,11 +3976,21 @@ registerRule(
 			if (atom.blue) deleteChild(atom, atom.blue)
 		},
 
-		receiveNumber: (atom, number, channel = number.channel, {expanded} = {}) => {
+		receiveNumber: (atom, number, channel = number.channel, {expanded, numberAtom} = {}) => {
 			
 			atom.redExpanded = atom.red && atom.red.expanded
 			atom.greenExpanded = atom.green && atom.green.expanded
 			atom.blueExpanded = atom.blue && atom.blue.expanded
+			
+			if (atom.variableAtoms === undefined) {
+				atom.variableAtoms = [undefined, undefined, undefined]
+			}
+
+			if (number !== undefined && number.variable !== undefined) {
+				atom.variableAtoms[channel] = numberAtom
+			} else {
+				atom.variableAtoms[channel] = undefined
+			}
 
 			if (expanded !== undefined) {
 				const channelName = CHANNEL_NAMES[channel]
@@ -5111,35 +5123,71 @@ registerRule(
 
 				const atoms = getAllBaseAtoms()
 				for (const square of atoms) {
-					if (!square.isSquare) continue
-					if (!square.expanded) continue
 
-					const {x: px, y: py} = getAtomPosition(square.pickerPad)
+					const other = square
+					if (other.isTallRectangle) {
+						if (!other.expanded) continue
+						const slotNames = ["padTop", "padBottom"]
+						for (const slotName of slotNames) {
+							
+							let endAtom = other
+	
+							while (endAtom.operationAtoms[slotName] !== undefined) {
+								endAtom = endAtom.operationAtoms[slotName]
+							}
+							
+							if (!endAtom.isTallRectangle) continue
+							if (!endAtom.expanded) continue
+	
+							const slot = endAtom[slotName]
+							const {x: px, y: py} = getAtomPosition(slot)
+							const pleft = px
+							const pright = px + slot.width
+							const ptop = py
+							const pbottom = py + slot.height
+	
+							if (left > pright) continue
+							if (right < pleft) continue
+							if (bottom < ptop) continue
+							if (top > pbottom) continue
+	
+							atom.highlightedSlot = slotName
+							atom.highlightedAtom = slot
+							break
+	
+						}
+					} else {
 
-					const pleft = px
-					const pright = px + square.pickerPad.width
-					const ptop = py
-					const pbottom = py + square.pickerPad.height
+						if (!square.isSquare) continue
+						if (!square.expanded) continue
 
-					if (left > pright) continue
-					if (right < pleft) continue
-					if (bottom < ptop) continue
-					if (top > pbottom) continue
+						const {x: px, y: py} = getAtomPosition(square.pickerPad)
 
-					const slots = ["red", "green", "blue"].filter(slot => square[slot] === undefined)
-					if (slots.length === 0) continue
-					
-					const {x: ax, y: ay} = getAtomPosition(square)
+						const pleft = px
+						const pright = px + square.pickerPad.width
+						const ptop = py
+						const pbottom = py + square.pickerPad.height
 
-					for (const slot of slots) {
-						const slotId = CHANNEL_IDS[slot]
-						const sx = ax + square.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-						const sy = ay + OPTION_MARGIN
-						const distance = Math.hypot(x - sx, y - sy)
-						if (distance < winningDistance) {
-							winningDistance = distance
-							winningSquare = square
-							winningSlot = slot
+						if (left > pright) continue
+						if (right < pleft) continue
+						if (bottom < ptop) continue
+						if (top > pbottom) continue
+
+						const slots = ["red", "green", "blue"].filter(slot => square[slot] === undefined)
+						if (slots.length === 0) continue
+						
+						const {x: ax, y: ay} = getAtomPosition(square)
+
+						for (const slot of slots) {
+							const slotId = CHANNEL_IDS[slot]
+							const sx = ax + square.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+							const sy = ay + OPTION_MARGIN
+							const distance = Math.hypot(x - sx, y - sy)
+							if (distance < winningDistance) {
+								winningDistance = distance
+								winningSquare = square
+								winningSlot = slot
+							}
 						}
 					}
 
@@ -5157,6 +5205,8 @@ registerRule(
 					atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
 					atom.highlightedAtom = winningSquare
 					atom.highlightedSlot = winningSlot
+				} else if (atom.highlightedAtom) {
+					print("hiu")
 				}
 
 			}
@@ -5689,7 +5739,7 @@ registerRule(
 
 			const square = atom.highlightedAtom
 			const slotId = CHANNEL_IDS[atom.highlightedSlot]
-			square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
+			square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded, numberAtom: atom})
 			deleteAtom(atom)
 		},
 		draw: (atom) => {
@@ -5810,7 +5860,7 @@ registerRule(
 			atom.padRight.y = atom.height/2 - atom.padRight.height/2
 			atom.padRight.x = atom.width + OPTION_MARGIN
 			
-			atom.handleLeft = createChild(atom, SYMMETRY_HANDLE)
+			/*atom.handleLeft = createChild(atom, SYMMETRY_HANDLE)
 			atom.handleLeft.y = atom.height/2 - atom.handleLeft.height/2
 			atom.handleLeft.x = -atom.width/2 - atom.handleLeft.width
 			atom.handleLeft.width *= 2
@@ -5819,7 +5869,7 @@ registerRule(
 			atom.padLeft.height = COLOURTODE_PICKER_PAD.height
 			atom.padLeft.width = OPTION_MARGIN + (atom.width+OPTION_MARGIN/1.5)*3
 			atom.padLeft.y = atom.height/2 - atom.padRight.height/2
-			atom.padLeft.x = -atom.padLeft.width - OPTION_MARGIN
+			atom.padLeft.x = -atom.padLeft.width - OPTION_MARGIN*/
 
 			atom.red = createChild(atom, DIAMOND_CHOICE)
 			atom.red.x = atom.padRight.x + OPTION_MARGIN/1.5
@@ -5869,8 +5919,8 @@ registerRule(
 			deleteChild(atom, atom.handleTop, {quiet: true})
 			deleteChild(atom, atom.handleBottom, {quiet: true})
 			
-			deleteChild(atom, atom.padLeft)
-			deleteChild(atom, atom.handleLeft)
+			/*deleteChild(atom, atom.padLeft)
+			deleteChild(atom, atom.handleLeft)*/
 
 			for (const operation of ["padTop", "padBottom"]) {
 				const operationAtom = atom.operationAtoms[operation]
@@ -6310,6 +6360,9 @@ registerRule(
 
 	const getAllBaseAtoms = () => {
 		const atoms = [...state.colourTode.atoms]
+		for (const atom of atoms) {
+			if (atom.isSquare && atom.expanded) atoms.push(...atom.children)
+		}
 		for (const paddle of paddles) {
 			for (const child of paddle.children) {
 				if (child.isPinhole) continue
