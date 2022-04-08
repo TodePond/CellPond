@@ -1929,21 +1929,15 @@ on.load(() => {
 		let blue = undefined
 
 		if (array.channels[0] !== undefined) {
-			const values = array.channels[0].values
-			const variable = array.channels[0].variable
-			red = makeNumber({values, variable, channel: 0})
+			red = cloneDragonNumber(array.channels[0])
 		}
 		
 		if (array.channels[1] !== undefined) {
-			const values = array.channels[1].values
-			const variable = array.channels[1].variable
-			green = makeNumber({values, variable, channel: 1})
+			green = cloneDragonNumber(array.channels[1])
 		}
 		
 		if (array.channels[2] !== undefined) {
-			const values = array.channels[2].values
-			const variable = array.channels[2].variable
-			blue = makeNumber({values, variable, channel: 2})
+			blue = cloneDragonNumber(array.channels[2])
 		}
 
 		const joins = []
@@ -1953,6 +1947,16 @@ on.load(() => {
 		}
 
 		const clone = makeArray({channels: [red, green, blue], joins})
+		return clone
+	}
+
+	const cloneDragonNumber = (number) => {
+		const values = [...number.values]
+		const variable = number.variable
+		const channel = number.channel
+		const add = number.add === undefined? undefined : cloneDragonNumber(number.add)
+		const subtract = number.subtract === undefined? undefined : cloneDragonNumber(number.subtract)
+		const clone = makeNumber({values, variable, channel, add, subtract})
 		return clone
 	}
 
@@ -2388,7 +2392,13 @@ on.load(() => {
 				for (let i = 0; i < cell.content.channels.length; i++) {
 					const channel = cell.content.channels[i]
 					if (channel.variable === undefined) continue
-					const results = VARIABLE_EVALUATOR[channel.variable](channel, {source})
+					let results = VARIABLE_EVALUATOR[channel.variable](channel, {source})
+					if (channel.add !== undefined) {
+						results = addChannelToResults(results, channel.add, {source, multiplier: 1})
+					}
+					if (channel.subtract !== undefined) {
+						results = addChannelToResults(results, channel.subtract, {source, multiplier: -1})
+					}
 					const choices = results.map((v, i) => v === true? i : false).filter(v => v !== false)
 					const newPart = choices[Random.Uint8 % choices.length]
 					colour -= parts[i]
@@ -2407,6 +2417,32 @@ on.load(() => {
 		return instruction
 	}
 	DRAGON_INSTRUCTION.recolour.type = "RECOLOUR"
+
+	const addChannelToResults = (augendResults, addend, {source, multiplier = 1}) => {
+		let addendResults = addend.values
+		if (addend.variable !== undefined) {
+			addendResults = VARIABLE_EVALUATOR[addend.variable](addend, {source})
+		}
+
+		const addendChoices = addendResults.map((v, i) => v === true? i : false).filter(v => v !== false)
+		const augendChoices = augendResults.map((v, i) => v === true? i : false).filter(v => v !== false)
+		
+		const choices = new Set()
+		for (const augendChoice of augendChoices) {
+			for (const addendChoice of addendChoices) {
+				const choice = clamp(augendChoice + addendChoice*multiplier, 0, 9)
+				choices.add(choice)
+			}
+		}
+
+		const results = [false, false, false, false, false, false, false, false, false, false]
+		for (const choice of choices) {
+			results[choice] = true
+		}
+
+		return results
+		
+	}
 
 	// A SPLIT REQUIRES THE CORRECT NUMBER OF RECOLOUR COMMANDS AFTER IT
 	// IF YOU DON'T, IT WILL GO WRONG
@@ -3681,6 +3717,12 @@ registerRule(
 	}
 	
 	const giveChild = (parent, atom) => {
+		if (atom === undefined) {
+			throw new Error(`Can't give child because child is undefined`)
+		}
+		if (parent === undefined) {
+			throw new Error(`Can't give child because parent is undefined`)
+		}
 		deleteAtom(atom)
 		if (atom.stayAtBack || atom.behindOtherChildren) parent.children.unshift(atom)
 		else parent.children.push(atom)
@@ -5271,11 +5313,6 @@ registerRule(
 					atom.dy = 0
 					deleteAtom(atom)
 					diamond.expand(diamond)
-					
-					if (atom.expanded) {
-						atom.unexpand(atom)
-						atom.expand(atom)
-					}
 
 					atom.attached = true
 
@@ -5767,6 +5804,8 @@ registerRule(
 		place: (atom, highlightedAtom) => {
 
 			atom.attached = true
+			atom.dx = 0
+			atom.dy = 0
 
 			if (!highlightedAtom.isSquare) {
 				const diamond = highlightedAtom.parent
@@ -5777,8 +5816,6 @@ registerRule(
 				diamond.operationAtoms[atom.highlightedSlot] = atom
 				atom.x = 0
 				atom.y = highlightedAtom.y + highlightedAtom.height/2 - atom.height/2
-				atom.dx = 0
-				atom.dy = 0
 				deleteAtom(atom)
 				diamond.expand(diamond)
 
@@ -5786,7 +5823,6 @@ registerRule(
 					atom.unexpand(atom)
 					atom.expand(atom)
 				}
-
 
 				return
 			}
@@ -6403,12 +6439,12 @@ registerRule(
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 
 			applyRangeStamp(stampeds, cellAtom.value)
-			const diagramCell = makeDiagramCell({x, y, content: cellAtom.value})
+			const diagramCell = makeDiagramCell({x, y, content: cloneDragonArray(cellAtom.value)})
 			left.push(diagramCell)
 
 			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
 			applyRangeStamp(stampeds, rightContent)
-			const rightDiagramCell = makeDiagramCell({x, y, content: rightContent})
+			const rightDiagramCell = makeDiagramCell({x, y, content: cloneDragonArray(rightContent)})
 			right.push(rightDiagramCell)
 		}
 		
