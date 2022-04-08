@@ -5614,6 +5614,7 @@ registerRule(
 					atom.unexpand(atom)
 					atom.expand(atom)
 				}
+				atom.attached = false
 			}
 			return atom
 		},
@@ -5715,6 +5716,8 @@ registerRule(
 		},
 		place: (atom, highlightedAtom) => {
 
+			atom.attached = true
+
 			if (!highlightedAtom.isSquare) {
 				const diamond = highlightedAtom.parent
 				diamond.unexpand(diamond)
@@ -5733,6 +5736,7 @@ registerRule(
 					atom.unexpand(atom)
 					atom.expand(atom)
 				}
+
 
 				return
 			}
@@ -5852,7 +5856,7 @@ registerRule(
 			atom.handleRight = createChild(atom, SYMMETRY_HANDLE)
 			atom.handleRight.y = atom.height/2 - atom.handleRight.height/2
 			atom.handleRight.x = atom.width/2
-			atom.handleRight.width *= 2
+			atom.handleRight.width *= 2.5
 
 			atom.padRight = createChild(atom, SYMMETRY_PAD)
 			atom.padRight.height = COLOURTODE_PICKER_PAD.height
