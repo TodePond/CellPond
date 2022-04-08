@@ -3572,11 +3572,19 @@ registerRule(
 		
 		for (let i = atom.children.length-1; i >= 0; i--) {
 			const child = atom.children[i]
+			if (child.behindParent) continue
 			const result = isAtomOverlapping(child, x, y)
 			if (result) return result
 		}
 		
 		if (atom.behindChildren && atom.overlaps(atom, x, y)) return atom
+		
+		for (let i = atom.children.length-1; i >= 0; i--) {
+			const child = atom.children[i]
+			if (!child.behindParent) continue
+			const result = isAtomOverlapping(child, x, y)
+			if (result) return result
+		}
 	}
 
 	const grabAtom = (atom, x, y) => {
@@ -4958,6 +4966,16 @@ registerRule(
 
 				unlockMenuTool("wide_rectangle")
 			}
+
+			else if (atom.parent.isTallRectangle) {
+				const diamond = atom.parent
+				freeChild(diamond, atom)
+				diamond.operationAtoms[atom.highlightedSlot] = undefined
+				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
+				diamond[operationName] = undefined
+				atom.attached = false
+			}
+
 			return atom
 		},
 
@@ -5132,7 +5150,7 @@ registerRule(
 							
 							let endAtom = other
 	
-							while (endAtom.operationAtoms[slotName] !== undefined) {
+							while (endAtom.isTallRectangle && endAtom.operationAtoms[slotName] !== undefined) {
 								endAtom = endAtom.operationAtoms[slotName]
 							}
 							
@@ -5206,7 +5224,14 @@ registerRule(
 					atom.highlightedAtom = winningSquare
 					atom.highlightedSlot = winningSlot
 				} else if (atom.highlightedAtom) {
-					print("hiu")
+					const {x: ax, y: ay} = getAtomPosition(atom.highlightedAtom)
+
+					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+					atom.highlight.hasBorder = true
+					atom.highlight.x = ax
+					atom.highlight.y = ay
+					atom.highlight.width = atom.highlightedAtom.width
+					atom.highlight.height = atom.highlightedAtom.height
 				}
 
 			}
@@ -5220,17 +5245,41 @@ registerRule(
 
 		drop: (atom) => {
 			if (atom.highlight !== undefined) {
-				const square = atom.highlightedAtom
-				const slotId = CHANNEL_IDS[atom.highlightedSlot]
-				atom.value.channel = slotId
-				/*giveChild(square, atom)
-				atom.dx = 0
-				atom.dy = 0
-				square[atom.highlightedSlot] = atom
-				atom.y = OPTION_MARGIN
-				atom.x = square.size + OPTION_MARGIN*2 + slotId*(OPTION_MARGIN*square.size)*/
-				square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
-				deleteAtom(atom)
+
+				if (atom.highlightedAtom.isSquare) {
+					const square = atom.highlightedAtom
+					const slotId = CHANNEL_IDS[atom.highlightedSlot]
+					atom.value.channel = slotId
+					/*giveChild(square, atom)
+					atom.dx = 0
+					atom.dy = 0
+					square[atom.highlightedSlot] = atom
+					atom.y = OPTION_MARGIN
+					atom.x = square.size + OPTION_MARGIN*2 + slotId*(OPTION_MARGIN*square.size)*/
+					square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded})
+					deleteAtom(atom)
+				} else {
+					const diamond = atom.highlightedAtom.parent
+					diamond.unexpand(diamond)
+					
+					const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
+					diamond.value[operationName] = atom.value
+					diamond.operationAtoms[atom.highlightedSlot] = atom
+					atom.x = atom.highlightedAtom.x + OPTION_MARGIN
+					atom.y = atom.highlightedAtom.y + atom.highlightedAtom.height/2 - atom.height/2
+					atom.dx = 0
+					atom.dy = 0
+					deleteAtom(atom)
+					diamond.expand(diamond)
+					
+					if (atom.expanded) {
+						atom.unexpand(atom)
+						atom.expand(atom)
+					}
+
+					atom.attached = true
+
+				}
 			}
 			
 			unlockMenuTool("tall_rectangle")
@@ -5400,13 +5449,13 @@ registerRule(
 		draw: (atom) => {
 			const {x, y} = getAtomPosition(atom)
 
-			let colour = "pink"
+			/*let colour = "pink"
 			if (atom.parent !== COLOURTODE_BASE_PARENT) {
 				if (atom.parent.parent !== COLOURTODE_BASE_PARENT) {
 					const colours = getSplashesArrayFromArray(atom.parent.parent.value)
 					colour = colours[Random.Uint32 % colours.length]
 				}
-			}
+			}*/
 
 			/*colourTodeContext.fillStyle = "#000000"
 			colourTodeContext.globalCompositeOperation = "lighten"
@@ -5564,7 +5613,7 @@ registerRule(
 			parent.createOptions(parent)
 			parent.updateColours(parent)
 
-			if (parent.parent !== COLOURTODE_BASE_PARENT) {
+			if (parent.parent.isSquare) {
 				const square = parent.parent
 				const channel = CHANNEL_IDS[parent.channelSlot]
 				square.receiveNumber(square, number, channel)
@@ -5594,6 +5643,7 @@ registerRule(
 	]
 
 	const COLOURTODE_TALL_RECTANGLE = {
+		behindChildren: true,
 		highlighter: true,
 		drag: (atom) => {
 			if (atom.parent.isSquare) {
@@ -5641,7 +5691,7 @@ registerRule(
 						
 						let endAtom = other
 
-						while (endAtom.operationAtoms[slotName] !== undefined) {
+						while (endAtom.isTallRectangle && endAtom.operationAtoms[slotName] !== undefined) {
 							endAtom = endAtom.operationAtoms[slotName]
 						}
 						
@@ -5831,6 +5881,7 @@ registerRule(
 				atom.handleTop.height *= 2
 				atom.handleTop.y = atom.height/2 - atom.handleTop.height
 				atom.handleTop.x = atom.width/2 - atom.handleTop.width/2
+				atom.handleTop.behindParent = true
 
 				atom.padTop = createChild(atom, SYMMETRY_PAD)
 				atom.padTop.height = COLOURTODE_PICKER_PAD.height
@@ -5845,6 +5896,7 @@ registerRule(
 				atom.handleBottom.height *= 2
 				atom.handleBottom.y = atom.height/2
 				atom.handleBottom.x = atom.width/2 - atom.handleBottom.width/2
+				atom.handleBottom.behindParent = true
 
 				atom.padBottom = createChild(atom, SYMMETRY_PAD)
 				atom.padBottom.height = COLOURTODE_PICKER_PAD.height
@@ -5857,6 +5909,7 @@ registerRule(
 			atom.handleRight.y = atom.height/2 - atom.handleRight.height/2
 			atom.handleRight.x = atom.width/2
 			atom.handleRight.width *= 2.5
+			atom.handleRight.behindParent = true
 
 			atom.padRight = createChild(atom, SYMMETRY_PAD)
 			atom.padRight.height = COLOURTODE_PICKER_PAD.height
@@ -6714,6 +6767,7 @@ registerRule(
 
 	const HIGHLIGHT_THICKNESS = BORDER_THICKNESS
 	const HIGHLIGHT = {
+		behindParent: true,
 		draw: COLOURTODE_RECTANGLE.draw,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
