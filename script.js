@@ -6438,13 +6438,16 @@ registerRule(
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 
-			applyRangeStamp(stampeds, cellAtom.value)
-			const diagramCell = makeDiagramCell({x, y, content: cloneDragonArray(cellAtom.value)})
+			const leftClone = cloneDragonArray(cellAtom.value)
+			applyRangeStamp(stampeds, leftClone)
+			const diagramCell = makeDiagramCell({x, y, content: leftClone})
 			left.push(diagramCell)
 
+
 			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
-			applyRangeStamp(stampeds, rightContent)
-			const rightDiagramCell = makeDiagramCell({x, y, content: cloneDragonArray(rightContent)})
+			const rightClone = cloneDragonArray(rightContent)
+			applyRangeStamp(stampeds, rightClone)
+			const rightDiagramCell = makeDiagramCell({x, y, content: rightClone})
 			right.push(rightDiagramCell)
 		}
 		
@@ -6456,7 +6459,7 @@ registerRule(
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
+		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule.d)
 	}
 
 	const getAllBaseAtoms = () => {
