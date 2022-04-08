@@ -5858,7 +5858,7 @@ registerRule(
 			atom.padRight.height = COLOURTODE_PICKER_PAD.height
 			atom.padRight.width = OPTION_MARGIN + (atom.width+OPTION_MARGIN/1.5)*3
 			atom.padRight.y = atom.height/2 - atom.padRight.height/2
-			atom.padRight.x = atom.width + OPTION_MARGIN
+			atom.padRight.x = atom.width/2 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2)/2 + OPTION_MARGIN
 			
 			/*atom.handleLeft = createChild(atom, SYMMETRY_HANDLE)
 			atom.handleLeft.y = atom.height/2 - atom.handleLeft.height/2
