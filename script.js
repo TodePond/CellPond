@@ -2435,9 +2435,17 @@ on.load(() => {
 			}
 		}
 
-		const results = [false, false, false, false, false, false, false, false, false, false]
+		let results = [false, false, false, false, false, false, false, false, false, false]
 		for (const choice of choices) {
 			results[choice] = true
+		}
+
+		if (addend.add !== undefined) {
+			results = addChannelToResults(results, addend.add, {source, multiplier: 1})
+		}
+
+		if (addend.subtract !== undefined) {
+			results = addChannelToResults(results, addend.add, {source, multiplier: -1})
 		}
 
 		return results
