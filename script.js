@@ -5902,6 +5902,14 @@ registerRule(
 				giveChild(atom, operationAtom)
 			}
 
+			for (const child of atom.children) {
+				if (!child.isTallRectangle) continue
+				if (child.expanded) {
+					child.unexpand(child)
+					child.expand(child)
+				}
+			}
+
 		},
 		unexpand: (atom) => {
 			atom.expanded = false
