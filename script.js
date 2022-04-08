@@ -5929,19 +5929,19 @@ registerRule(
 			atom.padLeft.x = -atom.padLeft.width - OPTION_MARGIN*/
 
 			atom.red = createChild(atom, DIAMOND_CHOICE)
-			atom.red.x = atom.padRight.x + OPTION_MARGIN/1.5
+			atom.red.x = atom.padRight.x + OPTION_MARGIN/Math.SQRT2
 			atom.red.borderColour = Colour.Red
 			atom.red.colour = Colour.Black
 			atom.red.value = "red"
 
 			atom.green = createChild(atom, DIAMOND_CHOICE)
-			atom.green.x = atom.padRight.x + OPTION_MARGIN/1.5 + (atom.green.width+OPTION_MARGIN)*1
+			atom.green.x = atom.padRight.x + OPTION_MARGIN/Math.SQRT2 + (atom.green.width+OPTION_MARGIN)*1
 			atom.green.borderColour = Colour.Green
 			atom.green.colour = Colour.Black
 			atom.green.value = "green"
 			
 			atom.blue = createChild(atom, DIAMOND_CHOICE)
-			atom.blue.x = atom.padRight.x + OPTION_MARGIN/1.5 + (atom.blue.width+OPTION_MARGIN)*2
+			atom.blue.x = atom.padRight.x + OPTION_MARGIN/Math.SQRT2 + (atom.blue.width+OPTION_MARGIN)*2
 			atom.blue.borderColour = Colour.Blue
 			atom.blue.colour = Colour.Black
 			atom.blue.value = "blue"
