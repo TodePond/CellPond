@@ -3968,7 +3968,7 @@ registerRule(
 					if (atom.blueExpanded) atom.blue.click(atom.blue)
 					atom.blue.attached = true
 				} else {
-					const diamond = atom.variableAtoms[2]
+					let diamond = atom.variableAtoms[2]
 					registerAtom(diamond)
 					giveChild(atom, diamond)
 					diamond.channelSlot = "blue"
@@ -3994,7 +3994,7 @@ registerRule(
 					if (atom.greenExpanded) atom.green.click(atom.green)
 					atom.green.attached = true
 				} else {
-					const diamond = atom.variableAtoms[1]
+					let diamond = atom.variableAtoms[1]
 					registerAtom(diamond)
 					giveChild(atom, diamond)
 					diamond.channelSlot = "green"
@@ -4020,7 +4020,7 @@ registerRule(
 					if (atom.redExpanded) atom.red.click(atom.red)
 					atom.red.attached = true
 				} else {
-					const diamond = atom.variableAtoms[0]
+					let diamond = atom.variableAtoms[0]
 					registerAtom(diamond)
 					giveChild(atom, diamond)
 					diamond.channelSlot = "red"
@@ -4110,6 +4110,7 @@ registerRule(
 			atom.colourTicker = Infinity
 			atom.joins = []
 			atom.joinColourIds = []
+			atom.variableAtoms = []
 
 		},
 
@@ -6106,6 +6107,23 @@ registerRule(
 			atom.parent.winnerPin.borderColour = atom.borderColour
 
 			atom.parent.updateAppearance(atom.parent)
+
+			const diamond = atom.parent
+			let topDiamond = diamond
+			let top = diamond.parent
+			while (!top.isSquare) {
+				if (top === COLOURTODE_BASE_PARENT) return
+				topDiamond = top
+				top = top.parent
+			}
+
+			let channelNumber = 0
+			if (topDiamond.channelSlot === "green") channelNumber = 1
+			if (topDiamond.channelSlot === "blue") channelNumber = 2
+
+			const topChannel = top.variableAtoms[channelNumber]
+			top.receiveNumber(top, topChannel.value, channelNumber, {expanded: topChannel.expanded, numberAtom: topChannel})
+
 		}
 	}
 	
@@ -7155,15 +7173,29 @@ registerRule(
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
 			registerAtom(newAtom)
 
-			if (newAtom.value !== undefined && newAtom.value.joins !== undefined) {
-				for (const j of newAtom.value.joins) {
-					const joinAtom = makeAtom(COLOURTODE_SQUARE)
-					joinAtom.value = j
-					newAtom.joins.push(joinAtom)
+			if (newAtom.value !== undefined) {
+				if (newAtom.value.joins !== undefined) {
+					for (const j of newAtom.value.joins) {
+						const joinAtom = makeAtom(COLOURTODE_SQUARE)
+						joinAtom.value = j
+						newAtom.joins.push(joinAtom)
+					}
 				}
+
 			}
 			
 			if (newAtom.isSquare) {
+
+				for (let i = 0; i < 3; i++) {
+					const channel = newAtom.value.channels[i]
+					if (channel === undefined) continue
+					if (channel.variable === undefined) continue
+					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
+					newAtom.variableAtoms[i] = diamond
+					diamond.variable = channel.variable
+					diamond.value.variable = diamond.variable
+				}
+
 				const diagramCell = makeDiagramCell({content: newAtom.value})
 				state.brush.colour = makeDiagram({left: [diagramCell]})
 			}
