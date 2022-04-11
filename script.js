@@ -5090,6 +5090,11 @@ registerRule(
 			atom.children.splice(selectionBottomId, 1)
 			atom.children.push(atom.selectionBottom)
 
+			if (atom.parent.isTallRectangle) {
+				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
+				atom.parent.value[operationName] = atom.value
+			}
+
 		},
 
 		positionSelectionBack: (atom) => {
@@ -6472,15 +6477,15 @@ registerRule(
 
 	const getAllBaseAtoms = () => {
 		const atoms = [...state.colourTode.atoms]
-		for (const atom of atoms) {
-			if (atom.isSquare && atom.expanded) atoms.push(...atom.children)
-		}
 		for (const paddle of paddles) {
 			for (const child of paddle.children) {
 				if (child.isPinhole) continue
 				if (child.isPaddleHandle) continue
 				atoms.push(child)
 			}
+		}
+		for (const atom of atoms) {
+			if (atom.isSquare && atom.expanded) atoms.push(...atom.children)
 		}
 		return atoms
 	}
