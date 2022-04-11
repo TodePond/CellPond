@@ -5024,6 +5024,16 @@ registerRule(
 				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
 				diamond.value[operationName] = undefined
 				atom.attached = false
+				if (diamond.expanded) {
+					diamond.unexpand(diamond)
+					diamond.expand(diamond)
+				} else {
+					const handle = atom.highlightedSlot === "padTop"? "handleTop" : "handleBottom"
+					deleteChild(diamond, diamond[handle], {quiet: true})
+					deleteChild(diamond, diamond[atom.highlightedSlot], {quiet: true})
+					diamond.expand(diamond)
+					diamond.unexpand(diamond)
+				}
 			}
 
 			return atom
@@ -5315,7 +5325,7 @@ registerRule(
 					deleteAtom(atom)
 				} else {
 					const diamond = atom.highlightedAtom.parent
-					diamond.unexpand(diamond)
+					//diamond.unexpand(diamond)
 					
 					const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
 					diamond.value[operationName] = atom.value
@@ -5324,8 +5334,8 @@ registerRule(
 					atom.y = atom.highlightedAtom.y + atom.highlightedAtom.height/2 - atom.height/2
 					atom.dx = 0
 					atom.dy = 0
-					deleteAtom(atom)
-					diamond.expand(diamond)
+					giveChild(diamond, atom)
+					//diamond.expand(diamond)
 
 					atom.attached = true
 
@@ -5575,7 +5585,7 @@ registerRule(
 			atom.dy = 0
 
 			
-			if (atom.parent.parent !== COLOURTODE_BASE_PARENT) {
+			if (atom.parent.parent.isSquare) {
 				const square = atom.parent.parent
 				const channel = CHANNEL_IDS[atom.parent.channelSlot]
 				square.receiveNumber(square, number, channel)
@@ -5715,6 +5725,16 @@ registerRule(
 					atom.expand(atom)
 				}
 				atom.attached = false
+				if (diamond.expanded) {
+					diamond.unexpand(diamond)
+					diamond.expand(diamond)
+				} else {
+					const handle = atom.highlightedSlot === "padTop"? "handleTop" : "handleBottom"
+					deleteChild(diamond, diamond[handle], {quiet: true})
+					deleteChild(diamond, diamond[atom.highlightedSlot], {quiet: true})
+					diamond.expand(diamond)
+					diamond.unexpand(diamond)
+				}
 			}
 			return atom
 		},
@@ -5822,15 +5842,15 @@ registerRule(
 
 			if (!highlightedAtom.isSquare) {
 				const diamond = highlightedAtom.parent
-				diamond.unexpand(diamond)
+				//diamond.unexpand(diamond)
 				
 				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
 				diamond.value[operationName] = atom.value
 				diamond.operationAtoms[atom.highlightedSlot] = atom
 				atom.x = 0
 				atom.y = highlightedAtom.y + highlightedAtom.height/2 - atom.height/2
-				deleteAtom(atom)
-				diamond.expand(diamond)
+				giveChild(diamond, atom)
+				//diamond.expand(diamond)
 
 				if (atom.expanded) {
 					atom.unexpand(atom)
@@ -5924,34 +5944,38 @@ registerRule(
 		expand: (atom) => {
 			atom.expanded = true
 
-			if (atom.y < 0 || !(atom.parent.isTallRectangle && !atom.parent.parent.isTallRectangle)) {
-				atom.handleTop = createChild(atom, SYMMETRY_HANDLE)
-				atom.handleTop.width = atom.handleTop.height
-				atom.handleTop.height *= 2
-				atom.handleTop.y = atom.height/2 - atom.handleTop.height
-				atom.handleTop.x = atom.width/2 - atom.handleTop.width/2
-				atom.handleTop.behindParent = true
+			if (atom.value.add === undefined) {
+				if (atom.y < 0 || !(atom.parent.isTallRectangle && atom.parent.operationAtoms.padBottom === atom)) {
+					atom.handleTop = createChild(atom, SYMMETRY_HANDLE)
+					atom.handleTop.width = atom.handleTop.height
+					atom.handleTop.height *= 2
+					atom.handleTop.y = atom.height/2 - atom.handleTop.height
+					atom.handleTop.x = atom.width/2 - atom.handleTop.width/2
+					atom.handleTop.behindParent = true
 
-				atom.padTop = createChild(atom, SYMMETRY_PAD)
-				atom.padTop.height = COLOURTODE_PICKER_PAD.height
-				atom.padTop.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
-				atom.padTop.x = atom.width/2 - atom.padTop.width/2
-				atom.padTop.y = -atom.padTop.height - OPTION_MARGIN
+					atom.padTop = createChild(atom, SYMMETRY_PAD)
+					atom.padTop.height = COLOURTODE_PICKER_PAD.height
+					atom.padTop.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
+					atom.padTop.x = atom.width/2 - atom.padTop.width/2
+					atom.padTop.y = -atom.padTop.height - OPTION_MARGIN
+				}
 			}
 
-			if (atom.y > 0 || !(atom.parent.isTallRectangle && !atom.parent.parent.isTallRectangle)) {
-				atom.handleBottom = createChild(atom, SYMMETRY_HANDLE)
-				atom.handleBottom.width = atom.handleBottom.height
-				atom.handleBottom.height *= 2
-				atom.handleBottom.y = atom.height/2
-				atom.handleBottom.x = atom.width/2 - atom.handleBottom.width/2
-				atom.handleBottom.behindParent = true
+			if (atom.value.subtract === undefined) {
+				if (atom.y > 0 || !(atom.parent.isTallRectangle && atom.parent.operationAtoms.padTop === atom)) {
+					atom.handleBottom = createChild(atom, SYMMETRY_HANDLE)
+					atom.handleBottom.width = atom.handleBottom.height
+					atom.handleBottom.height *= 2
+					atom.handleBottom.y = atom.height/2
+					atom.handleBottom.x = atom.width/2 - atom.handleBottom.width/2
+					atom.handleBottom.behindParent = true
 
-				atom.padBottom = createChild(atom, SYMMETRY_PAD)
-				atom.padBottom.height = COLOURTODE_PICKER_PAD.height
-				atom.padBottom.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
-				atom.padBottom.x = atom.width/2 - atom.padBottom.width/2
-				atom.padBottom.y = atom.height + OPTION_MARGIN
+					atom.padBottom = createChild(atom, SYMMETRY_PAD)
+					atom.padBottom.height = COLOURTODE_PICKER_PAD.height
+					atom.padBottom.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2
+					atom.padBottom.x = atom.width/2 - atom.padBottom.width/2
+					atom.padBottom.y = atom.height + OPTION_MARGIN
+				}
 			}
 			
 			atom.handleRight = createChild(atom, SYMMETRY_HANDLE)
@@ -6028,19 +6052,25 @@ registerRule(
 			deleteChild(atom, atom.handleRight)
 			deleteChild(atom, atom.winnerPin)
 			
-			deleteChild(atom, atom.padTop, {quiet: true})
-			deleteChild(atom, atom.padBottom, {quiet: true})
-			deleteChild(atom, atom.handleTop, {quiet: true})
-			deleteChild(atom, atom.handleBottom, {quiet: true})
+			if (atom.value.add === undefined) {
+				deleteChild(atom, atom.padTop, {quiet: true})
+				deleteChild(atom, atom.handleTop, {quiet: true})
+			}
+			
+			if (atom.value.subtract === undefined) {
+				deleteChild(atom, atom.padBottom, {quiet: true})
+				deleteChild(atom, atom.handleBottom, {quiet: true})
+			}
 			
 			/*deleteChild(atom, atom.padLeft)
 			deleteChild(atom, atom.handleLeft)*/
 
-			for (const operation of ["padTop", "padBottom"]) {
+			/*for (const opera
+				tion of ["padTop", "padBottom"]) {
 				const operationAtom = atom.operationAtoms[operation]
 				if (operationAtom === undefined) continue
 				deleteChild(atom, operationAtom)
-			}
+			}*/
 
 		}
 	}
