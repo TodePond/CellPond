@@ -6511,7 +6511,7 @@ registerRule(
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule.d)
+		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
 	}
 
 	const getAllBaseAtoms = () => {
