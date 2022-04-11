@@ -1947,6 +1947,8 @@ on.load(() => {
 		let green = undefined
 		let blue = undefined
 
+		const stamp = array.stamp
+
 		if (array.channels[0] !== undefined) {
 			red = cloneDragonNumber(array.channels[0])
 		}
@@ -1965,7 +1967,7 @@ on.load(() => {
 			joins.push(joinClone)
 		}
 
-		const clone = makeArray({channels: [red, green, blue], joins})
+		const clone = makeArray({stamp, channels: [red, green, blue], joins})
 		return clone
 	}
 
@@ -3811,6 +3813,7 @@ registerRule(
 			let Y = Math.round(y)
 			let W = Math.round(atom.width)
 			let H = Math.round(atom.height)
+			let R = Math.round(atom.width/2)
 
 			if (atom.hasBorder) {
 
@@ -3832,10 +3835,22 @@ registerRule(
 					else {
 						colourTodeContext.fillStyle = atom.borderColour
 					}
-					colourTodeContext.fillRect(X, Y, W, H)
 
+					colourTodeContext.beginPath()
+					colourTodeContext.rect(X, Y, W, H)
+					if (atom.stamp !== undefined) {
+						colourTodeContext.arc(X+R, Y+R, Math.round((PADDLE_HANDLE.size - OPTION_MARGIN/2)/2), 0, 2*Math.PI)
+					}
+
+					colourTodeContext.fill("evenodd")
+
+					colourTodeContext.beginPath()
 					colourTodeContext.fillStyle = atom.colour
-					colourTodeContext.fillRect(X+border, Y+border, W-border*2, H-border*2)
+					colourTodeContext.rect(X+border, Y+border, W-border*2, H-border*2)
+					if (atom.stamp !== undefined) {
+						colourTodeContext.arc(X+R, Y+R, Math.round((PADDLE_HANDLE.size - OPTION_MARGIN/2)/2)+border, 0, 2*Math.PI)
+					}
+					colourTodeContext.fill("evenodd")
 				}
 
 				else {
@@ -4090,6 +4105,8 @@ registerRule(
 			squareTool.toolbarNeedsColourUpdate = true
 			triangleTool.toolbarNeedsColourUpdate = true
 			circleTool.toolbarNeedsColourUpdate = true
+			wideRectangleTool.toolbarNeedsColourUpdate = true
+			tallRectangleTool.toolbarNeedsColourUpdate = true
 
 		},
 
@@ -4551,6 +4568,7 @@ registerRule(
 						joinAtom.value = j
 						clone.joins.push(joinAtom)
 					}
+					clone.stamp = clone.value.stamp
 					registerAtom(clone)
 
 					/*if (atom.slotted !== undefined) {
@@ -4567,6 +4585,7 @@ registerRule(
 					atom.attached = false
 					atom.slottee = false
 					freeChild(paddle, atom)
+					atom.cellAtom.slot.colour = Colour.Black
 					atom.cellAtom.slotted = undefined
 					atom.cellAtom = undefined
 					return atom
@@ -4869,6 +4888,36 @@ registerRule(
 		// Returns what atom to highlight when being hovered over stuff
 		hover: (atom) => {
 
+			if (atom.direction === "up") {
+				
+				const {x, y} = getAtomPosition(atom)
+				const left = x
+				const top = y
+				const right = x + atom.width
+				const bottom = y + atom.height
+
+				const others = getAllBaseAtoms()
+				for (const other of others) {
+					if (!other.isSquare) continue
+					if (other.parent.isPaddle && other.parent.pinhole.locked) continue
+					
+					const {x: px, y: py} = getAtomPosition(other)
+					const pleft = px
+					const pright = px + other.width
+					const ptop = py
+					const pbottom = py + other.height
+					
+					if (left > pright) continue
+					if (right < pleft) continue
+					if (bottom-5 > pbottom) continue
+					if (bottom < ptop) continue
+
+					return other
+				}
+
+				return
+			}
+
 			if (atom.direction !== "right") return undefined
 
 			// Get my bounds
@@ -4877,8 +4926,6 @@ registerRule(
 			const top = y
 			const right = x + atom.width
 			const bottom = y + atom.height
-
-			// HIGHLIGHT SELECTION CODE GOES HERE!!!
 
 			for (const paddle of paddles) {
 
@@ -4908,6 +4955,27 @@ registerRule(
 		},
 
 		place: (atom, paddle) => {
+
+			if (atom.direction === "up") {
+				const square = paddle
+
+				if (square.stamp === undefined) {
+					square.stamp = "circle"
+					square.value.stamp = "circle"
+				} else {
+					square.stamp = undefined
+					square.value.stamp = undefined
+				}
+
+				squareTool.toolbarNeedsColourUpdate = true
+				circleTool.toolbarNeedsColourUpdate = true
+				triangleTool.toolbarNeedsColourUpdate = true
+				wideRectangleTool.toolbarNeedsColourUpdate = true
+				tallRectangleTool.toolbarNeedsColourUpdate = true
+				return
+			}
+			
+			if (atom.direction !== "right") return undefined
 			
 			giveChild(paddle, atom)
 			paddle.rightTriangle = atom
@@ -6301,7 +6369,7 @@ registerRule(
 		//borderColour: Colour.Silver,
 		draw: (atom) => {
 			//atom.colour = borderColours[atom.cellAtom.colour.splash]
-			COLOURTODE_RECTANGLE.draw(atom)
+			//COLOURTODE_RECTANGLE.draw(atom)
 			
 			const [x, y] = getAtomPosition(atom)
 
@@ -6350,7 +6418,7 @@ registerRule(
 				fillPoints(Colour.Black, stripe)
 			}*/
 
-			colourTodeContext.fillStyle = Colour.Black
+			colourTodeContext.fillStyle = atom.colour
 			/*colourTodeContext.beginPath()
 			colourTodeContext.arc(x + atom.width/2, y+atom.height/2, atom.width / 5, 0, 2*Math.PI)
 			colourTodeContext.fill()*/
@@ -6364,7 +6432,7 @@ registerRule(
 		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
-		colour: Colour.Grey,
+		colour: Colour.Black,
 		size: COLOURTODE_SQUARE.size,
 		grab: (atom) => atom.parent,
 		dragOnly: true,
@@ -6462,6 +6530,7 @@ registerRule(
 				if (cellAtom.slotted !== undefined) {
 					cellAtom.slotted.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width
 					cellAtom.slotted.y = cellAtom.y
+					slot.colour = Colour.Grey
 				}
 				
 			}
@@ -7229,6 +7298,7 @@ registerRule(
 						newAtom.joins.push(joinAtom)
 					}
 				}
+				newAtom.stamp = newAtom.value.stamp
 
 			}
 			
@@ -7247,8 +7317,6 @@ registerRule(
 					diamond.unexpand(diamond)
 				}
 
-				//const diagramCell = makeDiagramCell({content: newAtom.value})
-				//state.brush.colour = makeDiagram({left: [diagramCell]})
 			}
 
 			return newAtom
@@ -7336,6 +7404,9 @@ registerRule(
 		} else {
 			const content = state.brush.colour.left[0].content
 			atom.value = cloneDragonArray(content)
+			if (atom === squareTool) {
+				atom.stamp = atom.value.stamp
+			}
 			atom.joins = content.joins.map(j => ({value: j}))
 			//atom.joins.map(j => getSplashesArrayFromArray(j.value))
 		}
