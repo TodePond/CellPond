@@ -1140,7 +1140,7 @@ on.load(() => {
 		const children = []
 		for (const diagramCell of diagram.left) {
 
-			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour})
+			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour, debug: true})
 			const colour = colours[Random.Uint32 % colours.length]
 
 			const child = makeCell({
@@ -1822,13 +1822,22 @@ on.load(() => {
 		return values
 	}
 
-	const evaluateNumber = (number, args) => {
+	const evaluateNumber = (number, args = {}) => {
 		if (number.variable === undefined) {
 			return number.values
 		}
+
+		let results = VARIABLE_EVALUATOR[number.variable](number, args)
+
+		if (number.add !== undefined) {
+			results = addChannelToResults(results, number.add, {source: args.source, multiplier: 1})
+		}
+		if (number.subtract !== undefined) {
+			results = addChannelToResults(results, number.subtract, {source: args.source, multiplier: -1})
+		}
 		
-		return VARIABLE_EVALUATOR[number.variable](number, args)
-		
+		return results
+
 	}
 
 	//================//
@@ -1867,7 +1876,7 @@ on.load(() => {
 		return splashes
 	}
 	
-	const getSplashesArrayFromArray = (array, args) => {
+	const getSplashesArrayFromArray = (array, args = {}) => {
 
 		const splashes = []
 		//if (array.channels === undefined) print(array)
@@ -1877,7 +1886,7 @@ on.load(() => {
 		if (greens === undefined) greens = makeNumber({channel: 1, variable: "green"})
 		if (blues === undefined) blues = makeNumber({channel: 2, variable: "blue"})
 
-		const rvalues = evaluateNumber(reds, args)
+		const rvalues = evaluateNumber(reds, {...args, debug: args.debug})
 		const gvalues = evaluateNumber(greens, args)
 		const bvalues = evaluateNumber(blues, args)
 
