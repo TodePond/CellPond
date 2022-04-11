@@ -5939,8 +5939,7 @@ registerRule(
 
 		},
 		makeOperationAtoms: (atom) => {
-			print("missin")
-			if (atom.value.d.add !== undefined) {
+			if (atom.value.add !== undefined) {
 				if (atom.operationAtoms.padtop === undefined) {
 					print("missin")
 				}
@@ -7357,6 +7356,9 @@ registerRule(
 		}
 		else atom.colourTicker++
 		
+		if (atom.colourId >= atom.colours.length) {
+			atom.colourId = 0
+		}
 		atom.colour = Colour.splash(atom.colours[atom.colourId])
 	}
 
