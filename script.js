@@ -6579,6 +6579,7 @@ registerRule(
 	}
 
 	const applyRangeStamp = (stampeds, value) => {
+		if (value.stamp) return //already got a manual stamp
 		const isSingle = isDragonArraySingleColour(value)
 		if (!isSingle) {
 			let newStamp = undefined
@@ -6645,7 +6646,7 @@ registerRule(
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
+		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule.d)
 	}
 
 	const getAllBaseAtoms = () => {
