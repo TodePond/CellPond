@@ -1769,6 +1769,16 @@ on.load(() => {
 		return {values: numberValues, variable, channel, add, subtract}
 	}
 
+	const cloneDragonNumber = (number) => {
+		const values = [...number.values]
+		const variable = number.variable
+		const channel = number.channel
+		const add = number.add === undefined? undefined : cloneDragonNumber(number.add)
+		const subtract = number.subtract === undefined? undefined : cloneDragonNumber(number.subtract)
+		const clone = makeNumber({values, variable, channel, add, subtract})
+		return clone
+	}
+
 	const DRAGON_NUMBER_OPERATOR = {
 		ADD: (left, right) => Math.min(left + right, 9),
 		SUBTRACT: (left, right) => Math.max(left - right, 0),
@@ -1956,16 +1966,6 @@ on.load(() => {
 		}
 
 		const clone = makeArray({channels: [red, green, blue], joins})
-		return clone
-	}
-
-	const cloneDragonNumber = (number) => {
-		const values = [...number.values]
-		const variable = number.variable
-		const channel = number.channel
-		const add = number.add === undefined? undefined : cloneDragonNumber(number.add)
-		const subtract = number.subtract === undefined? undefined : cloneDragonNumber(number.subtract)
-		const clone = makeNumber({values, variable, channel, add, subtract})
 		return clone
 	}
 
@@ -3306,13 +3306,18 @@ registerRule(
 			grabAtom(atom, e.clientX / CT_SCALE, e.clientY / CT_SCALE)
 			
 			if (atom.dragOnly) {
+				
+				hand.pityStartX = e.clientX
+				hand.pityStartY = e.clientY
+				hand.pityStartT = Date.now()
 				hand.hasStartedDragging = false
-				changeHandState(HAND.DRAGGING)
+				changeHandState(HAND.TOUCHING, "move")
 			}
 			else {
 				hand.pityStartX = e.clientX
 				hand.pityStartY = e.clientY
 				hand.pityStartT = Date.now()
+				hand.hasStartedDragging = false
 				changeHandState(HAND.TOUCHING)
 			}
 
@@ -3398,7 +3403,7 @@ registerRule(
 			if (hand.content.draggable) {				
 				changeHandState(HAND.DRAGGING)
 
-				const attached = hand.content.attached
+				const attached = hand.content.attached && !hand.content.dragOnly
 
 				hand.content = hand.content.drag(hand.content, x, y)
 				
@@ -5931,6 +5936,15 @@ registerRule(
 				atom.size += BORDER_THICKNESS/2
 			}
 			atom.operationAtoms = {padTop: undefined, padBottom: undefined}
+
+		},
+		makeOperationAtoms: (atom) => {
+			print("missin")
+			if (atom.value.d.add !== undefined) {
+				if (atom.operationAtoms.padtop === undefined) {
+					print("missin")
+				}
+			}
 		},
 		updateAppearance: (atom) => {
 			if (atom.variable === "red") {
@@ -6160,7 +6174,7 @@ registerRule(
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
 		stayAtBack: true,
-		attached: true,
+		//attached: true,
 		isPaddle: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -6933,6 +6947,7 @@ registerRule(
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		dragOnly: true,
+		//touch: (atom) => atom.parent,
 		width: SYMMETRY_CIRCLE.size/2,
 		x: SYMMETRY_CIRCLE.size/2 + SYMMETRY_CIRCLE.size/4,
 		height: SYMMETRY_CIRCLE.size / 3,
@@ -7192,12 +7207,13 @@ registerRule(
 					if (channel.variable === undefined) continue
 					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
 					newAtom.variableAtoms[i] = diamond
+					diamond.value = cloneDragonNumber(channel)
 					diamond.variable = channel.variable
-					diamond.value.variable = diamond.variable
+					diamond.makeOperationAtoms(diamond)
 				}
 
-				const diagramCell = makeDiagramCell({content: newAtom.value})
-				state.brush.colour = makeDiagram({left: [diagramCell]})
+				//const diagramCell = makeDiagramCell({content: newAtom.value})
+				//state.brush.colour = makeDiagram({left: [diagramCell]})
 			}
 
 			return newAtom
