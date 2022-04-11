@@ -5940,8 +5940,42 @@ registerRule(
 		},
 		makeOperationAtoms: (atom) => {
 			if (atom.value.add !== undefined) {
+
 				if (atom.operationAtoms.padtop === undefined) {
-					print("missin")
+					if (atom.value.add.variable === undefined) {
+						const operationAtom = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+						operationAtom.value = atom.value.add
+						atom.operationAtoms.padTop = operationAtom
+						operationAtom.x = atom.padTop.x + OPTION_MARGIN
+						operationAtom.y = atom.padTop.y + atom.padTop.height/2 - operationAtom.height/2
+						operationAtom.highlightedSlot = "padTop"
+					} else {
+						const operationAtom = createChild(atom, COLOURTODE_TALL_RECTANGLE)
+						operationAtom.value = atom.value.add
+						operationAtom.variable = atom.value.add.variable
+						operationAtom.makeOperationAtoms(operationAtom)
+						operationAtom.highlightedSlot = "padTop"
+						operationAtom.x = 0
+						operationAtom.y = atom.padTop.y + atom.padTop.height/2 - operationAtom.height/2
+						operationAtom.updateAppearance(operationAtom)
+						atom.operationAtoms.padTop = operationAtom
+					}
+				}
+			}
+
+			if (atom.value.subtract !== undefined) {
+
+				if (atom.operationAtoms.padBottom === undefined) {
+					if (atom.value.subtract.variable === undefined) {
+						const operationAtom = createChild(atom, COLOURTODE_PICKER_CHANNEL)
+						operationAtom.value = atom.value.subtract
+						atom.operationAtoms.padBottom = operationAtom
+						operationAtom.x = atom.padBottom.x + OPTION_MARGIN
+						operationAtom.y = atom.padBottom.y + atom.padBottom.height/2 - operationAtom.height/2
+						operationAtom.highlightedSlot = "padBottom"
+					} else {
+
+					}
 				}
 			}
 		},
@@ -7206,9 +7240,11 @@ registerRule(
 					if (channel.variable === undefined) continue
 					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
 					newAtom.variableAtoms[i] = diamond
+					diamond.expand(diamond)
 					diamond.value = cloneDragonNumber(channel)
 					diamond.variable = channel.variable
 					diamond.makeOperationAtoms(diamond)
+					diamond.unexpand(diamond)
 				}
 
 				//const diagramCell = makeDiagramCell({content: newAtom.value})
