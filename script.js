@@ -5022,7 +5022,7 @@ registerRule(
 				freeChild(diamond, atom)
 				diamond.operationAtoms[atom.highlightedSlot] = undefined
 				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
-				diamond[operationName] = undefined
+				diamond.value[operationName] = undefined
 				atom.attached = false
 			}
 
@@ -5704,7 +5704,7 @@ registerRule(
 				freeChild(diamond, atom)
 				diamond.operationAtoms[atom.highlightedSlot] = undefined
 				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract"
-				diamond[operationName] = undefined
+				diamond.value[operationName] = undefined
 				if (atom.expanded) {
 					atom.unexpand(atom)
 					atom.expand(atom)
