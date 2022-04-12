@@ -713,7 +713,12 @@ on.load(() => {
 			return
 		}
 
-		const children = splitCellToDiagram(cell, state.brush.colour)
+		let children = []
+		if (state.brush.colour.left[0].content.isDiagram) {
+			children = splitCellToDiagram(cell, state.brush.colour.left[0].content)
+		} else {
+			children = splitCellToDiagram(cell, state.brush.colour)
+		}
 
 		for (const child of children) {
 			drawCell(child)
@@ -1888,6 +1893,8 @@ on.load(() => {
 	
 	const getSplashesArrayFromArray = (array, args = {}) => {
 
+		if (array.isDiagram) return [900] // backup in case of a bug in my code - shows red for error(!?)
+
 		const splashes = []
 		//if (array.channels === undefined) print(array)
 		let [reds, greens, blues] = array.channels
@@ -1943,6 +1950,10 @@ on.load(() => {
 
 	const cloneDragonArray = (array) => {
 
+		if (array.isDiagram) {
+			return cloneDiagram(array)
+		}
+
 		let red = undefined
 		let green = undefined
 		let blue = undefined
@@ -1995,9 +2006,28 @@ on.load(() => {
 		return {left, right, isDiagram: true}
 	}
 
+	const cloneDiagram = (diagram) => {
+		const clone = makeDiagram()
+		for (const sideName of ["left", "right"]) {
+			if (diagram[sideName] === undefined) continue
+			const side = []
+			for (const cell of diagram[sideName]) {
+				const cloneCell = cloneDiagramCell(cell)
+				side.push(cloneCell)
+			}
+			clone[sideName] = side
+		}
+		return clone
+	}
+
 	// Content can be a dragon-array or another dragon-diagram
 	makeDiagramCell = ({x = 0, y = 0, width = 1, height = 1, content = makeArray(), instruction = DRAGON_INSTRUCTION.recolour, splitX = 1, splitY = 1} = {}) => {
 		return {x, y, width, height, content, instruction, splitX, splitY}
+	}
+
+	const cloneDiagramCell = (cell) => {
+		const content = cloneDragonArray(cell.content)
+		return {...cell, content}
 	}
 
 	//===============//
@@ -3929,7 +3959,11 @@ registerRule(
 		},
 		click: (atom) => {
 
-			if (atom.joins.length > 0) {
+			if (atom.value.isDiagram) {
+
+			}
+
+			else if (atom.joins.length > 0) {
 				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
 					if (atom.joinExpanded) {
 						atom.joinUnepxand(atom)
@@ -6339,10 +6373,17 @@ registerRule(
 			paddle.dx = 0
 		},
 
-		drag: (paddle) => {
+		drag: (paddle, x, y) => {
 			if (paddle.pinhole.locked) {
-				alert("I haven't coded this feature yet.")
-				return paddle
+				const square = makeAtom(COLOURTODE_SQUARE)
+				hand.offset.x = -square.width/2
+				hand.offset.y = -square.height/2
+				const cells = makeDiagramCellsFromCellAtoms(paddle.cellAtoms)
+				const diagram = makeDiagram({left: cells})
+				square.value = diagram
+				registerAtom(square)
+				state.brush.colour = makeDiagram({left: [makeDiagramCell({content: diagram})]})
+				return square
 			}
 			return paddle
 		}
@@ -6598,6 +6639,25 @@ registerRule(
 		}
 	}
 
+	const makeDiagramCellsFromCellAtoms = (cellAtoms) => {
+
+		const origin = cellAtoms[0]
+		const diagramCells = []
+
+		for (const cellAtom of cellAtoms) {
+			const x = (cellAtom.x - origin.x) / cellAtom.width
+			const y = (cellAtom.y - origin.y) / cellAtom.height
+
+			const leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis
+			const diagramCell = makeDiagramCell({x, y, content: leftClone})
+			diagramCells.push(diagramCell)
+
+		}
+
+		return diagramCells
+
+	}
+
 	const updatePaddleRule = (paddle) => {
 
 		if (!paddle.expanded) return
@@ -6625,7 +6685,7 @@ registerRule(
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 
-			const leftClone = cloneDragonArray(cellAtom.value)
+			const leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis
 			applyRangeStamp(stampeds, leftClone)
 			const diagramCell = makeDiagramCell({x, y, content: leftClone})
 			left.push(diagramCell)
@@ -6646,7 +6706,7 @@ registerRule(
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule.d)
+		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
 	}
 
 	const getAllBaseAtoms = () => {
@@ -7408,8 +7468,12 @@ registerRule(
 			if (atom === squareTool) {
 				atom.stamp = atom.value.stamp
 			}
-			atom.joins = content.joins.map(j => ({value: j}))
-			//atom.joins.map(j => getSplashesArrayFromArray(j.value))
+			if (content.joins !== undefined) {
+				atom.joins = content.joins.map(j => ({value: j}))
+				//atom.joins.map(j => getSplashesArrayFromArray(j.value))
+			} else {
+				atom.joins = []
+			}
 		}
 
 		atom.joinDrawTimer++
