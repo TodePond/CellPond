@@ -1890,9 +1890,19 @@ on.load(() => {
 	
 	const getSplashesArrayFromArray = (array, args = {}) => {
 
-		if (array.isDiagram) return [900] // backup in case of a bug in my code - shows red for error(!?)
-
 		const splashes = []
+		for (const join of array.joins) {
+			const joinSplashes = getSplashesArrayFromArray(join)
+			splashes.push(...joinSplashes)
+		}
+
+		
+		if (array.isDiagram) {
+			splashes.push(900) // backup in case of a bug in my code - shows red for error(!?)
+			return splashes
+		 }
+
+
 		//if (array.channels === undefined) print(array)
 		let [reds, greens, blues] = array.channels
 
@@ -1917,11 +1927,6 @@ on.load(() => {
 					splashes.push(splash)
 				}
 			}
-		}
-
-		for (const join of array.joins) {
-			const joinSplashes = getSplashesArrayFromArray(join)
-			splashes.push(...joinSplashes)
 		}
 
 		return splashes
@@ -1999,8 +2004,8 @@ on.load(() => {
 	// or you can make an invalid side by giving it two cells in the same place
 
 	// Right can be undefined to represent a single-sided diagram
-	makeDiagram = ({left = [], right} = {}) => {
-		return {left, right, isDiagram: true}
+	makeDiagram = ({left = [], right, joins = []} = {}) => {
+		return {left, right, isDiagram: true, joins}
 	}
 
 	const cloneDiagram = (diagram) => {
@@ -3959,11 +3964,7 @@ registerRule(
 		},
 		click: (atom) => {
 
-			if (atom.value.isDiagram) {
-
-			}
-
-			else if (atom.joins.length > 0) {
+			if (atom.joins.length > 0) {
 				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
 					if (atom.joinExpanded) {
 						atom.joinUnepxand(atom)
@@ -3971,6 +3972,10 @@ registerRule(
 						atom.joinExpand(atom)
 					}
 				}
+			}
+
+			else if (atom.value.isDiagram) {
+
 			}
 
 			else if (!atom.expanded) {
@@ -4190,6 +4195,23 @@ registerRule(
 					}
 				}
 				
+				if (atom.joinDrawId === undefined) {
+					atom.joinDrawId = -1
+					atom.joinDrawTimer = 0
+				}
+
+				atom.joinDrawTimer++
+				if (atom.joinDrawTimer >= 45) {
+					atom.joinDrawId++
+					atom.needsColoursUpdate = true
+					atom.colourTicker = Infinity
+					if (atom.joinDrawId >= atom.joins.length) {
+						atom.joinDrawId = -1
+					}
+					atom.joinDrawTimer = 0
+				}
+				
+
 			} else {
 
 				if (atom.joinDrawId === undefined) {
@@ -4543,6 +4565,7 @@ registerRule(
 					
 					joinee.joinExpand(joinee)
 					
+					
 					joinee.value.joins.push(joiner.value)
 					joinee.needsColoursUpdate = true
 					joinee.colourTicker = Infinity
@@ -4583,6 +4606,12 @@ registerRule(
 			
 			atom.needsColoursUpdate = true
 			atom.colourTicker = Infinity
+
+			if (atom.multiAtoms !== undefined) {
+				for (const multiAtom of atom.multiAtoms) {
+					bringAtomToFront(multiAtom)
+				}
+			}
 			
 		},
 
