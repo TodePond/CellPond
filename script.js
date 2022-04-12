@@ -3949,7 +3949,10 @@ registerRule(
 		//behindChildren: true,
 		isSquare: true,
 		hasBorder: true,
-		draw: COLOURTODE_RECTANGLE.draw,
+		draw: (atom) => {
+			if (atom.value.isDiagram) return
+			else COLOURTODE_RECTANGLE.draw(atom)
+		},
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		touch: (atom) => {
@@ -4172,6 +4175,25 @@ registerRule(
 
 		update: (atom) => {
 			
+			if (atom.value.isDiagram) {
+				if (atom.multiAtoms === undefined || atom.multiAtoms.length === 0) {
+					atom.multiAtoms = []
+					const diagram = atom.value
+					const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
+					const cellAtomWidth = atom.width / diagramWidth
+					const cellAtomHeight = atom.height / diagramHeight
+					for (const diagramCell of diagram.left) {
+						const multiAtom = createChild(atom, COLOURTODE_SQUARE)
+						multiAtom.x = diagramCell.x * cellAtomWidth
+						multiAtom.y = diagramCell.y * cellAtomHeight
+						multiAtom.width = diagramCell.width * cellAtomWidth
+						multiAtom.height = diagramCell.height * cellAtomHeight
+						multiAtom.value = diagramCell.content
+						atom.multiAtoms.push(multiAtom)
+					}
+				}
+				return
+			}
 
 			if (atom.joinDrawId === undefined) {
 				atom.joinDrawId = -1
