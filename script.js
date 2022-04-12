@@ -8,7 +8,7 @@ If you venture further, may tode be with you.
 What you are about to discover...
 	... is a single javascript file ...
 		... of gargantuan size ...
-			... over 6000 lines ...
+			... over 7000 lines ...
 				... globally scoped ...
 
 	>>> There is no room for fear here! <<<
@@ -24,10 +24,7 @@ Coding CellPond is a performance ...
 
 
 
-I'm just joking.
-That would be ridiculous!
-
-don't take it too seriously
+I'm just joking THAT WOULD BE RIDICULOUS
 
 */
 
@@ -4192,62 +4189,62 @@ registerRule(
 						atom.multiAtoms.push(multiAtom)
 					}
 				}
-				return
-			}
+				
+			} else {
 
-			if (atom.joinDrawId === undefined) {
-				atom.joinDrawId = -1
-				atom.joinDrawTimer = 0
-			}
-
-			atom.joinDrawTimer++
-			if (atom.joinDrawTimer >= 45) {
-				atom.joinDrawId++
-				atom.needsColoursUpdate = true
-				atom.colourTicker = Infinity
-				if (atom.joinDrawId >= atom.joins.length) {
+				if (atom.joinDrawId === undefined) {
 					atom.joinDrawId = -1
+					atom.joinDrawTimer = 0
 				}
-				atom.joinDrawTimer = 0
-			}
 
-			if (atom.needsColoursUpdate) {
-
-				let drawTarget = atom.value
-				if (atom.joins.length > 0 && !atom.joinExpanded) {
-					if (atom.joinDrawId >= 0) {
-						drawTarget = atom.joins[atom.joinDrawId].value
+				atom.joinDrawTimer++
+				if (atom.joinDrawTimer >= 45) {
+					atom.joinDrawId++
+					atom.needsColoursUpdate = true
+					atom.colourTicker = Infinity
+					if (atom.joinDrawId >= atom.joins.length) {
+						atom.joinDrawId = -1
 					}
+					atom.joinDrawTimer = 0
 				}
 
-				const valueClone = cloneDragonArray(drawTarget)
-				if (atom.value === drawTarget) valueClone.joins = []
-				atom.colours = getSplashesArrayFromArray(valueClone)
-				atom.colourId = Random.Uint32 % atom.colours.length
-				atom.needsColoursUpdate = false
+				if (atom.needsColoursUpdate) {
 
+					let drawTarget = atom.value
+					if (atom.joins.length > 0 && !atom.joinExpanded) {
+						if (atom.joinDrawId >= 0) {
+							drawTarget = atom.joins[atom.joinDrawId].value
+						}
+					}
+
+					const valueClone = cloneDragonArray(drawTarget)
+					if (atom.value === drawTarget) valueClone.joins = []
+					atom.colours = getSplashesArrayFromArray(valueClone)
+					atom.colourId = Random.Uint32 % atom.colours.length
+					atom.needsColoursUpdate = false
+
+				}
+
+				if (atom.colourTicker >= getColourCycleLength(atom)) {
+					atom.colourTicker = 0
+
+					atom.colourId += atom.dcolourId
+					if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
+						atom.dcolourId *= -1
+					}
+					if (atom.colourId >= atom.colours.length) {
+						atom.dcolourId = -1
+						atom.colourId = atom.colours.length-1
+					}
+					if (atom.colourId < 0) {
+						atom.dcolourId = 1
+						atom.colourId = 0
+					}
+					atom.colour = Colour.splash(atom.colours[atom.colourId])
+				}
+				else atom.colourTicker++
 			}
 
-			if (atom.colourTicker >= getColourCycleLength(atom)) {
-				atom.colourTicker = 0
-
-				atom.colourId += atom.dcolourId
-				if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
-					atom.dcolourId *= -1
-				}
-				if (atom.colourId >= atom.colours.length) {
-					atom.dcolourId = -1
-					atom.colourId = atom.colours.length-1
-				}
-				if (atom.colourId < 0) {
-					atom.dcolourId = 1
-					atom.colourId = 0
-				}
-				atom.colour = Colour.splash(atom.colours[atom.colourId])
-			}
-			else atom.colourTicker++
-
-			
 			const {x, y} = getAtomPosition(atom)
 
 			atom.highlightedAtom = undefined
@@ -4619,10 +4616,12 @@ registerRule(
 					const dragonArray = cloneDragonArray(atom.value)
 					clone.value = dragonArray
 
-					for (const j of clone.value.joins) {
-						const joinAtom = makeAtom(COLOURTODE_SQUARE)
-						joinAtom.value = j
-						clone.joins.push(joinAtom)
+					if (clone.value.joins !== undefined) {
+						for (const j of clone.value.joins) {
+							const joinAtom = makeAtom(COLOURTODE_SQUARE)
+							joinAtom.value = j
+							clone.joins.push(joinAtom)
+						}
 					}
 					clone.stamp = clone.value.stamp
 					registerAtom(clone)
@@ -7385,7 +7384,7 @@ registerRule(
 
 			}
 			
-			if (newAtom.isSquare) {
+			if (newAtom.isSquare && !newAtom.value.isDiagram) {
 
 				for (let i = 0; i < 3; i++) {
 					const channel = newAtom.value.channels[i]
