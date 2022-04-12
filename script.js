@@ -120,6 +120,13 @@ const clamp = (number, min, max) => {
 	return number
 }
 
+const wrap = (number, min, max) => {
+	const length = (max - min)+1
+	if (number < min) return wrap(number + length, min, max)
+	if (number > max) return wrap(number - length, min, max)
+	return number
+}
+
 let brushColourCycleIndex = 0
 const brushColourCycle = [
 	999,
@@ -7435,6 +7442,7 @@ registerRule(
 		cursor: () => "move",
 	}
 
+	let menuId = 0
 	const addMenuTool = (element, unlockName) => {
 		const {width = COLOURTODE_SQUARE.size, height = COLOURTODE_SQUARE.size, size} = element
 		
@@ -7445,6 +7453,8 @@ registerRule(
 		y += BORDER_THICKNESS
 
 		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: Math.round(menuRight), y, element})
+		atom.menuId = menuId
+		menuId++
 		atom.attached = true
 		atom.isTool = true
 		atom.previousBrushColour = undefined
@@ -7523,6 +7533,35 @@ registerRule(
 				//atom.joins.map(j => getSplashesArrayFromArray(j.value))
 			} else {
 				atom.joins = []
+			}
+		}
+
+		if (atom.value !== undefined && atom.value.isDiagram) {
+
+
+
+			if (atom === squareTool) {
+				if (atom.multiAtoms === undefined || atom.multiAtoms.length === 0) {
+					atom.multiAtoms = []
+					const diagram = atom.value
+					const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
+					const cellAtomWidth = atom.width / diagramWidth
+					const cellAtomHeight = atom.height / diagramHeight
+					for (const diagramCell of diagram.left) {
+						const multiAtom = createChild(atom, COLOURTODE_SQUARE)
+						multiAtom.x = diagramCell.x * cellAtomWidth
+						multiAtom.y = diagramCell.y * cellAtomHeight
+						multiAtom.width = diagramCell.width * cellAtomWidth
+						multiAtom.height = diagramCell.height * cellAtomHeight
+						multiAtom.value = diagramCell.content
+						atom.multiAtoms.push(multiAtom)
+					}
+				}
+			} else {
+				const diagram = atom.value
+				const id = wrap(atom.menuId, 0, diagram.left.length-1)
+				const diagramCell = diagram.left[id]
+				atom.value = diagramCell.content
 			}
 		}
 
