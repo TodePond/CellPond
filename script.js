@@ -1171,32 +1171,6 @@ on.load(() => {
 
 	}
 
-	const getDiagramDimensions = (diagram) => {
-
-		let left = Infinity
-		let right = -Infinity
-		let top = Infinity
-		let bottom = -Infinity
-
-		for (const cell of diagram.left) {
-
-			const cleft = cell.x
-			const cright = cell.x + cell.width
-			const ctop = cell.y
-			const cbottom = cell.y + cell.height
-
-			if (cleft < left) left = cleft
-			if (ctop < top) top = ctop
-			if (cright > right) right = cright
-			if (cbottom > bottom) bottom = cbottom
-		}
-
-		const width = right - left
-		const height = bottom - top
-
-		return [width, height]
-	}
-
 	// Warning: bugs will happen if you try to merge cells that don't align or aren't next to each other
 	const mergeCells = (cells) => {
 		
@@ -2026,6 +2000,91 @@ on.load(() => {
 		return {...cell, content}
 	}
 
+	// Make the entire diagram fit within 1x1
+	const normaliseDiagram = (diagram) => {
+		const [width, height] = getDiagramDimensions(diagram)
+
+		for (const sideName of ["left", "right"]) {
+			const side = diagram[sideName]
+			if (side === undefined) continue
+			for (const diagramCell of side) {
+				diagramCell.width /= width
+				diagramCell.height /= height
+				diagramCell.x /= width
+				diagramCell.y /= height
+			}
+		}
+
+		return diagram
+	}
+
+	// Make the SMALLEST cell of a diagram be 1x1
+	// Note: doesn't really work if the diagram contains another diagram
+	const makeMaximisedDiagram = (diagram) => {
+
+		let smallestWidth = Infinity
+		let smallestHeight = Infinity
+
+		for (const sideName of ["left", "right"]) {
+			const side = diagram[sideName]
+			if (side === undefined) continue
+			for (const diagramCell of side) {
+				if (diagramCell.width < smallestWidth) {
+					smallestWidth = diagramCell.width
+				}
+				if (diagramCell.height < smallestHeight) {
+					smallestHeight = diagramCell.height
+				}
+			}
+		}
+
+		const maximisedDiagram = makeDiagram({joins: diagram.joins})
+
+		for (const sideName of ["left", "right"]) {
+			const side = diagram[sideName]
+			if (side === undefined) continue
+			if (maximisedDiagram[sideName] === undefined) {
+				maximisedDiagram[sideName] = []
+			}
+			for (const diagramCell of side) {
+				const maximisedDiagramCell = cloneDiagramCell(diagramCell)
+				maximisedDiagramCell.width /= smallestWidth
+				maximisedDiagramCell.height /= smallestHeight
+				maximisedDiagramCell.x /= smallestWidth
+				maximisedDiagramCell.y /= smallestHeight
+				maximisedDiagram[sideName].push(maximisedDiagramCell)
+			}
+		}
+
+		return maximisedDiagram
+	}
+
+	const getDiagramDimensions = (diagram) => {
+
+		let left = Infinity
+		let right = -Infinity
+		let top = Infinity
+		let bottom = -Infinity
+
+		for (const cell of diagram.left) {
+
+			const cleft = cell.x
+			const cright = cell.x + cell.width
+			const ctop = cell.y
+			const cbottom = cell.y + cell.height
+
+			if (cleft < left) left = cleft
+			if (ctop < top) top = ctop
+			if (cright > right) right = cright
+			if (cbottom > bottom) bottom = cbottom
+		}
+
+		const width = right - left
+		const height = bottom - top
+
+		return [width, height]
+	}
+
 	//===============//
 	// DRAGON - RULE //
 	//===============//
@@ -2489,6 +2548,8 @@ on.load(() => {
 		
 	}
 
+	// TODO MAKE split and merge call the recolour function from inside them.
+
 	// A SPLIT REQUIRES THE CORRECT NUMBER OF RECOLOUR COMMANDS AFTER IT
 	// IF YOU DON'T, IT WILL GO WRONG
 	DRAGON_INSTRUCTION.split = (cell) => {
@@ -2515,7 +2576,7 @@ on.load(() => {
 
 	DRAGON_INSTRUCTION.merge = (cell) => {
 
-		const splashes = getSplashesArrayFromArray(cell.content)
+		//const splashes = getSplashesArrayFromArray(cell.content)
 		
 		const childCount = Math.abs(cell.splitX) * Math.abs(cell.splitY)
 
@@ -2524,12 +2585,12 @@ on.load(() => {
 			const children = neighbours.slice(neighbourId, neighbourId+childCount)
 			const merged = mergeCells(children)
 
-			const colour = splashes[Random.Uint32 % splashes.length]
+			/*const colour = splashes[Random.Uint32 % splashes.length]
 			let drawn = 0
 			if (redraw) drawn += setCellColour(merged, colour)
-			else merged.colour = colour
+			else merged.colour = colour*/
 
-			return {drawn, skip: childCount-1}
+			return {drawn: 0, skip: childCount-1, bonusTargets: [merged]}
 
 		}
 
@@ -6431,6 +6492,8 @@ registerRule(
 				hand.offset.y = -square.height/2
 				const cells = makeDiagramCellsFromCellAtoms(paddle.cellAtoms)
 				const diagram = makeDiagram({left: cells})
+				normaliseDiagram(diagram)
+
 				square.value = diagram
 				registerAtom(square)
 				state.brush.colour = makeDiagram({left: [makeDiagramCell({content: diagram})]})
@@ -6737,15 +6800,56 @@ registerRule(
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 
-			let leftClone = undefined
+			//======//
+			// LEFT //
+			//======//
 			if (cellAtom.value.isDiagram) {
-				print("uh oh")
-			}
-			leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis
-			applyRangeStamp(stampeds, leftClone)
-			const diagramCell = makeDiagramCell({x, y, content: leftClone})
-			left.push(diagramCell)
 
+				// Check for every mini-cell
+				for (const miniDiagramCell of cellAtom.value.left) {
+					const miniClone = cloneDragonArray(miniDiagramCell.content)
+					applyRangeStamp(stampeds, miniClone)
+					const miniX = x + miniDiagramCell.x
+					const miniY = y + miniDiagramCell.y
+					const diagramCell = makeDiagramCell({
+						x: miniX,
+						y: miniY,
+						width: miniDiagramCell.width,
+						height: miniDiagramCell.height,
+						content: miniClone,
+					})
+					left.push(diagramCell)
+				}
+
+			} else {
+				
+				// Just check for a single cell
+				const leftClone = cloneDragonArray(cellAtom.value)
+				applyRangeStamp(stampeds, leftClone)
+				const diagramCell = makeDiagramCell({x, y, content: leftClone})
+				left.push(diagramCell)
+			}
+
+			
+			//=======//
+			// RIGHT //
+			//=======//
+
+			// Merge!!!
+			if (cellAtom.value.isDiagram) {
+				const maxiLeft = makeMaximisedDiagram(cellAtom.value)
+				const [maxiWidth, maxiHeight] = getDiagramDimensions(maxiLeft)
+				
+				const mergeCell = makeDiagramCell({
+					x,
+					y,
+					instruction: DRAGON_INSTRUCTION.merge,
+					splitX: maxiWidth,
+					splitY: maxiHeight,
+				})
+
+				right.push(mergeCell)
+			}
 
 			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
 			const rightClone = cloneDragonArray(rightContent)
