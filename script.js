@@ -2156,6 +2156,18 @@ on.load(() => {
 			transformedRight.push(transformedRightCell)
 		}
 
+		// Re-order the additional instruction from splitting - so that they are all in order from left-to-right, top-to-bottom
+		// This is because the engine passes cells to the instruction in that order
+		// (it does this specific static order for performance reasons - rather than dynamically finding the cells in any order you want)
+		for (let i = 0; i < transformedRight.length; i++) {
+			const diagramCell = transformedRight[i]
+			if (diagramCell.instruction.type !== "SPLIT") continue
+			const additionalInstructionCount = diagramCell.splitX * diagramCell.splitY
+			const additionalInstructions = transformedRight.slice(i+1, i+1+additionalInstructionCount)
+			const orderedAdditionalInstructions = getOrderedCellAtoms(additionalInstructions)
+			transformedRight.splice(i+1, additionalInstructionCount, ...orderedAdditionalInstructions)
+		}
+
 		const transformedDiagram = makeDiagram({left: transformedLeft, right: transformedRight})
 		return transformedDiagram
 	}
@@ -2165,11 +2177,11 @@ on.load(() => {
 		let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height, diagramWidth, diagramHeight)
 		
 		let {splitX, splitY} = cell
-		if (!isTranslation) {
+		/*if (!isTranslation) {
 			const [newSplitX, newSplitY] = transformation(cell.splitX, cell.splitY, 1, 1, 1, 1)
 			splitX = newSplitX
 			splitY = newSplitY
-		}
+		}*/
 
 		if (x === undefined) x = cell.x
 		if (y === undefined) y = cell.y
@@ -2610,23 +2622,29 @@ on.load(() => {
 	//================//
 	// DRAGON - DEBUG //
 	//================//
-	debugRegistry = (registry) => {
+	debugRegistry = (registry, {transforms = true, redundants = true} = {}) => {
 		const {redundantRules, transformedRules} = registry
-		for (const rule of redundantRules) {
-			print("REDUNDANT RULE")
-			debugRule(rule)
-		}
 		print("")
-		for (const rule of transformedRules) {
-			print("TRANSFORMED RULE")
-			debugRule(rule)
+		print("=================================================================")
+		if (transforms) {
+			print("")
+			print("TRANSFORMED RULES")
+			for (const rule of transformedRules) {
+				debugRule(rule)
+			}
+		}
+		if (redundants) {
+			print("")
+			print("REDUNDANT RULES")
+			for (const rule of redundantRules) {
+				debugRule(rule)
+			}
 		}
 	}
 
 	debugRule = (rule) => {
 		for (const step of rule.steps) {
 			print("")
-			print(">> STEP >>")
 			print("=== LEFT ===")
 			for (const cell of step.left) {
 				debugDiagramCell(cell, {read: true})
@@ -2646,15 +2664,9 @@ on.load(() => {
 			if (cell.instruction.type === "RECOLOUR") {
 				print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height, "to", getSplashesArrayFromArray(cell.content))
 			} else {
-				print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height)
+				print(cell.instruction.type, cell.splitX, cell.splitY, "at", cell.x, cell.y, "with size", cell.width, cell.height)
 			}
 		}
-		/*if (cell.instruction.type === "SPLIT") {
-			print("split", cell.splitX, cell.splitY)
-		}
-		if (cell.instruction.type === "MERGE") {
-			print("merge", cell.splitX, cell.splitY)
-		}*/
 	}
 
 	const GREY = makeArrayFromSplash(Colour.Grey.splash)
@@ -6922,9 +6934,7 @@ registerRule(
 			}
 		}
 		
-		// TODO: multiply widths+heights by some number to make the smallest cell size 1,1???
-
-		const diagram = makeDiagram({left, right})
+		const diagram = makeMaximisedDiagram(makeDiagram({left, right}))
 
 		const locked = paddle.pinhole.locked
 		const rule = makeRule({steps: [diagram], transformations, locked})
@@ -6933,8 +6943,9 @@ registerRule(
 			unregisterRegistry(paddle.registry)
 		}
 		if (locked && paddle.rightTriangle !== undefined) {
-			debugRule(rule)
+			//debugRule(rule)
 			paddle.registry = registerRule(rule)
+			debugRegistry(paddle.registry)
 		}
 	}
 
