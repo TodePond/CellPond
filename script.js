@@ -7537,27 +7537,37 @@ registerRule(
 			}
 		}
 
-		if (atom.value !== undefined && atom.value.isDiagram) {
+		if (atom.value !== undefined) {
 
 			if (atom === squareTool) {
-				if (atom.multiAtoms === undefined || atom.multiAtoms.length === 0) {
+				if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
+					if (atom.multiAtoms === undefined) {
+						atom.multiAtoms = []
+					}
+					for (const multiAtom of atom.multiAtoms) {
+						deleteChild(atom, multiAtom)
+					}
+
 					atom.multiAtoms = []
-					const diagram = atom.value
-					const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
-					const cellAtomWidth = atom.width / diagramWidth
-					const cellAtomHeight = atom.height / diagramHeight
-					for (const diagramCell of diagram.left) {
-						const multiAtom = createChild(atom, COLOURTODE_SQUARE)
-						multiAtom.x = diagramCell.x * cellAtomWidth
-						multiAtom.y = diagramCell.y * cellAtomHeight
-						multiAtom.width = diagramCell.width * cellAtomWidth
-						multiAtom.height = diagramCell.height * cellAtomHeight
-						multiAtom.value = diagramCell.content
-						multiAtom.update(multiAtom)
-						atom.multiAtoms.push(multiAtom)
+
+					if (atom.value.isDiagram) {
+						const diagram = atom.value
+						const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
+						const cellAtomWidth = atom.width / diagramWidth
+						const cellAtomHeight = atom.height / diagramHeight
+						for (const diagramCell of diagram.left) {
+							const multiAtom = createChild(atom, COLOURTODE_SQUARE)
+							multiAtom.x = diagramCell.x * cellAtomWidth
+							multiAtom.y = diagramCell.y * cellAtomHeight
+							multiAtom.width = diagramCell.width * cellAtomWidth
+							multiAtom.height = diagramCell.height * cellAtomHeight
+							multiAtom.value = diagramCell.content
+							multiAtom.update(multiAtom)
+							atom.multiAtoms.push(multiAtom)
+						}
 					}
 				}
-			} else {
+			} else if (atom.value.isDiagram) {
 				const diagram = atom.value
 				const id = wrap(atom.menuId, 0, diagram.left.length-1)
 				const diagramCell = diagram.left[id]
