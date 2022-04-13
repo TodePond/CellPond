@@ -2110,7 +2110,7 @@ on.load(() => {
 			(x, y, w, h, W, H) => [     x,      y],
 			(x, y, w, h, W, H) => [-y-h+H,      x],
 			(x, y, w, h, W, H) => [-x-w+W, -y-h+H],
-			(x, y, w, h, W, H) => [   y-h, -x-w+W],
+			(x, y, w, h, W, H) => [     y, -x-w+W],
 		],
 		XYR: [
 			(x, y, w, h, W, H) => [     x,     y],
@@ -2177,11 +2177,20 @@ on.load(() => {
 		let [x, y, width, height] = transformation(cell.x, cell.y, cell.width, cell.height, diagramWidth, diagramHeight)
 		
 		let {splitX, splitY} = cell
-		/*if (!isTranslation) {
-			const [newSplitX, newSplitY] = transformation(cell.splitX, cell.splitY, 1, 1, 1, 1)
-			splitX = newSplitX
-			splitY = newSplitY
-		}*/
+
+		// Detect rotation, and rotate splitX and splitY if need be
+		if (!isTranslation) {
+			const [testSplitX, testSplitY] = transformation(cell.splitX, cell.splitY, 1, 1, 1, 1).map(n => Math.abs(n))
+			//print(transformation.toString(), splitX, splitY, "to", testSplitX, testSplitY)
+			splitX = testSplitX
+			splitY = testSplitY
+			
+			const [testWidth, testHeight] = transformation(cell.width, cell.height, 1, 1, 1, 1).map(n => Math.abs(n))
+			//print(transformation.toString(), splitX, splitY, "to", testSplitX, testSplitY)
+			width = testWidth
+			height = testHeight
+
+		}
 
 		if (x === undefined) x = cell.x
 		if (y === undefined) y = cell.y
@@ -6945,7 +6954,7 @@ registerRule(
 		if (locked && paddle.rightTriangle !== undefined) {
 			//debugRule(rule)
 			paddle.registry = registerRule(rule)
-			//debugRegistry(paddle.registry)
+			debugRegistry(paddle.registry, {redundants: false})
 		}
 	}
 
