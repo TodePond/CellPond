@@ -2564,7 +2564,7 @@ on.load(() => {
 			if (redraw) drawn += setCellColour(head, colour, true)
 			else head.colour = colour*/
 
-			return {drawn: 0, bonusTargets: children}
+			return {drawn: 0, bonusTargets: children.reverse()}
 
 		}
 		return instruction
@@ -2647,19 +2647,21 @@ on.load(() => {
 
 	debugDiagramCell = (cell, {read = false} = {}) => {
 		if (read) {
-			print("CHECK", "at", cell.x, cell.y, "with size", cell.width, cell.height)
-			print("for", getSplashesArrayFromArray(cell.content))
+			print("CHECK", "at", cell.x, cell.y, "with size", cell.width, cell.height, "for", getSplashesArrayFromArray(cell.content))
 		}
 		else {
-			print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height)
-			print("to", getSplashesArrayFromArray(cell.content))
+			if (cell.instruction.type === "RECOLOUR") {
+				print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height, "to", getSplashesArrayFromArray(cell.content))
+			} else {
+				print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height)
+			}
 		}
-		if (cell.instruction.type === "SPLIT") {
+		/*if (cell.instruction.type === "SPLIT") {
 			print("split", cell.splitX, cell.splitY)
 		}
 		if (cell.instruction.type === "MERGE") {
 			print("merge", cell.splitX, cell.splitY)
-		}
+		}*/
 	}
 
 	const GREY = makeArrayFromSplash(Colour.Grey.splash)
@@ -6904,7 +6906,10 @@ registerRule(
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule.d)
+		if (locked && paddle.rightTriangle !== undefined) {
+			debugRule(rule)
+			paddle.registry = registerRule(rule)
+		}
 	}
 
 	const getAllBaseAtoms = () => {
