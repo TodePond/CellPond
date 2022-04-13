@@ -703,7 +703,6 @@ on.load(() => {
 		let cell = pickCell(x, y)
 		if (cell === undefined) return
 
-		// TODO: this should just merge it together!
 		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) {
 			const worldCells = getWorldCellsSet(x, y)
 			if (worldCells === undefined) return
@@ -1989,18 +1988,6 @@ on.load(() => {
 
 		const clone = makeArray({stamp, channels: [red, green, blue], joins})
 		return clone
-	}
-
-	//================//
-	// DRAGON - SHAPE //
-	//================//
-	const makeStamp = (shape) => {
-		return {shape}
-	}
-
-	// TODO: something - maybe related to ColourTode shapes?
-	const makeShape = () => {
-		return {}
 	}
 
 	//==================//
@@ -4669,6 +4656,10 @@ registerRule(
 						//registerAtom(clone)
 					}*/
 
+					if (clone.value.isDiagram) {
+						clone.update(clone)
+					}
+
 					return clone
 				}
 
@@ -6440,6 +6431,7 @@ registerRule(
 				square.value = diagram
 				registerAtom(square)
 				state.brush.colour = makeDiagram({left: [makeDiagramCell({content: diagram})]})
+				square.update(square)
 				return square
 			}
 			return paddle
@@ -6742,7 +6734,11 @@ registerRule(
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 
-			const leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis
+			let leftClone = undefined
+			if (cellAtom.value.isDiagram) {
+				print("uh oh")
+			}
+			leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis
 			applyRangeStamp(stampeds, leftClone)
 			const diagramCell = makeDiagramCell({x, y, content: leftClone})
 			left.push(diagramCell)
@@ -6755,6 +6751,8 @@ registerRule(
 			right.push(rightDiagramCell)
 		}
 		
+		// TODO: multiply widths+heights by some number to make the smallest cell size 1,1???
+
 		const diagram = makeDiagram({left, right})
 
 		const locked = paddle.pinhole.locked
@@ -6763,7 +6761,7 @@ registerRule(
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
 		}
-		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule)
+		if (locked && paddle.rightTriangle !== undefined) paddle.registry = registerRule(rule.d)
 	}
 
 	const getAllBaseAtoms = () => {
@@ -7398,7 +7396,12 @@ registerRule(
 	const COLOURTODE_TOOL = {
 		element: COLOURTODE_SQUARE,
 		draw: (atom) => {
-			atom.element.draw(atom)
+			if ((atom.previousBrushColour !== state.brush.colour) || atom.toolbarNeedsColourUpdate) {
+				atom.update(atom)
+			}
+			if (atom.unlocked) {
+				atom.element.draw(atom)
+			}
 		},
 		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
 		grab: (atom, x, y) => {
@@ -7437,6 +7440,10 @@ registerRule(
 
 			}
 
+			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
+				newAtom.update(newAtom)
+			}
+
 			return newAtom
 		},
 		cursor: () => "move",
@@ -7464,12 +7471,6 @@ registerRule(
 		atom.hasBorder = true
 		menuRight += width
 		menuRight += OPTION_MARGIN
-
-		atom.draw = (a) => {
-			if (a.unlocked) {
-				element.draw(a)
-			}
-		}
 
 		registerAtom(atom)
 
@@ -7538,8 +7539,6 @@ registerRule(
 
 		if (atom.value !== undefined && atom.value.isDiagram) {
 
-
-
 			if (atom === squareTool) {
 				if (atom.multiAtoms === undefined || atom.multiAtoms.length === 0) {
 					atom.multiAtoms = []
@@ -7554,6 +7553,7 @@ registerRule(
 						multiAtom.width = diagramCell.width * cellAtomWidth
 						multiAtom.height = diagramCell.height * cellAtomHeight
 						multiAtom.value = diagramCell.content
+						multiAtom.update(multiAtom)
 						atom.multiAtoms.push(multiAtom)
 					}
 				}
