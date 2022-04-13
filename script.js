@@ -5049,6 +5049,9 @@ registerRule(
 					square.value.stamp = undefined
 				}
 
+				const diagramCell = makeDiagramCell({content: square.value})
+				state.brush.colour = makeDiagram({left: [diagramCell]})
+
 				squareTool.toolbarNeedsColourUpdate = true
 				circleTool.toolbarNeedsColourUpdate = true
 				triangleTool.toolbarNeedsColourUpdate = true
@@ -7523,6 +7526,7 @@ registerRule(
 		if (typeof state.brush.colour === "number") {
 			atom.value = makeArrayFromSplash(state.brush.colour)
 			atom.joins = []
+			atom.stamp = undefined
 		} else {
 			const content = state.brush.colour.left[0].content
 			atom.value = cloneDragonArray(content)
