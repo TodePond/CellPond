@@ -6945,7 +6945,7 @@ registerRule(
 		if (locked && paddle.rightTriangle !== undefined) {
 			//debugRule(rule)
 			paddle.registry = registerRule(rule)
-			debugRegistry(paddle.registry)
+			//debugRegistry(paddle.registry)
 		}
 	}
 
