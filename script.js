@@ -2548,25 +2548,23 @@ on.load(() => {
 		
 	}
 
-	// TODO MAKE split and merge call the recolour function from inside them.
-
 	// A SPLIT REQUIRES THE CORRECT NUMBER OF RECOLOUR COMMANDS AFTER IT
 	// IF YOU DON'T, IT WILL GO WRONG
 	DRAGON_INSTRUCTION.split = (cell) => {
 
-		const splashes = getSplashesArrayFromArray(cell.content)
+		//const splashes = getSplashesArrayFromArray(cell.content)
 
 		const instruction = (target, redraw, neighbours, neighbourId, stamps) => {
 			
 			const children = splitCell(target, cell.splitX, cell.splitY)
-			const [head, ...tail] = children
+			//const [head, ...tail] = children
 
-			const colour = splashes[Random.Uint32 % splashes.length]
+			/*const colour = splashes[Random.Uint32 % splashes.length]
 			let drawn = 0
 			if (redraw) drawn += setCellColour(head, colour, true)
-			else head.colour = colour
+			else head.colour = colour*/
 
-			return {drawn, bonusTargets: tail}
+			return {drawn: 0, bonusTargets: children}
 
 		}
 		return instruction
@@ -6852,10 +6850,48 @@ registerRule(
 			}
 
 			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
-			const rightClone = cloneDragonArray(rightContent)
-			applyRangeStamp(stampeds, rightClone)
-			const rightDiagramCell = makeDiagramCell({x, y, content: rightClone})
-			right.push(rightDiagramCell)
+
+			if (rightContent.isDiagram) {
+
+				// Split the cell into mini-cells!
+				const maxiRight = makeMaximisedDiagram(rightContent)
+				const [maxiWidth, maxiHeight] = getDiagramDimensions(maxiRight)
+				
+				const splitCell = makeDiagramCell({
+					x,
+					y,
+					instruction: DRAGON_INSTRUCTION.split,
+					splitX: maxiWidth,
+					splitY: maxiHeight,
+				})
+
+				right.push(splitCell)
+
+				// Recolour every mini-cell!
+				for (const miniDiagramCell of rightContent.left) {
+					const miniClone = cloneDragonArray(miniDiagramCell.content)
+					applyRangeStamp(stampeds, miniClone)
+					const miniX = x + miniDiagramCell.x
+					const miniY = y + miniDiagramCell.y
+					const diagramCell = makeDiagramCell({
+						x: miniX,
+						y: miniY,
+						width: miniDiagramCell.width,
+						height: miniDiagramCell.height,
+						content: miniClone,
+						instruction: DRAGON_INSTRUCTION.recolour,
+					})
+					right.push(diagramCell)
+				}
+
+			} else {
+
+				// Just recolour a single cell
+				const rightClone = cloneDragonArray(rightContent)
+				applyRangeStamp(stampeds, rightClone)
+				const rightDiagramCell = makeDiagramCell({x, y, content: rightClone})
+				right.push(rightDiagramCell)
+			}
 		}
 		
 		// TODO: multiply widths+heights by some number to make the smallest cell size 1,1???
