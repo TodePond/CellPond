@@ -1105,22 +1105,15 @@ on.load(() => {
 	//===============//
 	const splitCell = (cell, width, height) => {
 
-
-		const wSign = Math.sign(width)
-		const hSign = Math.sign(height)
-
-		width = Math.abs(width)
-		height = Math.abs(height)
-
 		const childWidth = cell.width / width
 		const childHeight = cell.height / height
 
 		const children = []
 
-		const xStart = wSign === 1? cell.x : cell.right-childWidth
-		const yStart = hSign === 1? cell.y : cell.bottom-childHeight
-		const dx = wSign * childWidth
-		const dy = hSign * childHeight
+		const xStart = cell.x
+		const yStart = cell.y
+		const dx = childWidth
+		const dy = childHeight
 		
 		for (let ix = 0; ix < width; ix++) {
 			const x = xStart + dx*ix
@@ -6754,9 +6747,39 @@ registerRule(
 		}
 	}
 
+	const getTopLeftOfCellAtoms = (cellAtoms) => {
+		let smallestX = Infinity
+		let smallestY = Infinity
+		let leader = undefined
+
+		for (const cellAtom of cellAtoms) {
+			if (cellAtom.x <= smallestX) {
+				if (cellAtom.y <= smallestY) {
+					leader = cellAtom
+					smallestX = cellAtom.x
+					smallestY = cellAtom.y
+				}
+			}
+		}
+
+		return leader
+	}
+
+	const getOrderedCellAtoms = (cellAtoms) => {
+		const orderedCellAtoms = [...cellAtoms].sort((a, b) => {
+			if (a.x < b.x) return -1
+			if (a.x > b.x) return 1
+			if (a.y < b.y) return -1
+			if (a.y > b.y) return 1
+			return 0
+		})
+		return orderedCellAtoms
+	}
+
 	const makeDiagramCellsFromCellAtoms = (cellAtoms) => {
 
-		const origin = cellAtoms[0]
+		const orderedCellAtoms = getOrderedCellAtoms(cellAtoms)
+		const origin = orderedCellAtoms[0]
 		const diagramCells = []
 
 		for (const cellAtom of cellAtoms) {
@@ -6792,11 +6815,12 @@ registerRule(
 			transformations = DRAGON_TRANSFORMATIONS[key]
 		}
 
-		const origin = paddle.cellAtoms[0]
+		const orderedCellAtoms = getOrderedCellAtoms(paddle.cellAtoms)
+		const origin = orderedCellAtoms[0]
 		const left = []
 		const right = []
 		const stampeds = []
-		for (const cellAtom of paddle.cellAtoms) {
+		for (const cellAtom of orderedCellAtoms) {
 			const x = (cellAtom.x - origin.x) / cellAtom.width
 			const y = (cellAtom.y - origin.y) / cellAtom.height
 
@@ -6806,7 +6830,8 @@ registerRule(
 			if (cellAtom.value.isDiagram) {
 
 				// Check for every mini-cell
-				for (const miniDiagramCell of cellAtom.value.left) {
+				const orderedMiniLeftCells = getOrderedCellAtoms(cellAtom.value.left)
+				for (const miniDiagramCell of orderedMiniLeftCells) {
 					const miniClone = cloneDragonArray(miniDiagramCell.content)
 					applyRangeStamp(stampeds, miniClone)
 					const miniX = x + miniDiagramCell.x
@@ -6870,7 +6895,8 @@ registerRule(
 				right.push(splitCell)
 
 				// Recolour every mini-cell!
-				for (const miniDiagramCell of rightContent.left) {
+				const orderedMiniRightCells = getOrderedCellAtoms(rightContent.left)
+				for (const miniDiagramCell of orderedMiniRightCells) {
 					const miniClone = cloneDragonArray(miniDiagramCell.content)
 					applyRangeStamp(stampeds, miniClone)
 					const miniX = x + miniDiagramCell.x
