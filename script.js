@@ -347,10 +347,17 @@ const state = {
 	}
 }
 
-const WORLD_SIZE = 6
-const WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
-const WORLD_DIMENSION = 2 ** WORLD_SIZE
-const WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
+let WORLD_SIZE = undefined
+let WORLD_CELL_COUNT = undefined
+let WORLD_DIMENSION = undefined
+let WORLD_CELL_SIZE = undefined
+const setWorldSize = (size) => {
+	WORLD_SIZE = size
+	WORLD_CELL_COUNT = 2 ** (WORLD_SIZE*2)
+	WORLD_DIMENSION = 2 ** WORLD_SIZE
+	WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
+}
+setWorldSize(6)
 
 const addCell = (cell) => {
 	cacheCell(cell)
@@ -384,6 +391,11 @@ for (let x = 0; x < GRID_SIZE; x++) {
 	for (let y = 0; y < GRID_SIZE; y++) {
 		const section = new Set()
 		state.grid.push(section)
+		section.left = x / GRID_SIZE
+		section.top = y / GRID_SIZE
+		section.right = section.left + 1/GRID_SIZE
+		section.bottom = section.top + 1/GRID_SIZE
+		section.isSection = true
 	}
 }
 
@@ -732,6 +744,14 @@ on.load(() => {
 
 	const getWorldCellsSet = (x, y) => {
 
+		const sections = getSectionsOfWorldCell(x, y)
+		const worldCells = getWorldCellsFromSections(sections, x, y)
+
+		return worldCells
+
+	}
+
+	const getSectionsOfWorldCell = (x, y) => {
 		const snappedX = Math.floor(x*WORLD_DIMENSION) / WORLD_DIMENSION
 		const snappedY = Math.floor(y*WORLD_DIMENSION) / WORLD_DIMENSION
 
@@ -748,11 +768,28 @@ on.load(() => {
 			}
 		}
 
+		return sections
+	}
+
+	const getWorldCellsFromSections = (sections, x, y) => {
+
+		/*const wleft = x
+		const wtop = y
+		const wright = x + 1/256
+		const wbottom = y + 1/256*/
+
 		const worldCells = new Set()
 
 		// Check if any cells in these sections overlap with an outer section
 		for (const section of sections.values()) {
+
+			/*if (section.left >= wleft && section.right <= wright && section.top >= wtop && section.bottom <= wbottom) {
+				worldCells.add(section)
+				continue
+			}*/
+
 			for (const cell of section.values()) {
+				if (worldCells.has(cell)) continue
 				for (const cellSection of cell.sections) {
 					if (!sections.has(cellSection)) return undefined
 				}
@@ -761,7 +798,6 @@ on.load(() => {
 		}
 
 		return worldCells
-
 	}
 
 	let dropperStartX = undefined
@@ -918,6 +954,17 @@ on.load(() => {
 	KEYDOWN.a = () => state.camera.dxTarget += state.camera.dsControl
 	KEYDOWN.d = () => state.camera.dxTarget -= state.camera.dsControl
 
+	KEYDOWN[0] = () => setWorldSize(0)
+	KEYDOWN[1] = () => setWorldSize(1)
+	KEYDOWN[2] = () => setWorldSize(2)
+	KEYDOWN[3] = () => setWorldSize(3)
+	KEYDOWN[4] = () => setWorldSize(4)
+	KEYDOWN[5] = () => setWorldSize(5)
+	KEYDOWN[6] = () => setWorldSize(6)
+	KEYDOWN[7] = () => setWorldSize(7)
+	KEYDOWN[8] = () => setWorldSize(8)
+	KEYDOWN[9] = () => setWorldSize(9)
+
 	KEYDOWN.r = () => {
 		state.camera.mscaleTarget = 1.0
 		state.camera.dxTarget = 0.0
@@ -1019,7 +1066,8 @@ on.load(() => {
 	}
 
 	const fireRandomSpotEvents = () => {
-		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
+		let count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
+		count = Math.min(count, state.cellCount)
 		const redrawCount = count * state.speed.redraw
 		let redraw = true
 		if (!state.worldBuilt) redraw = false
@@ -1173,6 +1221,16 @@ on.load(() => {
 		let bottom = 0
 
 		for (const cell of cells) {
+			/*if (cell.isSection) {
+				for (const c of cell.values()) {
+					if (c.left < left) left = c.left
+					if (c.top < top) top = c.top
+					if (c.right > right) right = c.right
+					if (c.bottom > bottom) bottom = c.bottom
+					deleteCell(c)
+				}
+				continue
+			}*/
 			if (cell.left < left) left = cell.left
 			if (cell.top < top) top = cell.top
 			if (cell.right > right) right = cell.right
@@ -6954,7 +7012,7 @@ registerRule(
 		if (locked && paddle.rightTriangle !== undefined) {
 			//debugRule(rule)
 			paddle.registry = registerRule(rule)
-			debugRegistry(paddle.registry, {redundants: false})
+			//debugRegistry(paddle.registry, {redundants: false})
 		}
 	}
 
