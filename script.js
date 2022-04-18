@@ -2548,6 +2548,11 @@ on.load(() => {
 	// These are the different types of instructions available for the right-hand-side of rules
 	// Default is recolour
 	DRAGON_INSTRUCTION = {}
+	DRAGON_INSTRUCTION.nothing = (cell) => () => {
+		return {drawn: 0}
+	}
+	DRAGON_INSTRUCTION.nothing.type = "NOTHING"
+
 	DRAGON_INSTRUCTION.recolour = (cell) => {
 
 		fillEmptyChannels(cell.content)
@@ -2752,7 +2757,10 @@ on.load(() => {
 			print("CHECK", "at", cell.x, cell.y, "with size", cell.width, cell.height, "for", getSplashesArrayFromArray(cell.content))
 		}
 		else {
-			if (cell.instruction.type === "RECOLOUR") {
+			if (cell.instruction.type === "NOTHING") {
+				print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height)
+			}
+			else if (cell.instruction.type === "RECOLOUR") {
 				print(cell.instruction.type, "at", cell.x, cell.y, "with size", cell.width, cell.height, "to", getSplashesArrayFromArray(cell.content))
 			} else {
 				print(cell.instruction.type, cell.splitX, cell.splitY, "at", cell.x, cell.y, "with size", cell.width, cell.height)
@@ -6979,9 +6987,18 @@ registerRule(
 				right.push(mergeCell)
 			}
 
-			const rightContent = cellAtom.slotted === undefined? cellAtom.value : cellAtom.slotted.value
+			const rightContent = cellAtom.slotted === undefined? undefined : cellAtom.slotted.value
 
-			if (rightContent.isDiagram) {
+			if (rightContent === undefined) {
+				const nothingCell = makeDiagramCell({
+					x,
+					y,
+					instruction: DRAGON_INSTRUCTION.nothing,
+				})
+
+				right.push(nothingCell)
+
+			} else if (rightContent.isDiagram) {
 
 				// Split the cell into mini-cells!
 				const maxiRight = makeMaximisedDiagram(rightContent)
@@ -7034,7 +7051,7 @@ registerRule(
 			unregisterRegistry(paddle.registry)
 		}
 		if (locked && paddle.rightTriangle !== undefined) {
-			//debugRule(rule)
+			debugRule(rule)
 			paddle.registry = registerRule(rule)
 			//debugRegistry(paddle.registry, {redundants: false})
 		}
