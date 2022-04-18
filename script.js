@@ -177,7 +177,7 @@ let edgeMode = 0
 
 const pickCell = (x, y) => {
 
-	if (edgeMode === 0) {
+	/*if (edgeMode === 0) {
 		if (x >= 1) return undefined
 		if (y >= 1) return undefined
 		if (x <  0) return undefined
@@ -187,7 +187,12 @@ const pickCell = (x, y) => {
 		while (y >= 1) y -= 1
 		while (x <  0) x += 1
 		while (y <  0) y += 1
-	}
+	}*/
+
+	if (x >= 1) return undefined
+	if (y >= 1) return undefined
+	if (x <  0) return undefined
+	if (y <  0) return undefined
 
 	const gridX = Math.floor(x * GRID_SIZE)
 	const gridY = Math.floor(y * GRID_SIZE)
