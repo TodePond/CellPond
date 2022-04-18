@@ -173,12 +173,21 @@ const makeCell = ({x=0, y=0, width=1, height=1, colour=112} = {}) => {
 
 }
 
+let edgeMode = 0
+
 const pickCell = (x, y) => {
 
-	if (x >= 1) return undefined
-	if (y >= 1) return undefined
-	if (x <  0) return undefined
-	if (y <  0) return undefined
+	if (edgeMode === 0) {
+		if (x >= 1) return undefined
+		if (y >= 1) return undefined
+		if (x <  0) return undefined
+		if (y <  0) return undefined
+	} else if (edgeMode === 1) {
+		while (x >= 1) x -= 1
+		while (y >= 1) y -= 1
+		while (x <  0) x += 1
+		while (y <  0) y += 1
+	}
 
 	const gridX = Math.floor(x * GRID_SIZE)
 	const gridY = Math.floor(y * GRID_SIZE)
@@ -970,6 +979,9 @@ on.load(() => {
 		state.camera.dxTarget = 0.0
 		state.camera.dyTarget = 0.0
 	}
+
+	KEYDOWN["="] = () => edgeMode = 1
+	KEYDOWN["-"] = () => edgeMode = 0
 
 	//========//
 	// CAMERA //
@@ -2388,8 +2400,15 @@ on.load(() => {
 				const width = cell.width * origin.width
 				const height = cell.height * origin.height
 
-				const x = origin.x + cell.x*origin.width
-				const y = origin.y + cell.y*origin.height
+				let x = origin.x + cell.x*origin.width
+				let y = origin.y + cell.y*origin.height
+
+				if (edgeMode === 1) {
+					while (x >= 1) x -= 1
+					while (y >= 1) y -= 1
+					while (x <  0) x += 1
+					while (y <  0) y += 1
+				}
 
 				const centerX = x + width/2
 				const centerY = y + height/2
