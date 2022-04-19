@@ -3569,8 +3569,8 @@ registerRule(
 			const dx = e.clientX - hand.pityStartX
 			const dy = e.clientY - hand.pityStartY
 			
-			if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, hand.content.attached)) / CT_SCALE + hand.offset.x
-			if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, hand.content.attached)) / CT_SCALE + hand.offset.y
+			if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, hand.content.attached && !hand.content.noDampen)) / CT_SCALE + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, hand.content.attached && !hand.content.noDampen)) / CT_SCALE + hand.offset.y
 
 			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
 			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
@@ -3596,7 +3596,7 @@ registerRule(
 			if (hand.content.draggable) {				
 				changeHandState(HAND.DRAGGING)
 
-				const attached = hand.content.attached && !hand.content.dragOnly
+				const attached = hand.content.attached && !hand.content.dragOnly && !hand.content.noDampen
 
 				hand.content = hand.content.drag(hand.content, x, y)
 				
@@ -5369,6 +5369,13 @@ registerRule(
 				}
 			}
 
+			else if (atom.parent.isPaddle) {
+				const paddle = atom.parent
+				paddle.chance = undefined
+				freeChild(paddle, atom)
+				updatePaddleSize(paddle)
+			}
+
 			return atom
 		},
 
@@ -5523,10 +5530,10 @@ registerRule(
 			if (hand.content === atom && hand.state === HAND.DRAGGING) {
 
 				const {x, y} = getAtomPosition(atom)
-				const left = x
-				const top = y
-				const right = x + atom.width
-				const bottom = y + atom.height
+				let left = x
+				let top = y
+				let right = x + atom.width
+				let bottom = y + atom.height
 
 				if (atom.highlight !== undefined) {
 					deleteChild(atom, atom.highlight)
@@ -5630,6 +5637,33 @@ registerRule(
 					atom.highlight.y = ay
 					atom.highlight.width = atom.highlightedAtom.width
 					atom.highlight.height = atom.highlightedAtom.height
+				} else {
+
+					left -= OPTION_MARGIN
+					right += OPTION_MARGIN
+					top -= OPTION_MARGIN
+					bottom += OPTION_MARGIN
+					
+					for (const paddle of paddles) {
+						const {x: px, y: py} = getAtomPosition(paddle)
+						const pright = px + paddle.width
+						const ptop = py
+						const pbottom = py + paddle.height
+
+						if (paddle.chance === undefined && paddle.expanded && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
+							if (atom.highlightPaddle !== undefined) {
+								deleteChild(atom, atom.highlightPaddle)
+							}
+		
+							atom.highlightPaddle = createChild(atom, HIGHLIGHT, {bottom: true})
+							atom.highlightPaddle.width = HIGHLIGHT_THICKNESS
+							atom.highlightPaddle.height = paddle.height
+							atom.highlightPaddle.y = ptop
+							atom.highlightPaddle.x = pright - HIGHLIGHT_THICKNESS/2
+							atom.highlightedPaddle = paddle
+							return
+						}
+					}
 				}
 
 			}
@@ -5637,6 +5671,12 @@ registerRule(
 			if (atom.highlightedAtom === undefined && atom.highlight !== undefined) {
 				deleteChild(atom, atom.highlight)
 				atom.highlight = undefined
+			}
+			
+			if (atom.highlightPaddle !== undefined) {
+				deleteChild(atom, atom.highlightPaddle)
+				atom.highlightPaddle = undefined
+				atom.highlightedPaddle = undefined
 			}
 
 		},
@@ -5673,6 +5713,16 @@ registerRule(
 					atom.attached = true
 
 				}
+			} else if (atom.highlightPaddle !== undefined) {
+				const paddle = atom.highlightedPaddle
+				atom.attached = true
+				giveChild(paddle, atom)
+				
+				paddle.chance = atom
+				updatePaddleSize(paddle)
+				
+				atom.dx = 0
+				atom.dy = 0
 			}
 			
 			unlockMenuTool("tall_rectangle")
@@ -6525,7 +6575,8 @@ registerRule(
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
 		stayAtBack: true,
-		//attached: true,
+		attached: true,
+		noDampen: true,
 		isPaddle: true,
 		behindChildren: true,
 		draw: COLOURTODE_RECTANGLE.draw,
@@ -6760,7 +6811,7 @@ registerRule(
 			width = width+width + paddle.rightTriangle.width
 		}
 		
-		if (paddle.hasSymmetry) {
+		if (paddle.hasSymmetry || paddle.chance !== undefined) {
 			width += SYMMETRY_CIRCLE.size/3
 		}
 
@@ -6799,6 +6850,20 @@ registerRule(
 		if (paddle.symmetryCircle !== undefined) {
 			paddle.symmetryCircle.x = paddle.width - paddle.symmetryCircle.width/2
 			paddle.symmetryCircle.y = paddle.height/2 - paddle.symmetryCircle.height/2
+		}
+
+		if (paddle.chance !== undefined) {
+			paddle.chance.x = paddle.width - paddle.chance.width/2
+			paddle.chance.y = paddle.height/2 - paddle.chance.height/2
+		}
+
+		if (paddle.chance !== undefined && paddle.symmetryCircle !== undefined) {
+			paddle.symmetryCircle.y -= paddle.symmetryCircle.height/2
+			paddle.chance.y += paddle.symmetryCircle.height/2
+			if (paddle.height > 100) {
+				paddle.symmetryCircle.y -= OPTION_MARGIN/2
+				paddle.chance.y += OPTION_MARGIN/2
+			}
 		}
 		
 		paddle.handle.y = paddle.height/2 - paddle.handle.height/2
@@ -7051,7 +7116,7 @@ registerRule(
 			unregisterRegistry(paddle.registry)
 		}
 		if (locked && paddle.rightTriangle !== undefined) {
-			debugRule(rule)
+			//debugRule(rule)
 			paddle.registry = registerRule(rule)
 			//debugRegistry(paddle.registry, {redundants: false})
 		}
@@ -7356,11 +7421,12 @@ registerRule(
 					paddle.hasSymmetry = true
 					paddle.symmetryCircle = atom
 					updatePaddleSize(paddle)
-					
-					atom.x = paddle.width -atom.width/2
-					atom.y = paddle.height/2 - atom.height/2
+
 					atom.dx = 0
 					atom.dy = 0
+					
+					/*atom.x = paddle.width -atom.width/2
+					atom.y = paddle.height/2 - atom.height/2*/
 
 					/*if (paddle.pinhole.locked && atom.expanded) {
 						atom.unexpand(atom)
