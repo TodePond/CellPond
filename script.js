@@ -1847,6 +1847,10 @@ on.load(() => {
 		}
 	}
 
+	const getNumbersFromDragonValues = (values) => {
+		return values.map((v, i) => v? i : v).filter(v => v !== false)
+	}
+
 	const makeValuesFromInt = (int) => {
 		const values = [false, false, false, false, false, false, false, false, false, false]
 		values[int] = true
@@ -2156,8 +2160,8 @@ on.load(() => {
 	//===============//
 	// DRAGON - RULE //
 	//===============//
-	makeRule = ({steps = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true} = {}) => {
-		return {steps, transformations, locked}
+	makeRule = ({steps = [], transformations = DRAGON_TRANSFORMATIONS.NONE, locked = true, chance} = {}) => {
+		return {steps, transformations, locked, chance}
 	}
 
 	//==========================//
@@ -2207,7 +2211,7 @@ on.load(() => {
 
 		const steps = rule.steps.map(step => getTransformedDiagram(step, transformation, isTranslation, ruleWidth, ruleHeight))
 
-		const transformedRule = makeRule({steps, transformations: rule.transformations, locked: rule.locked})
+		const transformedRule = makeRule({steps, transformations: rule.transformations, locked: rule.locked, chance: rule.chance})
 		return transformedRule
 	}
 
@@ -2359,13 +2363,11 @@ on.load(() => {
 	}
 
 	const makeBehaveFunction = (rule) => {
-
 		const stepFunctions = []
-
 		for (const step of rule.steps) {
 
 			const stampNames = getStampNamesOfStep(step)
-			const conditionFunction = makeConditionFunction(step, stampNames)
+			const conditionFunction = makeConditionFunction(step, stampNames, rule.chance)
 			const resultFunction = makeResultFunction(step, stampNames)
 
 			const stepFunction = (origin, redraw) => {
@@ -2392,14 +2394,14 @@ on.load(() => {
 
 	}
 
-	const makeConditionFunction = (diagram, stampNames) => {
+	const makeConditionFunction = (diagram, stampNames, chance) => {
 
 		const conditions = []
 
 		for (const cell of diagram.left) {
 
 			const splashes = getSplashesSetFromArray(cell.content)
-			
+
 			const condition = (origin) => {
 				
 				const width = cell.width * origin.width
@@ -2433,7 +2435,22 @@ on.load(() => {
 			conditions.push(condition)
 		}
 
+		let chanceCondition = undefined
+		if (chance !== undefined) {
+			// TODO: make this work for diamonds eventually?
+			const chanceValues = getNumbersFromDragonValues(chance.values).map(v => 2 ** (9-v)).map(v => v === 512? 0 : v)
+			if (chanceValues.length === 1) {
+				const chanceValue = chanceValues[0]
+				//if (chanceValue === 1) chance = undefined
+				chanceCondition = () => oneIn(chanceValue)
+			} else {
+				chanceCondition = () => oneIn(chanceValues[Random.Uint8 % chanceValues.length])
+			}
+		}
+
 		const conditionFunction = (origin) => {
+
+			if (chance !== undefined && !chanceCondition()) return [undefined, undefined]
 
 			const neighbours = []
 			const stamps = {}
@@ -5974,7 +5991,11 @@ registerRule(
 				square.receiveNumber(square, number, channel)
 			}
 
-			
+			if (atom.parent.parent.isPaddle) {
+				const paddle = atom.parent.parent
+				updatePaddleSize(paddle)
+			}
+
 		},
 		dragLockX: true,
 	}
@@ -6060,6 +6081,11 @@ registerRule(
 				const square = parent.parent
 				const channel = CHANNEL_IDS[parent.channelSlot]
 				square.receiveNumber(square, number, channel)
+			}
+
+			if (parent.parent.isPaddle) {
+				const paddle = parent.parent
+				updatePaddleSize(paddle)
 			}
 		},
 
@@ -7110,7 +7136,8 @@ registerRule(
 		const diagram = makeMaximisedDiagram(makeDiagram({left, right}))
 
 		const locked = paddle.pinhole.locked
-		const rule = makeRule({steps: [diagram], transformations, locked})
+		const chance = paddle.chance === undefined? undefined : paddle.chance.value
+		const rule = makeRule({steps: [diagram], transformations, locked, chance})
 		paddle.rule = rule
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry)
