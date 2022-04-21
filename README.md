@@ -10,7 +10,7 @@ I've made two videos about it! Check them out:<br>
 ## What's the big idea?
 CellPond has 2 big ideas:<br>
 🐸 You can code it by dragging + dropping shapes.<br>
-🐸 Cells can split/merge into bigger/smaller cells.
+🐸 Cells can split/merge cells into smaller/bigger cells.
 
 ## How can I use it?
 You can try it out at [cellpond.cool](https://cellpond.cool)<br>
