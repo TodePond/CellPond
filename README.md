@@ -1,4 +1,4 @@
-<img align="right" height="100" src="https://user-images.githubusercontent.com/15892272/164451427-b9214b14-29f1-4294-acb9-bb782797fd7a.png">
+<img align="right" height="100" src="https://user-images.githubusercontent.com/15892272/164454144-25d4aa67-4942-463e-b4fe-edbd3b17adc1.png">
 
 # CellPond
 CellPond is a weird 'cellular automata' engine that I made for fun.
