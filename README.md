@@ -16,7 +16,7 @@ CellPond has 2 big ideas:<br>
 You can try it out at [cellpond.cool](https://cellpond.cool)<br>
 (sorry no touch controls yet)
 
-Or, you can download the source code and open `index.html` in a browser.
+Or, you can [download the source code](https://github.com/TodePond/CellPond/archive/refs/heads/main.zip) and open `index.html` in a browser.
 
 ## How does it work? What do all the shapes do?
 It's a secret.
