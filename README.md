@@ -3,7 +3,7 @@
 # CellPond
 CellPond is a weird 'cellular automata' engine that I made for fun.
 
-I've made two videos about it! Check them out:<br>
+I've made two videos about it (so far)! Check them out:<br>
 🦠 [**Cells in Cells in Cells**](https://youtu.be/gv40Z9tVjAI)<br>
 🤖 [**Nothing**](https://youtu.be/sQYUQNozljo)<br>
 
