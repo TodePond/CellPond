@@ -619,9 +619,9 @@ on.load(() => {
 		id += 4
 
 		for (let x = left+1; x < right-1; x++) { 
-			data[id] = red
-			data[id+1] = green
-			data[id+2] = blue
+			data[id] = Colour.Void.red
+			data[id+1] = Colour.Void.green
+			data[id+2] = Colour.Void.blue
 			id += 4
 			//pixelCount++
 		}
