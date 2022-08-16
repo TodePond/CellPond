@@ -565,17 +565,73 @@ on.load(() => {
 		//let pixelCount = 0
 		let id = (top*imageWidth + left) * 4
 		const data = state.image.data.data
-		for (let y = top; y < bottom; y++) {
-			for (let x = left; x < right; x++) { 
+
+		// DRAW TOP ROW
+		data[id] = Colour.Void.red
+		data[id+1] = Colour.Void.green
+		data[id+2] = Colour.Void.blue
+		id += 4
+
+		for (let x = left+1; x < right-1; x++) { 
+			data[id] = Colour.Void.red
+			data[id+1] = Colour.Void.green
+			data[id+2] = Colour.Void.blue
+			id += 4
+			//pixelCount++
+		}
+
+		data[id] = Colour.Void.red
+		data[id+1] = Colour.Void.green
+		data[id+2] = Colour.Void.blue
+		id += 4
+		id -= sx
+		id += iy
+
+		// DRAW MIDDLE ROWS
+		for (let y = top+1; y < bottom-1; y++) {
+ 
+			data[id] = Colour.Void.red
+			data[id+1] = Colour.Void.green
+			data[id+2] = Colour.Void.blue
+			id += 4
+
+			for (let x = left+1; x < right-1; x++) { 
 				data[id] = red
 				data[id+1] = green
 				data[id+2] = blue
 				id += 4
 				//pixelCount++
 			}
+
+			data[id] = Colour.Void.red
+			data[id+1] = Colour.Void.green
+			data[id+2] = Colour.Void.blue
+			id += 4
+
 			id -= sx
 			id += iy
 		}
+
+		// DRAW BOTTOM ROW
+		data[id] = Colour.Void.red
+		data[id+1] = Colour.Void.green
+		data[id+2] = Colour.Void.blue
+		id += 4
+
+		for (let x = left+1; x < right-1; x++) { 
+			data[id] = red
+			data[id+1] = green
+			data[id+2] = blue
+			id += 4
+			//pixelCount++
+		}
+
+		data[id] = Colour.Void.red
+		data[id+1] = Colour.Void.green
+		data[id+2] = Colour.Void.blue
+		id += 4
+		id -= sx
+		id += iy
 
 		cell.lastDraw = state.time
 		//cell.lastDrawCount = pixelCount
