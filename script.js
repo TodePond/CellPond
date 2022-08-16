@@ -18,13 +18,18 @@ Be brave.
 		Trust no names.
 
 A simple seed ... grown into a mountain ...
-Coding CellPond is a performance ...
-	and by reading this you join the performance ...
+Coding CellPond is a performance & ritual ...
+	and by reading this you JOIN THE CEREMONY ...
 
 
+=============================================================
 
+	... many months later
 
-I'm just joking THAT WOULD BE RIDICULOUS
+	the source of CellPond calls me back
+
+	and it calls you too!
+
 
 */
 
