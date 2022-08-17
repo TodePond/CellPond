@@ -575,13 +575,18 @@ on.load(() => {
 			borderBlue = blue
 		}
 
+		const left1 = left + 1
+		const right_1 = right - 1
+		const top1 = top + 1
+		const bottom_1 = bottom - 1
+
 		// DRAW TOP ROW
 		data[id] = borderRed
 		data[id+1] = borderGreen
 		data[id+2] = borderBlue
 		id += 4
 
-		for (let x = left+1; x < right-1; x++) {
+		for (let x = left1; x < right_1; x++) {
 			data[id] = borderRed
 			data[id+1] = borderGreen
 			data[id+2] = borderBlue
@@ -597,14 +602,14 @@ on.load(() => {
 		id += iy
 
 		// DRAW MIDDLE ROWS
-		for (let y = top+1; y < bottom-1; y++) {
+		for (let y = top1; y < bottom_1; y++) {
  
 			data[id] = borderRed
 			data[id+1] = borderGreen
 			data[id+2] = borderBlue
 			id += 4
 
-			for (let x = left+1; x < right-1; x++) { 
+			for (let x = left1; x < right_1; x++) { 
 				data[id] = red
 				data[id+1] = green
 				data[id+2] = blue
@@ -627,7 +632,7 @@ on.load(() => {
 		data[id+2] = borderBlue
 		id += 4
 
-		for (let x = left+1; x < right-1; x++) { 
+		for (let x = left1; x < right_1; x++) { 
 			data[id] = borderRed
 			data[id+1] = borderGreen
 			data[id+2] = borderBlue
@@ -638,9 +643,6 @@ on.load(() => {
 		data[id] = borderRed
 		data[id+1] = borderGreen
 		data[id+2] = borderBlue
-		id += 4
-		id -= sx
-		id += iy
 
 		cell.lastDraw = state.time
 		//cell.lastDrawCount = pixelCount
