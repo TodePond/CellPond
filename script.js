@@ -190,8 +190,8 @@ const pickNeighbour = (cell, dx, dy) => {
 }
 
 const pickRandomCell = () => {
-	const x = Math.random()
-	const y = Math.random()
+	const x = Random.Uint32 / 4294967295
+	const y = Random.Uint32 / 4294967295
 	const cell = pickCell(x, y)
 	return cell
 }
@@ -201,8 +201,8 @@ const pickRandomVisibleCell = () => {
 	if (!state.view.visible) return undefined
 	if (state.view.fullyVisible) return pickRandomCell()
 	
-	const x = state.region.left + Math.random() * state.region.width
-	const y = state.region.top + Math.random() * state.region.height
+	const x = state.region.left + (Random.Uint32 / 4294967295) * state.region.width
+	const y = state.region.top + (Random.Uint32 / 4294967295) * state.region.height
 	const cell = pickCell(x, y)
 	return cell
 }
