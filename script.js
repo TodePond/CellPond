@@ -164,8 +164,9 @@ const pickCell = (x, y) => {
 
 	let i = 1
 	const size = section.size
+	const values = section.values()
 
-	for (const cell of section.values()) {
+	for (const cell of values) {
 		if (i === size) return cell
 		i++
 		if (cell.left > x) continue
