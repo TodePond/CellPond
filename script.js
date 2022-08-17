@@ -566,23 +566,32 @@ on.load(() => {
 		let id = (top*imageWidth + left) * 4
 		const data = state.image.data.data
 
+		let borderRed = Colour.Void.red
+		let borderGreen = Colour.Void.green
+		let borderBlue = Colour.Void.blue
+		if (width <= 3 || bottom-top <= 3) {
+			borderRed = red
+			borderGreen = green
+			borderBlue = blue
+		}
+
 		// DRAW TOP ROW
-		data[id] = Colour.Void.red
-		data[id+1] = Colour.Void.green
-		data[id+2] = Colour.Void.blue
+		data[id] = borderRed
+		data[id+1] = borderGreen
+		data[id+2] = borderBlue
 		id += 4
 
-		for (let x = left+1; x < right-1; x++) { 
-			data[id] = Colour.Void.red
-			data[id+1] = Colour.Void.green
-			data[id+2] = Colour.Void.blue
+		for (let x = left+1; x < right-1; x++) {
+			data[id] = borderRed
+			data[id+1] = borderGreen
+			data[id+2] = borderBlue
 			id += 4
 			//pixelCount++
 		}
 
-		data[id] = Colour.Void.red
-		data[id+1] = Colour.Void.green
-		data[id+2] = Colour.Void.blue
+		data[id] = borderRed
+		data[id+1] = borderGreen
+		data[id+2] = borderBlue
 		id += 4
 		id -= sx
 		id += iy
@@ -590,9 +599,9 @@ on.load(() => {
 		// DRAW MIDDLE ROWS
 		for (let y = top+1; y < bottom-1; y++) {
  
-			data[id] = Colour.Void.red
-			data[id+1] = Colour.Void.green
-			data[id+2] = Colour.Void.blue
+			data[id] = borderRed
+			data[id+1] = borderGreen
+			data[id+2] = borderBlue
 			id += 4
 
 			for (let x = left+1; x < right-1; x++) { 
@@ -603,9 +612,9 @@ on.load(() => {
 				//pixelCount++
 			}
 
-			data[id] = Colour.Void.red
-			data[id+1] = Colour.Void.green
-			data[id+2] = Colour.Void.blue
+			data[id] = borderRed
+			data[id+1] = borderGreen
+			data[id+2] = borderBlue
 			id += 4
 
 			id -= sx
@@ -613,22 +622,22 @@ on.load(() => {
 		}
 
 		// DRAW BOTTOM ROW
-		data[id] = Colour.Void.red
-		data[id+1] = Colour.Void.green
-		data[id+2] = Colour.Void.blue
+		data[id] = borderRed
+		data[id+1] = borderGreen
+		data[id+2] = borderBlue
 		id += 4
 
 		for (let x = left+1; x < right-1; x++) { 
-			data[id] = Colour.Void.red
-			data[id+1] = Colour.Void.green
-			data[id+2] = Colour.Void.blue
+			data[id] = borderRed
+			data[id+1] = borderGreen
+			data[id+2] = borderBlue
 			id += 4
 			//pixelCount++
 		}
 
-		data[id] = Colour.Void.red
-		data[id+1] = Colour.Void.green
-		data[id+2] = Colour.Void.blue
+		data[id] = borderRed
+		data[id+1] = borderGreen
+		data[id+2] = borderBlue
 		id += 4
 		id -= sx
 		id += iy
