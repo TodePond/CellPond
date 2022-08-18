@@ -571,9 +571,9 @@ on.load(() => {
 		let borderGreen = Colour.Void.green
 		let borderBlue = Colour.Void.blue
 		if (width <= 3 || bottom-top <= 3) {
-			borderRed = red
-			borderGreen = green
-			borderBlue = blue
+			borderRed = Colour.Void.red
+			borderGreen = Colour.Void.green
+			borderBlue = Colour.Void.blue
 		}
 
 		const left1 = left + 1
