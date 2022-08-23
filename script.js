@@ -47,7 +47,6 @@ const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenR
 //========//
 // COLOUR //
 //========//
-Colour.splash()
 const TODEPOND_COLOURS = [
 	Colour.Green.splash,
 	Colour.Red.splash,
@@ -4017,15 +4016,15 @@ registerRule(
 	}
 
 	// prepare border colours
-	const borderColours = []
-	for (let i = 0; i < 1000; i++) {
+	borderColours = PREBUILT_BORDER_COLOURS
+	/*for (let i = 0; i < 1000; i++) {
 		const colour = Colour.splash(i)
 		let borderColour = undefined
 		//let borderColour = Colour.add(colour, {lightness: -20})
 		const darkness = 70 - colour.lightness
 		borderColour = Colour.add(colour, {lightness: -20})
 		borderColours.push(borderColour)
-	}
+	}*/
 
 	const toolBorderColours = borderColours.clone
 	toolBorderColours[000] = Colour.Grey
