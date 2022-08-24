@@ -219,11 +219,6 @@ const state = {
 	time: 0,
 	maxTime: 9999999,
 
-	
-
-
-	
-	
 	speed: {
 		count: 100,
 		dynamic: false,
@@ -290,6 +285,7 @@ const state = {
 		dsControl: 1,
 		dsTargetSpeed: 0.05,
 
+		underScale: 0.9,
 		scale: 0.9,
 		mscale: 1.0,
 		dmscale: 0.002,
@@ -979,21 +975,25 @@ on.load(() => {
 		if (e.key === "Alt") e.preventDefault()
 	}, {passive: false})
 
+	const getNeatScale = (underScale) => {
+		return underScale
+	}
+
 	const doZoom = (dy, centerX, centerY) => {
 
 		const sign = -Math.sign(dy)
 		const d = Math.abs(dy)
 
-
 		for (let i = 0; i < d; i++) {
 
-			const oldScale = state.camera.scale
-			const zoom = ZOOM * state.camera.scale
+			const zoom = ZOOM * state.camera.underScale
 
 			const szoom = zoom * sign
-			state.camera.scale += szoom
+			state.camera.underScale += szoom
 
-			const newScale = state.camera.scale
+			const oldScale = state.camera.scale
+			const newScale = getNeatScale(state.camera.underScale)
+			state.camera.scale = newScale
 			const scale = newScale / oldScale
 
 			state.camera.x += (1-scale) * centerX/newScale
