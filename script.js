@@ -668,6 +668,8 @@ on.load(() => {
 	let pencilled = false
 	const updateBrush = () => {
 
+		if (!state.worldBuilt) return
+
 		if (!Mouse.Middle) {
 			pencilled = false
 		}
@@ -1113,6 +1115,7 @@ on.load(() => {
 	const fireRandomSpotEvents = () => {
 		let count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		count = Math.min(count, state.cellCount)
+		count *= state.worldBuilt? 1 : 0.1
 		const redrawCount = count * state.speed.redraw
 		let redraw = true
 		if (!state.worldBuilt) redraw = false
