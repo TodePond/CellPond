@@ -332,7 +332,7 @@ const setWorldSize = (size) => {
 	WORLD_DIMENSION = 2 ** WORLD_SIZE
 	WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
 }
-setWorldSize(7)
+setWorldSize(6)
 
 const addCell = (cell) => {
 	cacheCell(cell)
