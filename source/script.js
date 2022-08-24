@@ -332,7 +332,7 @@ const setWorldSize = (size) => {
 	WORLD_DIMENSION = 2 ** WORLD_SIZE
 	WORLD_CELL_SIZE = 1 / WORLD_DIMENSION
 }
-setWorldSize(6)
+setWorldSize(7)
 
 const addCell = (cell) => {
 	cacheCell(cell)
@@ -449,7 +449,7 @@ on.load(() => {
 
 		//state.image.data = context.getImageData(0, 0, state.image.size.iwidth, state.image.size.iheight)
 
-		drawSetNeedsReset = true
+		drawQueueNeedsReset = true
 	}
 
 	const updateImageData = () => {
@@ -503,6 +503,14 @@ on.load(() => {
 		return setCellColour(cell, cell.colour, override)
 	}
 
+	const isSectionVisible = (section) => {
+		if (section.right <= state.region.left) return false
+		if (section.left >= state.region.right) return false
+		if (section.bottom <= state.region.top) return false
+		if (section.top >= state.region.bottom) return false
+		return true
+	}
+
 	const isCellVisible = (cell) => {
 		if (cell.right <= state.region.left) return false
 		if (cell.left >= state.region.right) return false
@@ -511,15 +519,25 @@ on.load(() => {
 		return true
 	}
 
+	const queueCellDraw = (cell, colour) => {
+		cell.colour = colour
+		if (!isCellVisible(cell)) return 0
+		drawQueuePriority.add(cell)
+		drawQueue.delete(cell)
+		return 1
+	}
+
 	const setCellColour = (cell, colour, override = false) => {
 		
 		cell.colour = colour
 		if (!isCellVisible(cell)) return 0
 		
+		/*
 		if (!override && cell.lastDraw === state.time) {
 			cell.lastDrawRepeat += state.speed.redrawRepeatPenalty
 			return state.speed.redrawRepeatScore * cell.lastDrawRepeat
 		}
+		*/
 
 		const size = state.image.size
 		const imageWidth = canvas.width
@@ -572,7 +590,7 @@ on.load(() => {
 		let borderGreen = Colour.Void.green
 		let borderBlue = Colour.Void.blue
 
-		if (width <= 3 || bottom-top <= 3) {
+		if (width <= 2 || bottom-top <= 2) {
 			/*
 			borderRed = Colour.Void.red
 			borderGreen = Colour.Void.green
@@ -653,9 +671,11 @@ on.load(() => {
 		data[id+1] = borderGreen
 		data[id+2] = borderBlue
 
+		/*
 		cell.lastDraw = state.time
 		//cell.lastDrawCount = pixelCount
 		cell.lastDrawRepeat = 1
+		*/
 		return 1
 
 	}
@@ -899,7 +919,7 @@ on.load(() => {
 					}
 				}
 
-				drawSetNeedsReset = true
+				drawQueueNeedsReset = true
 
 			}
 
@@ -908,7 +928,7 @@ on.load(() => {
 			return
 		}
 
-		drawSetNeedsReset = true
+		drawQueueNeedsReset = true
 		
 		if (dropperStartX === undefined) {
 			dropperStartX = x
@@ -1108,9 +1128,9 @@ on.load(() => {
 		updateCursor()
 		updateCamera()
 		
-		if (drawSetNeedsReset) {
-			addAllCellsToDrawSet()
-			drawSetNeedsReset = false
+		if (drawQueueNeedsReset) {
+			addAllCellsTodrawQueue()
+			drawQueueNeedsReset = false
 		}
 
 		if (!show.paused) fireRandomSpotEvents()
@@ -1131,24 +1151,25 @@ on.load(() => {
 
 	}
 
-	const drawSet = new Set()
-	const drawQueue = new LinkedList()
-	drawSetNeedsReset = false
+	const drawQueue = new Set()
+	const drawQueuePriority = new Set()
+	drawQueueNeedsReset = false
 	
-	const addAllCellsToDrawSet = () => {
-		drawSet.clear()
-		for (const section of [...state.grid].shuffle()) {
-			for (const cell of section.values()) {
-				drawSet.add(cell)
-			}
+	const shuffleArray = (array) => {
+		for (let i = array.length - 1; i > 0; i--) {
+			const r = Random.Uint32 % (i+1)
+			;[array[i], array[r]] = [array[r], array[i]]
 		}
+		return array
 	}
 
-	const addAllCellsToDrawQueue = () => {
+	const addAllCellsTodrawQueue = () => {
 		drawQueue.clear()
-		for (const grid of [...state.grid].shuffle()) {
-			for (const cell of grid.values()) {
-				drawQueue.push(cell)
+		for (const section of shuffleArray([...state.grid])) {
+			if (!isSectionVisible(section)) continue
+			for (const cell of section.values()) {
+				//if (!isCellVisible(cell)) continue
+				drawQueue.add(cell)
 			}
 		}
 	}
@@ -1169,17 +1190,33 @@ on.load(() => {
 			drawnCount += drawn
 		}
 
-		for (const cell of drawSet.values()) {
+		for (const cell of drawQueuePriority) {
 			drawnCount += drawCell(cell)
-			drawSet.delete(cell)
-			if (drawnCount >= redrawCount) return
+			drawQueuePriority.delete(cell)
+			if (drawnCount >= redrawCount) break
 		}
 
+		for (const cell of drawQueue) {
+			drawnCount += drawCell(cell)
+			drawQueue.delete(cell)
+			if (drawnCount >= redrawCount) break
+		}
+
+		/*
+		for (const cell of drawQueue) {
+			drawnCount += drawCell(cell)
+			drawQueue.shift(cell)
+			if (drawnCount >= redrawCount) return
+		}
+		*/
+
+		/*
 		for (const cell of drawQueue) {
 			drawnCount += drawCell(cell)
 			drawQueue.shift()
 			if (drawnCount >= redrawCount) return
 		}
+		*/
 
 		/*if (!state.view.visible) return
 		while (drawnCount < redrawCount) {
@@ -1193,11 +1230,19 @@ on.load(() => {
 		const count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		let redrawCount = count * state.speed.redraw
 		if (!state.worldBuilt) redrawCount = 1
+
 		let drawnCount = 0
-		for (let i = 0; i < redrawCount; i++) {
+
+		for (const cell of drawQueue) {
+			drawnCount += drawCell(cell)
+			drawQueue.delete(cell)
+			if (drawnCount >= redrawCount) break
+		}
+
+		/*for (let i = 0; i < redrawCount; i++) {
 			const cell = pickRandomVisibleCell()
 			drawnCount += drawCell(cell)
-		}
+		}*/
 	}
 
 	// this function is currently full of debug code
@@ -1981,6 +2026,7 @@ on.load(() => {
 
 		const behaveFunction = (origin, redraw) => {
 
+			let count = 1
 			for (const stepFunction of stepFunctions) {
 				const drawn = stepFunction(origin, redraw)
 				if (drawn !== undefined) return drawn
@@ -2221,7 +2267,7 @@ on.load(() => {
 			}
 
 			let drawn = 0
-			if (redraw) drawn += setCellColour(target, colour, true)
+			if (redraw) drawn += queueCellDraw(target, colour, true)
 			else target.colour = colour
 
 			return {drawn, stampNameTakenFrom}
