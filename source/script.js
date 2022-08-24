@@ -357,7 +357,7 @@ const getCells = () => {
 // It helps to speed up cell lookup because it gives us a smaller area to search through
 // Note: Cells can be in multiple sections if they are big enough :)
 // NOTE: GRID_SIZE MUST BE BIG ENOUGH SO THAT SECTIONS ARE SMALLER OR EQUAL TO WORLD CELLS
-const GRID_SIZE = 256
+const GRID_SIZE = 128
 for (let x = 0; x < GRID_SIZE; x++) {
 	for (let y = 0; y < GRID_SIZE; y++) {
 		const section = new Set()
