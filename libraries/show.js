@@ -9,7 +9,7 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 	const canvas = document.createElement("canvas")
 	const context = canvas.getContext("2d")
 	canvas.style["background-color"] = Colour.Void
-	canvas.style["image-rendering"] = "pixelated"
+	//canvas.style["image-rendering"] = "pixelated"
 	document.body.appendChild(canvas)
 
 	const pad = {}

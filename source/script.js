@@ -448,6 +448,8 @@ on.load(() => {
 		state.region.height = state.region.bottom - state.region.top
 
 		//state.image.data = context.getImageData(0, 0, state.image.size.iwidth, state.image.size.iheight)
+
+		drawSetNeedsReset = true
 	}
 
 	const updateImageData = () => {
@@ -569,10 +571,17 @@ on.load(() => {
 		let borderRed = Colour.Void.red
 		let borderGreen = Colour.Void.green
 		let borderBlue = Colour.Void.blue
+
 		if (width <= 3 || bottom-top <= 3) {
+			/*
 			borderRed = Colour.Void.red
 			borderGreen = Colour.Void.green
 			borderBlue = Colour.Void.blue
+			*/
+			
+			borderRed = red
+			borderGreen = green
+			borderBlue = blue
 		}
 
 		const left1 = left + 1
@@ -852,7 +861,6 @@ on.load(() => {
 
 	const updatePan = () => {
 
-
 		const [x, y] = Mouse.position
 
 		if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
@@ -891,13 +899,16 @@ on.load(() => {
 					}
 				}
 
-				
+				drawSetNeedsReset = true
+
 			}
 
 			dropperStartX = undefined
 			dropperStartY = undefined
 			return
 		}
+
+		drawSetNeedsReset = true
 		
 		if (dropperStartX === undefined) {
 			dropperStartX = x
@@ -1066,6 +1077,9 @@ on.load(() => {
 		}
 
 		if (state.camera.mscale !== 1.0) {
+
+			//addAllCellsToDrawQueue()
+
 			const oldScale = state.camera.scale
 			state.camera.scale *= state.camera.mscale
 			const newScale = state.camera.scale
@@ -1093,7 +1107,12 @@ on.load(() => {
 		updateHand()
 		updateCursor()
 		updateCamera()
-		//state.dragon.behaves.shuffle()
+		
+		if (drawSetNeedsReset) {
+			addAllCellsToDrawSet()
+			drawSetNeedsReset = false
+		}
+
 		if (!show.paused) fireRandomSpotEvents()
 		else fireRandomSpotDrawEvents()
 
@@ -1112,6 +1131,28 @@ on.load(() => {
 
 	}
 
+	const drawSet = new Set()
+	const drawQueue = new LinkedList()
+	drawSetNeedsReset = false
+	
+	const addAllCellsToDrawSet = () => {
+		drawSet.clear()
+		for (const section of [...state.grid].shuffle()) {
+			for (const cell of section.values()) {
+				drawSet.add(cell)
+			}
+		}
+	}
+
+	const addAllCellsToDrawQueue = () => {
+		drawQueue.clear()
+		for (const grid of [...state.grid].shuffle()) {
+			for (const cell of grid.values()) {
+				drawQueue.push(cell)
+			}
+		}
+	}
+
 	const fireRandomSpotEvents = () => {
 		let count = state.speed.dynamic? state.speed.aer * state.cellCount : state.speed.count
 		count = Math.min(count, state.cellCount)
@@ -1128,11 +1169,23 @@ on.load(() => {
 			drawnCount += drawn
 		}
 
-		if (!state.view.visible) return
+		for (const cell of drawSet.values()) {
+			drawnCount += drawCell(cell)
+			drawSet.delete(cell)
+			if (drawnCount >= redrawCount) return
+		}
+
+		for (const cell of drawQueue) {
+			drawnCount += drawCell(cell)
+			drawQueue.shift()
+			if (drawnCount >= redrawCount) return
+		}
+
+		/*if (!state.view.visible) return
 		while (drawnCount < redrawCount) {
 			const cell = pickRandomVisibleCell()
 			drawnCount += drawCell(cell)
-		}
+		}*/
 	}
 
 	const fireRandomSpotDrawEvents = () => {
@@ -2769,7 +2822,7 @@ registerRule(
 	const colourTodeCanvas = document.createElement("canvas")
 	const colourTodeContext = colourTodeCanvas.getContext("2d")
 	
-	colourTodeCanvas.style["image-rendering"] = "pixelated"
+	//colourTodeCanvas.style["image-rendering"] = "pixelated"
 	colourTodeCanvas.style["position"] = "absolute"
 	colourTodeCanvas.style["top"] = "0px"
 	
