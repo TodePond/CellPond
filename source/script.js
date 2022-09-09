@@ -3695,15 +3695,21 @@ registerRule(
 						colourTodeContext.arc(X+R, Y+R, Math.round((PADDLE_HANDLE.size - OPTION_MARGIN/2)/2), 0, 2*Math.PI)
 					}
 
-					colourTodeContext.fill("evenodd")
 
-					colourTodeContext.beginPath()
-					colourTodeContext.fillStyle = atom.colour
-					colourTodeContext.rect(X+border, Y+border, W-border*2, H-border*2)
-					if (atom.stamp !== undefined) {
-						colourTodeContext.arc(X+R, Y+R, Math.round((PADDLE_HANDLE.size - OPTION_MARGIN/2)/2)+border, 0, 2*Math.PI)
+					if (atom.isGradient) {
+						colourTodeContext.putImageData(atom.gradient, X, Y)
+					} else {
+
+						colourTodeContext.fill("evenodd")
+
+						colourTodeContext.beginPath()
+						colourTodeContext.fillStyle = atom.colour
+						colourTodeContext.rect(X+border, Y+border, W-border*2, H-border*2)
+						if (atom.stamp !== undefined) {
+							colourTodeContext.arc(X+R, Y+R, Math.round((PADDLE_HANDLE.size - OPTION_MARGIN/2)/2)+border, 0, 2*Math.PI)
+						}
+						colourTodeContext.fill("evenodd")
 					}
-					colourTodeContext.fill("evenodd")
 				}
 
 				else {
@@ -3994,6 +4000,8 @@ registerRule(
 			atom.joinColourIds = []
 			atom.variableAtoms = []
 
+			atom.gradient = new ImageData(atom.width, atom.height)
+
 		},
 
 		update: (atom) => {
@@ -4043,8 +4051,6 @@ registerRule(
 				atom.joinDrawTimer++
 				if (atom.joinDrawTimer >= 45) {
 					atom.joinDrawId++
-					atom.needsColoursUpdate = true
-					atom.colourTicker = Infinity
 					if (atom.joinDrawId >= atom.joins.length) {
 						atom.joinDrawId = -1
 					}
@@ -4063,29 +4069,79 @@ registerRule(
 					const valueClone = cloneDragonArray(drawTarget)
 					if (atom.value === drawTarget) valueClone.joins = []
 					atom.colours = getSplashesArrayFromArray(valueClone)
+
+					// Create pixel values for gradient
+					atom.isGradient = false
+					if (atom.colours.length > 1) {
+						atom.isGradient = true
+						let minRed = Infinity
+						let maxRed = -Infinity
+						let minGreen = Infinity
+						let maxGreen = -Infinity
+						let minBlue = Infinity
+						let maxBlue = -Infinity
+
+						for (const colour of atom.colours) {
+							const [r, g, b] = getRGB(colour)
+							if (r < minRed) minRed = r
+							if (r > maxRed) maxRed = r
+							if (g < minGreen) minGreen = g
+							if (g > maxGreen) maxGreen = g
+							if (b < minBlue) minBlue = b
+							if (b > maxBlue) maxBlue = b
+						}
+
+						const gradientColours = [
+							Colour.splash(minRed + minGreen + minBlue), //000
+							Colour.splash(minRed + minGreen + maxBlue), //001
+							Colour.splash(minRed + maxGreen + minBlue), //010
+							Colour.splash(minRed + maxGreen + maxBlue), //011
+							Colour.splash(maxRed + minGreen + minBlue), //100
+							Colour.splash(maxRed + minGreen + maxBlue), //101
+							Colour.splash(maxRed + maxGreen + minBlue), //110
+							Colour.splash(maxRed + maxGreen + maxBlue), //111
+						]
+
+						const gradientPoints = [
+							[0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+							[0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+							[0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
+						]
+
+						const getDistancesFromGradientPoints = (x, y) => {
+							const distances = []
+							for (const [px, py] of gradientPoints) {
+								const displacement = [px-x, py-y]
+								const distance = Math.hypot(...displacement)
+								distances.push(distance)
+							}
+							return distances
+						}
+
+						let i = 0
+						for (let x = 0; x < atom.width; x++) {
+							for (let y = 0; y < atom.height; y++) {
+								const distances = getDistancesFromGradientPoints(x / atom.width, y / atom.height)
+								const sumValues = [0, 0, 0]
+								for (let i = 0; i < 8; i++) {
+									const distance = distances[i]
+									const score = 1.0 - clamp(distance, 0.0, 1.0)
+									const colour = gradientColours[i]
+									;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
+								}
+								const values = sumValues.map(value => value / 4)
+								atom.gradient.data[i] = values[0]
+								atom.gradient.data[i+1] = values[1]
+								atom.gradient.data[i+2] = values[2]
+								atom.gradient.data[i+3] = 255
+								i += 4
+							}
+						}
+					}
 					atom.colourId = Random.Uint32 % atom.colours.length
 					atom.needsColoursUpdate = false
 
 				}
-
-				if (atom.colourTicker >= getColourCycleLength(atom)) {
-					atom.colourTicker = 0
-
-					atom.colourId += atom.dcolourId
-					if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
-						atom.dcolourId *= -1
-					}
-					if (atom.colourId >= atom.colours.length) {
-						atom.dcolourId = -1
-						atom.colourId = atom.colours.length-1
-					}
-					if (atom.colourId < 0) {
-						atom.dcolourId = 1
-						atom.colourId = 0
-					}
-					atom.colour = Colour.splash(atom.colours[atom.colourId])
-				}
-				else atom.colourTicker++
 			}
 
 			const {x, y} = getAtomPosition(atom)
