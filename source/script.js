@@ -4072,7 +4072,7 @@ registerRule(
 
 					// Create pixel values for gradient
 					atom.isGradient = false
-					if (atom.colours.length > 1) {
+					if (true || atom.colours.length > 1) {
 						atom.isGradient = true
 						let minRed = Infinity
 						let maxRed = -Infinity
