@@ -1,7 +1,7 @@
 
 /*
 
-Welcome traveller.
+Welcome traveller!
 Welcome to the SOURCE of the CellPond.
 
 If you venture further, may tode be with you.
