@@ -4078,7 +4078,7 @@ registerRule(
 					atom.isGradient = false
 					if (true || atom.colours.length > 1) {
 						atom.isGradient = true
-						atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+						atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
 						
 					}
 					atom.colourId = Random.Uint32 % atom.colours.length
@@ -4551,9 +4551,12 @@ registerRule(
 		return scores
 	}
 
-	const getGradientImageFromColours = (colours, width, height) => {
+	const getGradientImageFromColours = (colours, width, height, gradient = new ImageData(width, height)) => {
 		;[width, height] = [width, height].map(dimension => Math.round(dimension))
-		const gradient = new ImageData(width, height)
+		const newLength = width * height * 4
+		if (gradient.length !== newLength) {
+			gradient = new ImageData(width, height)
+		}
 		let minRed = Infinity
 		let maxRed = -Infinity
 		let minGreen = Infinity
@@ -5209,7 +5212,7 @@ registerRule(
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
 					atom.isGradient = true
-					atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+					atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
 					atom.updateColours(atom)
 				}
 			}
@@ -5254,7 +5257,7 @@ registerRule(
 				}
 
 				atom.isGradient = true
-				atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+				atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
 			}
 
 			atom.highlightedAtom = undefined
@@ -5756,7 +5759,7 @@ registerRule(
 
 		updateColours: (atom) => {
 			atom.isGradient = true
-			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
 		},
 
 		touch: (atom) => {
@@ -7727,7 +7730,7 @@ registerRule(
 		//atom.colour = Colour.splash(atom.colours[atom.colourId])
 		if (atom === squareTool) {
 			atom.isGradient = true
-			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
 		} else {
 			atom.colour = Colour.splash(999)
 			atom.borderColour = Colour.splash(999)
