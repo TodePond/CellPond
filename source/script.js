@@ -5208,6 +5208,8 @@ registerRule(
 			if (atom.expanded) {
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
+					atom.isGradient = true
+					atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
 					atom.updateColours(atom)
 				}
 			}
@@ -5251,28 +5253,8 @@ registerRule(
 					atom.colours = getSplashesArrayFromArray(array)
 				}
 
-				atom.colourTicker = Infinity
-			}
-
-			if (atom.colourTicker >= getColourCycleLength(atom)) {
-				atom.colourTicker = 0
-
-				atom.colourId += atom.dcolourId
-				if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
-					atom.dcolourId *= -1
-				}
-				if (atom.colourId >= atom.colours.length) {
-					atom.dcolourId = -1
-					atom.colourId = atom.colours.length-1
-				}
-				if (atom.colourId < 0) {
-					atom.dcolourId = 1
-					atom.colourId = 0
-				}
-				atom.colour = Colour.splash(atom.colours[atom.colourId])
-
-			} else {
-				atom.colourTicker++
+				atom.isGradient = true
+				atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
 			}
 
 			atom.highlightedAtom = undefined
@@ -5789,7 +5771,9 @@ registerRule(
 				atom.dcolourId = 1
 				atom.colourId = 0
 			}
-			atom.colour = Colour.splash(atom.colours[atom.colourId])
+			//atom.colour = Colour.splash(atom.colours[atom.colourId])
+			atom.isGradient = true
+			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
 		},
 
 		touch: (atom) => {
