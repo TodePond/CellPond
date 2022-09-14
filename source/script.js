@@ -4575,11 +4575,11 @@ registerRule(
 				const sumValues = [0, 0, 0]
 				for (let i = 0; i < 8; i++) {
 					const distance = distances[i]
-					const score = 1.0 - clamp(distance, 0.0, 1.0)
+					const score = 1.0 //2.0 - clamp(distance, 0.0, 1.0)
 					const colour = gradientColours[i]
 					;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
 				}
-				const values = sumValues.map(value => value / 4)
+				const values = sumValues.map(value => value / 8)
 				gradient.data[i] = values[0]
 				gradient.data[i+1] = values[1]
 				gradient.data[i+2] = values[2]
