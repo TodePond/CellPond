@@ -913,6 +913,8 @@ on.load(() => {
 					else {
 						state.brush.colour = state.brush.hoverColour.splash
 					}
+
+					squareTool.toolbarNeedsColourUpdate = true
 				}
 
 				drawQueueNeedsReset = true
@@ -4521,20 +4523,34 @@ registerRule(
 		size: 40,
 		expanded: false,
 	}
-	
-	const gradientPoints = [
-		[0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
-								[1.0, 0.5],
-								[1.0, 1.0],
-					[0.5, 1.0],
-		[0.0, 1.0],
-		[0.0, 0.5],
-	]
 
-	const getDistancesFromGradientPoints = (x, y) => {
+	const getWarpedGradientPoints = (width, height) => {
+		
+		const maxWidth = 1.0
+		const maxHeight = 1.0
+
+		/*
+		const max = Math.max(width, height)
+		const maxWidth = max / width
+		const maxHeight = max / height
+		*/
+		
+		const midWidth = maxWidth/2
+		const midHeight = maxHeight/2
+
+
+
+		return [
+			[maxWidth, 0.0], [maxWidth, midHeight], [maxWidth, maxHeight],
+			[midWidth, 0.0], [midWidth, midHeight], [midWidth, maxHeight],
+			[0.0, 0.0],      [0.0, midHeight],      [0.0, maxHeight],
+		]
+	}
+
+	const getDistancesFromGradientPoints = (x, y, points) => {
 		const distances = []
-		for (const [px, py] of gradientPoints) {
-			const displacement = [x-px, y-py]
+		for (const [px, py] of points) {
+			const displacement = [px-x, py-y]
 			const distance = Math.hypot(...displacement)
 			distances.push(distance)
 		}
@@ -4543,10 +4559,12 @@ registerRule(
 
 	const getGradientPointScoresFromDistances = (distances) => {
 		const min = Math.min(...distances)
+		const max = Math.max(...distances)
 		const scores = []
 		for (const distance of distances) {
-			if (distance === min) scores.push(1.0)
-			else scores.push(0.0)
+			//if (distance === min) scores.push(distance**2)
+			//else scores.push(0.0)
+			scores.push(distance**2)
 		}
 		return scores
 	}
@@ -4554,7 +4572,7 @@ registerRule(
 	const getGradientImageFromColours = (colours, width, height, gradient = new ImageData(width, height)) => {
 		;[width, height] = [width, height].map(dimension => Math.round(dimension))
 		const newLength = width * height * 4
-		if (gradient.length !== newLength) {
+		if (gradient.data.length !== newLength) {
 			gradient = new ImageData(width, height)
 		}
 		let minRed = Infinity
@@ -4574,30 +4592,50 @@ registerRule(
 			if (b > maxBlue) maxBlue = b
 		}
 
+		const makeGradientColour = (red, green, blue) => {
+			//return Colour.splash(maxRed + maxGreen + maxBlue)
+			return Colour.splash((red === 1? maxRed : minRed) + (green === 1? maxGreen : minGreen) + (blue === 1? maxBlue : minBlue))
+		}
+
 		const gradientColours = [
 
+			makeGradientColour(0, 0, 1),
+			makeGradientColour(0, 0, 1),
+			makeGradientColour(0, 0, 1),
 			
-			Colour.splash(maxRed + maxGreen + maxBlue), //111
-			Colour.splash(minRed + maxGreen + maxBlue), //011
-			Colour.splash(minRed + minGreen + maxBlue), //001
-			Colour.splash(maxRed + minGreen + maxBlue), //101
-			Colour.splash(maxRed + minGreen + minBlue), //100
-			Colour.splash(minRed + minGreen + minBlue), //000
-			Colour.splash(minRed + maxGreen + minBlue), //010
-			Colour.splash(maxRed + maxGreen + minBlue), //110
+			makeGradientColour(0, 1, 1),
+			makeGradientColour(1, 0, 0),
+			makeGradientColour(1, 0, 0),
+			
+			makeGradientColour(0, 1, 0),
+			makeGradientColour(0, 1, 0),
+			makeGradientColour(1, 0, 0),
+			
+			/*
+			makeGradientColour(0, 1, 0),
+			makeGradientColour(0, 1, 1),
+			makeGradientColour(0, 0, 1),
+			
+			makeGradientColour(1, 1, 0),
+			makeGradientColour(1, 1, 1),
+			makeGradientColour(1, 0, 1),
+			
+			makeGradientColour(1, 0, 0),
+			makeGradientColour(0, 0, 0),
+			makeGradientColour(0, 0, 1),
+			*/
 
-			//----
+		]
 
-		].reverse()
-
+		const points = getWarpedGradientPoints(width, height)
 		let i = 0
 		for (let x = 0; x < width; x++) {
 			for (let y = 0; y < height; y++) {
-				const distances = getDistancesFromGradientPoints(x / width, y / height)
+				const distances = getDistancesFromGradientPoints(x / width, y / height, points)
 				const scores = getGradientPointScoresFromDistances(distances)
 				const sumValues = [0, 0, 0]
 				const sumScore = scores.reduce((a, b) => a + b)
-				for (let j = 0; j < 8; j++) {
+				for (let j = 0; j < 9; j++) {
 					const score = scores[j]
 					const colour = gradientColours[j]
 					;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
@@ -4608,6 +4646,7 @@ registerRule(
 				gradient.data[i+2] = values[2]
 				gradient.data[i+3] = 255
 				i += 4
+				if (i >= gradient.data.length) break
 			}
 		}
 		return gradient
@@ -7618,19 +7657,11 @@ registerRule(
 
 		if (typeof state.brush.colour === "number") {
 			atom.value = makeArrayFromSplash(state.brush.colour)
-			atom.joins = []
-			atom.stamp = undefined
 		} else {
 			const content = state.brush.colour.left[0].content
 			atom.value = cloneDragonArray(content)
 			if (atom === squareTool) {
 				atom.stamp = atom.value.stamp
-			}
-			if (content.joins !== undefined) {
-				atom.joins = content.joins.map(j => ({value: j}))
-				//atom.joins.map(j => getSplashesArrayFromArray(j.value))
-			} else {
-				atom.joins = []
 			}
 		}
 
@@ -7672,63 +7703,15 @@ registerRule(
 			}
 		}
 
-		atom.joinDrawTimer++
-		if (atom.joinDrawTimer >= 45) {
-			atom.joinDrawId++
-			atom.toolbarNeedsColourUpdate = true
-			atom.colourTicker = Infinity
-			if (atom.joinDrawId >= atom.joins.length) {
-				atom.joinDrawId = -1
-			}
-			atom.joinDrawTimer = 0
-		}
-
-		
-		let drawTarget = atom.value
-		if (atom.joins.length > 0) {
-			if (atom.joinDrawId >= atom.joins.length) {
-				atom.joinDrawId = 0
-			}
-			if (atom.joinDrawId >= 0) {
-				drawTarget = atom.joins[atom.joinDrawId].value
-			}
-		}
-		const valueClone = cloneDragonArray(drawTarget)
-		valueClone.joins = []
+		const valueClone = cloneDragonArray(atom.value)
 		atom.colours = getSplashesArrayFromArray(valueClone)
 
-		if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
-			atom.toolbarNeedsColourUpdate = false
-
-
-			//atom.colourId = Random.Uint32 % atom.colours.length
-			atom.colourTicker = Infinity
-			atom.previousBrushColour = state.brush.colour
-		}
-
-		if (atom.colourTicker >= getColourCycleLength(atom)) {
-			atom.colourTicker = 0
-
-			atom.colourId += atom.dcolourId
-			if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
-				atom.dcolourId *= -1
-			}
-			if (atom.colourId >= atom.colours.length) {
-				atom.dcolourId = -1
-				atom.colourId = atom.colours.length-1
-			}
-			if (atom.colourId < 0) {
-				atom.dcolourId = 1
-				atom.colourId = 0
-			}
-		}
-		else atom.colourTicker++
-		
 		if (atom.colourId >= atom.colours.length) {
 			atom.colourId = 0
 		}
 		//atom.colour = Colour.splash(atom.colours[atom.colourId])
-		if (atom === squareTool) {
+		if (atom.toolbarNeedsColourUpdate && atom === squareTool) {
+			atom.toolbarNeedsColourUpdate = false
 			atom.isGradient = true
 			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
 		} else {
