@@ -5464,11 +5464,13 @@ registerRule(
 				atom.expanded = true
 				atom.colourId = 0
 				atom.colourTicker = Infinity
+				atom.needsColoursUpdate = true
 				atom.createOptions(atom)
 			}
 			else {
 				atom.expanded = false
 				atom.deleteOptions(atom)
+				atom.needsColoursUpdate = true
 			}
 		},
 
