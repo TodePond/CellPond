@@ -5535,7 +5535,9 @@ registerRule(
 
 					option.colours = colours
 					option.colourTicker = Infinity
-					//option.needsColoursUpdate = true
+					if (option !== atom) {
+						option.updateColours(option)
+					}
 				}
 			}
 		},
@@ -5743,14 +5745,6 @@ registerRule(
 		colourId: 0,
 		dcolourId: 1,
 		update: (atom) => {
-			if (atom.colourTicker >= getColourCycleLength(atom)) {
-				atom.colourTicker = 0
-
-				atom.updateColours(atom)
-
-			} else {
-				atom.colourTicker++
-			}
 		},
 
 		getId: (atom) => {			
@@ -5761,19 +5755,6 @@ registerRule(
 		},
 
 		updateColours: (atom) => {
-			atom.colourId += atom.dcolourId
-			if (atom.colourId === atom.colours.length-1 || atom.colourId === 0) {
-				atom.dcolourId *= -1
-			}
-			if (atom.colourId >= atom.colours.length) {
-				atom.dcolourId = -1
-				atom.colourId = atom.colours.length-1
-			}
-			if (atom.colourId < 0) {
-				atom.dcolourId = 1
-				atom.colourId = 0
-			}
-			//atom.colour = Colour.splash(atom.colours[atom.colourId])
 			atom.isGradient = true
 			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
 		},
