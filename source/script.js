@@ -4524,21 +4524,35 @@ registerRule(
 	
 	const gradientPoints = [
 		[0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
-		[0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
-		[0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
+								[1.0, 0.5],
+								[1.0, 1.0],
+					[0.5, 1.0],
+		[0.0, 1.0],
+		[0.0, 0.5],
 	]
 
 	const getDistancesFromGradientPoints = (x, y) => {
 		const distances = []
 		for (const [px, py] of gradientPoints) {
-			const displacement = [px-x, py-y]
+			const displacement = [x-px, y-py]
 			const distance = Math.hypot(...displacement)
 			distances.push(distance)
 		}
 		return distances
 	}
 
+	const getGradientPointScoresFromDistances = (distances) => {
+		const min = Math.min(...distances)
+		const scores = []
+		for (const distance of distances) {
+			if (distance === min) scores.push(1.0)
+			else scores.push(0.0)
+		}
+		return scores
+	}
+
 	const getGradientImageFromColours = (colours, width, height) => {
+		;[width, height] = [width, height].map(dimension => Math.round(dimension))
 		const gradient = new ImageData(width, height)
 		let minRed = Infinity
 		let maxRed = -Infinity
@@ -4558,28 +4572,34 @@ registerRule(
 		}
 
 		const gradientColours = [
-			Colour.splash(minRed + minGreen + minBlue), //000
-			Colour.splash(minRed + minGreen + maxBlue), //001
-			Colour.splash(minRed + maxGreen + minBlue), //010
-			Colour.splash(minRed + maxGreen + maxBlue), //011
-			Colour.splash(maxRed + minGreen + minBlue), //100
-			Colour.splash(maxRed + minGreen + maxBlue), //101
-			Colour.splash(maxRed + maxGreen + minBlue), //110
+
+			
 			Colour.splash(maxRed + maxGreen + maxBlue), //111
-		]
+			Colour.splash(minRed + maxGreen + maxBlue), //011
+			Colour.splash(minRed + minGreen + maxBlue), //001
+			Colour.splash(maxRed + minGreen + maxBlue), //101
+			Colour.splash(maxRed + minGreen + minBlue), //100
+			Colour.splash(minRed + minGreen + minBlue), //000
+			Colour.splash(minRed + maxGreen + minBlue), //010
+			Colour.splash(maxRed + maxGreen + minBlue), //110
+
+			//----
+
+		].reverse()
 
 		let i = 0
 		for (let x = 0; x < width; x++) {
 			for (let y = 0; y < height; y++) {
 				const distances = getDistancesFromGradientPoints(x / width, y / height)
+				const scores = getGradientPointScoresFromDistances(distances)
 				const sumValues = [0, 0, 0]
-				for (let i = 0; i < 8; i++) {
-					const distance = distances[i]
-					const score = 1.0 //2.0 - clamp(distance, 0.0, 1.0)
-					const colour = gradientColours[i]
+				const sumScore = scores.reduce((a, b) => a + b)
+				for (let j = 0; j < 8; j++) {
+					const score = scores[j]
+					const colour = gradientColours[j]
 					;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
 				}
-				const values = sumValues.map(value => value / 8)
+				const values = sumValues.map(value => value / sumScore)
 				gradient.data[i] = values[0]
 				gradient.data[i+1] = values[1]
 				gradient.data[i+2] = values[2]
