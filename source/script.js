@@ -3648,7 +3648,7 @@ registerRule(
 	}*/
 
 	const toolBorderColours = borderColours.clone
-	toolBorderColours[000] = Colour.Grey
+	toolBorderColours[999] = Colour.splash(999)
 
 	/*const toolBorderColours = []
 	
@@ -7741,7 +7741,14 @@ registerRule(
 		if (atom.colourId >= atom.colours.length) {
 			atom.colourId = 0
 		}
-		atom.colour = Colour.splash(atom.colours[atom.colourId])
+		//atom.colour = Colour.splash(atom.colours[atom.colourId])
+		if (atom === squareTool) {
+			atom.isGradient = true
+			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+		} else {
+			atom.colour = Colour.splash(999)
+			atom.borderColour = Colour.splash(999)
+		}
 	}
 
 	triangleTool.update = squareTool.update
