@@ -586,7 +586,7 @@ on.load(() => {
 		let borderGreen = Colour.Void.green
 		let borderBlue = Colour.Void.blue
 
-		if (width <= 2 || bottom-top <= 2) {
+		if (width <= 3 || bottom-top <= 3) {
 			/*
 			borderRed = Colour.Void.red
 			borderGreen = Colour.Void.green
@@ -596,6 +596,20 @@ on.load(() => {
 			borderRed = red
 			borderGreen = green
 			borderBlue = blue
+
+			for (let y = top; y < bottom; y++) {
+				for (let x = left; x < right; x++) { 
+					data[id] = red
+					data[id+1] = green
+					data[id+2] = blue
+					id += 4
+					//pixelCount++
+				}
+				id += iy
+				id -= sx
+			}
+
+			return 1
 		}
 
 		const left1 = left + 1
