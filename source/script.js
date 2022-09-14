@@ -958,6 +958,10 @@ on.load(() => {
 
 		else if (Keyboard.Control) {
 			CT_SCALE -= dy * 0.1
+			const allAtoms = getAllAtoms()
+			for (const atom of allAtoms) {
+				atom.needsColoursUpdate = true
+			}
 		}
 		
 		else if (Keyboard.Shift) {
@@ -3697,7 +3701,7 @@ registerRule(
 
 
 					if (atom.isGradient) {
-						colourTodeContext.putImageData(atom.gradient, X, Y)
+						colourTodeContext.putImageData(atom.gradient, X * CT_SCALE, Y * CT_SCALE)
 					} else {
 
 						colourTodeContext.fill("evenodd")
@@ -4000,7 +4004,7 @@ registerRule(
 			atom.joinColourIds = []
 			atom.variableAtoms = []
 
-			atom.gradient = new ImageData(atom.width, atom.height)
+			atom.gradient = new ImageData(atom.width * CT_SCALE, atom.height * CT_SCALE)
 
 		},
 
@@ -4074,69 +4078,8 @@ registerRule(
 					atom.isGradient = false
 					if (true || atom.colours.length > 1) {
 						atom.isGradient = true
-						let minRed = Infinity
-						let maxRed = -Infinity
-						let minGreen = Infinity
-						let maxGreen = -Infinity
-						let minBlue = Infinity
-						let maxBlue = -Infinity
-
-						for (const colour of atom.colours) {
-							const [r, g, b] = getRGB(colour)
-							if (r < minRed) minRed = r
-							if (r > maxRed) maxRed = r
-							if (g < minGreen) minGreen = g
-							if (g > maxGreen) maxGreen = g
-							if (b < minBlue) minBlue = b
-							if (b > maxBlue) maxBlue = b
-						}
-
-						const gradientColours = [
-							Colour.splash(minRed + minGreen + minBlue), //000
-							Colour.splash(minRed + minGreen + maxBlue), //001
-							Colour.splash(minRed + maxGreen + minBlue), //010
-							Colour.splash(minRed + maxGreen + maxBlue), //011
-							Colour.splash(maxRed + minGreen + minBlue), //100
-							Colour.splash(maxRed + minGreen + maxBlue), //101
-							Colour.splash(maxRed + maxGreen + minBlue), //110
-							Colour.splash(maxRed + maxGreen + maxBlue), //111
-						]
-
-						const gradientPoints = [
-							[0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
-							[0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
-							[0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
-						]
-
-						const getDistancesFromGradientPoints = (x, y) => {
-							const distances = []
-							for (const [px, py] of gradientPoints) {
-								const displacement = [px-x, py-y]
-								const distance = Math.hypot(...displacement)
-								distances.push(distance)
-							}
-							return distances
-						}
-
-						let i = 0
-						for (let x = 0; x < atom.width; x++) {
-							for (let y = 0; y < atom.height; y++) {
-								const distances = getDistancesFromGradientPoints(x / atom.width, y / atom.height)
-								const sumValues = [0, 0, 0]
-								for (let i = 0; i < 8; i++) {
-									const distance = distances[i]
-									const score = 1.0 - clamp(distance, 0.0, 1.0)
-									const colour = gradientColours[i]
-									;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
-								}
-								const values = sumValues.map(value => value / 4)
-								atom.gradient.data[i] = values[0]
-								atom.gradient.data[i+1] = values[1]
-								atom.gradient.data[i+2] = values[2]
-								atom.gradient.data[i+3] = 255
-								i += 4
-							}
-						}
+						atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE)
+						
 					}
 					atom.colourId = Random.Uint32 % atom.colours.length
 					atom.needsColoursUpdate = false
@@ -4577,6 +4520,74 @@ registerRule(
 
 		size: 40,
 		expanded: false,
+	}
+	
+	const gradientPoints = [
+		[0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+		[0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+		[0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
+	]
+
+	const getDistancesFromGradientPoints = (x, y) => {
+		const distances = []
+		for (const [px, py] of gradientPoints) {
+			const displacement = [px-x, py-y]
+			const distance = Math.hypot(...displacement)
+			distances.push(distance)
+		}
+		return distances
+	}
+
+	const getGradientImageFromColours = (colours, width, height) => {
+		const gradient = new ImageData(width, height)
+		let minRed = Infinity
+		let maxRed = -Infinity
+		let minGreen = Infinity
+		let maxGreen = -Infinity
+		let minBlue = Infinity
+		let maxBlue = -Infinity
+
+		for (const colour of colours) {
+			const [r, g, b] = getRGB(colour)
+			if (r < minRed) minRed = r
+			if (r > maxRed) maxRed = r
+			if (g < minGreen) minGreen = g
+			if (g > maxGreen) maxGreen = g
+			if (b < minBlue) minBlue = b
+			if (b > maxBlue) maxBlue = b
+		}
+
+		const gradientColours = [
+			Colour.splash(minRed + minGreen + minBlue), //000
+			Colour.splash(minRed + minGreen + maxBlue), //001
+			Colour.splash(minRed + maxGreen + minBlue), //010
+			Colour.splash(minRed + maxGreen + maxBlue), //011
+			Colour.splash(maxRed + minGreen + minBlue), //100
+			Colour.splash(maxRed + minGreen + maxBlue), //101
+			Colour.splash(maxRed + maxGreen + minBlue), //110
+			Colour.splash(maxRed + maxGreen + maxBlue), //111
+		]
+
+		let i = 0
+		for (let x = 0; x < width; x++) {
+			for (let y = 0; y < height; y++) {
+				const distances = getDistancesFromGradientPoints(x / width, y / height)
+				const sumValues = [0, 0, 0]
+				for (let i = 0; i < 8; i++) {
+					const distance = distances[i]
+					const score = 1.0 - clamp(distance, 0.0, 1.0)
+					const colour = gradientColours[i]
+					;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
+				}
+				const values = sumValues.map(value => value / 4)
+				gradient.data[i] = values[0]
+				gradient.data[i+1] = values[1]
+				gradient.data[i+2] = values[2]
+				gradient.data[i+3] = 255
+				i += 4
+			}
+		}
+		return gradient
 	}
 
 	const TRIANGLE_RIGHT = {
@@ -6848,6 +6859,14 @@ registerRule(
 			paddle.registry = registerRule(rule)
 			//debugRegistry(paddle.registry, {redundants: false})
 		}
+	}
+
+	const getAllAtoms = (pool = state.colourTode.atoms) => {
+		const atoms = [...pool]
+		for (const atom of atoms) {
+			atoms.push(...getAllAtoms(atom.children))
+		}
+		return atoms
 	}
 
 	const getAllBaseAtoms = () => {
