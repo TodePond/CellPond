@@ -3871,6 +3871,7 @@ registerRule(
 					blue.needsColoursUpdate = true
 					//blue.grab = () => atom
 					atom.blue = blue
+					blue.deletedOptions = atom.deletedBlueOptions
 					if (atom.blueExpanded) atom.blue.click(atom.blue)
 					atom.blue.attached = true
 				} else {
@@ -3897,6 +3898,7 @@ registerRule(
 					green.needsColoursUpdate = true
 					//green.grab = () => atom
 					atom.green = green
+					green.deletedOptions = atom.deletedGreenOptions
 					if (atom.greenExpanded) atom.green.click(atom.green)
 					atom.green.attached = true
 				} else {
@@ -3923,6 +3925,7 @@ registerRule(
 					red.needsColoursUpdate = true
 					//red.grab = () => atom
 					atom.red = red
+					red.deletedOptions = atom.deletedRedOptions
 					if (atom.redExpanded) atom.red.click(atom.red)
 					atom.red.attached = true
 				} else {
@@ -3944,9 +3947,18 @@ registerRule(
 		deletePicker: (atom) => {
 			deleteChild(atom, atom.pickerPad)
 			deleteChild(atom, atom.pickerHandle)
-			if (atom.red) deleteChild(atom, atom.red)
-			if (atom.green) deleteChild(atom, atom.green)
-			if (atom.blue) deleteChild(atom, atom.blue)
+			if (atom.red) {
+				atom.deletedRedOptions = atom.red.options
+				deleteChild(atom, atom.red)
+			}
+			if (atom.green) {
+				atom.deletedGreenOptions = atom.green.options
+				deleteChild(atom, atom.green)
+			}
+			if (atom.blue) {
+				atom.deletedBlueOptions = atom.blue.options
+				deleteChild(atom, atom.blue)
+			}
 		},
 
 		receiveNumber: (atom, number, channel = number.channel, {expanded, numberAtom} = {}) => {
@@ -5532,6 +5544,10 @@ registerRule(
 
 		deleteOptions: (atom) => {
 
+			if (atom.options !== undefined) {
+				atom.deletedOptions = atom.options
+			}
+
 			for (const option of atom.options) {
 				if (atom !== option) deleteChild(atom, option)
 			}
@@ -5592,7 +5608,10 @@ registerRule(
 					option.colours = colours
 					option.colourTicker = Infinity
 					if (option !== atom) {
-						option.updateColours(option)
+						option.needsColoursUpdateCountdown = i
+						option.needsColoursUpdate = false
+						//option.needsColoursUpdate = true
+						//option.updateColours(option)
 					}
 				}
 			}
@@ -5628,6 +5647,7 @@ registerRule(
 
 		createOptions: (atom) => {
 
+			const oldOptions = atom.deletedOptions
 			atom.options = []
 
 			let startId = undefined
@@ -5656,6 +5676,10 @@ registerRule(
 
 			for (let i = 0; i < 10; i++) {
 				if (centerOptionId === 9-i) {
+					if (oldOptions !== undefined) {
+						//atom.isGradient = true
+						//atom.gradient = oldOptions[i].gradient
+					}
 					atom.options.push(atom)
 					continue
 				}
@@ -5663,12 +5687,19 @@ registerRule(
 				const pityTop = i !== 9 - endId + 1
 				const pityBottom = i !== 9 - startId - 1
 				const option = createChild(atom, {...COLOURTODE_PICKER_CHANNEL_OPTION, pityTop, pityBottom})
+				
+				if (oldOptions !== undefined) {
+					option.isGradient = true
+					option.gradient = oldOptions[i].gradient
+				}
 
 				option.y = top + i * optionSpacing
 				option.value = 9 - i
 				//option.colourTicker = Infinity
 				//option.needsColoursUpdate = true
-				option.updateColours(option)
+				option.needsColoursUpdateCountdown = i
+				option.needsColoursUpdate = true
+				//option.updateColours(option)
 				atom.options.push(option)
 			}
 
@@ -5801,6 +5832,19 @@ registerRule(
 		colourId: 0,
 		dcolourId: 1,
 		update: (atom) => {
+
+			if (atom.needsColoursUpdateCountdown >= 0) {
+				atom.needsColoursUpdateCountdown--
+				if (atom.needsColoursUpdateCountdown < 0) {
+					atom.needsColoursUpdate = true
+				}
+			}
+
+			if (atom.needsColoursUpdate) {
+				atom.updateColours(atom)
+				atom.needsColoursUpdateCountdown = -1
+				atom.needsColoursUpdate = false
+			}
 		},
 
 		getId: (atom) => {			
