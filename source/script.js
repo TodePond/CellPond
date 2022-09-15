@@ -3792,6 +3792,12 @@ registerRule(
 		return false
 	}
 
+	const setBrushColour = (value) => {
+		const diagramCell = makeDiagramCell({content: value})
+		state.brush.colour = makeDiagram({left: [diagramCell]})
+		squareTool.toolbarNeedsColourUpdate = true
+	}
+
 	const COLOURTODE_SQUARE = {
 		//behindChildren: true,
 		isSquare: true,
@@ -3834,8 +3840,7 @@ registerRule(
 				atom.unexpand(atom)
 			}
 
-			const diagramCell = makeDiagramCell({content: atom.value})
-			state.brush.colour = makeDiagram({left: [diagramCell]})
+			setBrushColour(atom.value)
 		},
 
 		expand: (atom) => {
