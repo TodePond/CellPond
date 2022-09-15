@@ -895,12 +895,16 @@ on.load(() => {
 
 		if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
 			const cell = pickCell(...getCursorView(x, y))
-			if (cell !== undefined)	state.brush.hoverColour = Colour.splash(cell.colour)
+			if (cell !== undefined)	state.brush.hoverColour = cell.colour.d
 		} else {
 			const atom = getAtom(x / CT_SCALE, y / CT_SCALE)
 
 			if (atom !== undefined) {
-				state.brush.hoverColour = atom.colour
+				if (atom.isSquare || atom === squareTool) {
+					state.brush.hoverColour = atom.value
+				} else {
+					state.brush.hoverColour = atom.colour.splash
+				}
 			} else {
 				state.brush.hoverColour = Colour.Void
 			}
@@ -921,11 +925,11 @@ on.load(() => {
 							brushColourCycleIndex = 0
 						}
 
-						state.brush.colour = brushColourCycle[brushColourCycleIndex]
+						setBrushColour(brushColourCycle[brushColourCycleIndex])
 					}
 
 					else {
-						state.brush.colour = state.brush.hoverColour.splash
+						setBrushColour(state.brush.hoverColour)
 					}
 
 					squareTool.toolbarNeedsColourUpdate = true
@@ -3793,9 +3797,14 @@ registerRule(
 	}
 
 	const setBrushColour = (value) => {
-		const diagramCell = makeDiagramCell({content: value})
-		state.brush.colour = makeDiagram({left: [diagramCell]})
-		squareTool.toolbarNeedsColourUpdate = true
+		if (typeof value === "number") {
+			state.brush.colour = value
+			squareTool.toolbarNeedsColourUpdate = true
+		} else {
+			const diagramCell = makeDiagramCell({content: value})
+			state.brush.colour = makeDiagram({left: [diagramCell]})
+			squareTool.toolbarNeedsColourUpdate = true
+		}
 	}
 
 	const COLOURTODE_SQUARE = {
@@ -7797,7 +7806,5 @@ registerRule(
 	circleTool.update = squareTool.update
 	wideRectangleTool.update = squareTool.update
 	tallRectangleTool.update = squareTool.update
-
 	
-
 })
