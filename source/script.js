@@ -4657,7 +4657,7 @@ registerRule(
 		const points = getWarpedGradientPoints(width, height)
 		let i = 0
 		for (let x = 0; x < width; x++) {
-			for (let y = 0; y < height; y += dy) {
+			for (let y = 0; y < height; y++) {
 				const distances = getDistancesFromGradientPoints(x / width, y / height, points)
 				const scores = getGradientPointScoresFromDistances(distances)
 				const sumValues = [0, 0, 0]
@@ -6801,6 +6801,14 @@ registerRule(
 	const updatePaddleRule = (paddle) => {
 
 		if (!paddle.expanded) return
+
+		if (paddle.rightTriangle !== undefined) {
+			if (paddle.pinhole.locked) {
+				paddle.rightTriangle.colour = Colour.splash(999)
+			} else {
+				paddle.rightTriangle.colour = Colour.splash(000)
+			}
+		}
 
 		let transformations = DRAGON_TRANSFORMATIONS.NONE
 		if (paddle.hasSymmetry) {
