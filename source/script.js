@@ -978,6 +978,7 @@ on.load(() => {
 			for (const atom of allAtoms) {
 				atom.needsColoursUpdate = true
 			}
+			squareTool.toolbarNeedsColourUpdate = true
 		}
 		
 		else if (Keyboard.Shift) {
