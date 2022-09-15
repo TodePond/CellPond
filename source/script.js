@@ -3694,14 +3694,11 @@ registerRule(
 
 					let border = BORDER_THICKNESS
 					if (atom.borderColour === undefined) {
-						colourTodeContext.fillStyle = borderColours[atom.colour.splash]
+						colourTodeContext.fillStyle = Colour.splash(atom.colour.splash)
 						if (atom.isTool) {
-							colourTodeContext.fillStyle = toolBorderColours[atom.colour.splash]
+							colourTodeContext.fillStyle = Colour.splash(atom.colour.splash)
 							border *= 1.5
-							/*W += BORDER_THICKNESS
-							H += BORDER_THICKNESS
-							Y -= BORDER_THICKNESS/2*/
-						} else if (atom.width === atom.height/* || atom.isTallRectangle*/) {
+						} else if (atom.width === atom.height) {
 							border *= 1.5
 						}
 					}
@@ -5647,7 +5644,7 @@ registerRule(
 
 		createOptions: (atom) => {
 
-			const oldOptions = atom.deletedOptions
+			const oldOptions = atom.parent.isSquare ? atom.deletedOptions : undefined
 			atom.options = []
 
 			let startId = undefined
@@ -5874,7 +5871,7 @@ registerRule(
 			parent.value = number
 			parent.deleteOptions(parent)
 			parent.createOptions(parent)
-			parent.updateColours(parent)
+			parent.needsColoursUpdate = true
 
 			if (parent.parent.isSquare) {
 				const square = parent.parent
