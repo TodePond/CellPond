@@ -4954,6 +4954,8 @@ registerRule(
 		click: (atom) => {
 			
 			if (atom.parent.isPaddle) {
+				atom.parent.pinhole.locked = !atom.parent.pinhole.locked
+				updatePaddleRule(atom.parent)
 				return
 			}
 
