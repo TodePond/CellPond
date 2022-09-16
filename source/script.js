@@ -4613,8 +4613,8 @@ registerRule(
 		const ogWidth = width
 		const ogHeight = height
 		;[width, height] = [width, height].map(dimension => Math.round(dimension))
-		const size = Math.max(width, height)
-		width = height = size
+		//const size = Math.max(width, height)
+		//width = height = size
 		const newLength = ogWidth * ogHeight * 4
 		if (gradient.data.length !== newLength) {
 			gradient = new ImageData(ogWidth, ogHeight)
@@ -4673,8 +4673,8 @@ registerRule(
 
 		const points = getWarpedGradientPoints(width, height)
 		let i = 0
-		for (let x = 0; x < width; x++) {
-			for (let y = 0; y < height; y++) {
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
 				const distances = getDistancesFromGradientPoints(x / width, y / height, points)
 				const scores = getGradientPointScoresFromDistances(distances)
 				const sumValues = [0, 0, 0]
