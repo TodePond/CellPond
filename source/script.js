@@ -3076,6 +3076,7 @@ registerRule(
 
 		mousedown: (e) => {
 			if (!state.worldBuilt) return
+			hand.voidingStart = [e.clientX, e.clientY]
 			changeHandState(HAND.VOIDING)
 		},
 
@@ -3104,6 +3105,16 @@ registerRule(
 	let voidingType = true
 	HAND.VOIDING = {
 		cursor: "auto",
+		mousemove: (e) => {
+			const start = hand.voidingStart
+			const [sx, sy] = start
+			const displacement = [e.clientX - sx, e.clientY - sy]
+			const distance = Math.hypot(...displacement)
+			if (distance > 10) {
+				changeHandState(HAND.FREE)
+				HAND.FREE.mousemove(e)
+			}
+		},
 		mouseup: (e) => {
 			const oldWorldSize = WORLD_SIZE
 			setWorldSize(0)
