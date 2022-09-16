@@ -895,7 +895,7 @@ on.load(() => {
 
 		if (hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
 			const cell = pickCell(...getCursorView(x, y))
-			if (cell !== undefined)	state.brush.hoverColour = cell.colour.d
+			if (cell !== undefined)	state.brush.hoverColour = cell.colour
 		} else {
 			const atom = getAtom(x / CT_SCALE, y / CT_SCALE)
 
@@ -4069,39 +4069,8 @@ registerRule(
 						atom.multiAtoms.push(multiAtom)
 					}
 				}
-				
-				if (atom.joinDrawId === undefined) {
-					atom.joinDrawId = -1
-					atom.joinDrawTimer = 0
-				}
-
-				atom.joinDrawTimer++
-				if (atom.joinDrawTimer >= 45) {
-					atom.joinDrawId++
-					atom.needsColoursUpdate = true
-					atom.colourTicker = Infinity
-					if (atom.joinDrawId >= atom.joins.length) {
-						atom.joinDrawId = -1
-					}
-					atom.joinDrawTimer = 0
-				}
-				
 
 			} else {
-
-				if (atom.joinDrawId === undefined) {
-					atom.joinDrawId = -1
-					atom.joinDrawTimer = 0
-				}
-
-				atom.joinDrawTimer++
-				if (atom.joinDrawTimer >= 45) {
-					atom.joinDrawId++
-					if (atom.joinDrawId >= atom.joins.length) {
-						atom.joinDrawId = -1
-					}
-					atom.joinDrawTimer = 0
-				}
 
 				if (atom.needsColoursUpdate) {
 
@@ -4610,6 +4579,7 @@ registerRule(
 	}
 
 	const getGradientImageFromColours = (colours, width, height, gradient = new ImageData(width, height)) => {
+		
 		const ogWidth = width
 		const ogHeight = height
 		;[width, height] = [width, height].map(dimension => Math.round(dimension))
@@ -7753,6 +7723,7 @@ registerRule(
 
 			if (atom === squareTool) {
 				if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
+					atom.previousBrushColour = state.brush.colour
 					if (atom.multiAtoms === undefined) {
 						atom.multiAtoms = []
 					}
