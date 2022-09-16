@@ -4089,7 +4089,13 @@ registerRule(
 					atom.isGradient = false
 					if (true || atom.colours.length > 1) {
 						atom.isGradient = true
-						atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
+						atom.gradient = getGradientImageFromColours({
+							colours: atom.colours,
+							width: atom.width * CT_SCALE,
+							height: atom.height * CT_SCALE,
+							gradient: atom.gradient,
+							stamp: atom.value.stamp,
+						})
 						
 					}
 					atom.colourId = Random.Uint32 % atom.colours.length
@@ -4567,8 +4573,6 @@ registerRule(
 	}
 
 	const getGradientPointScoresFromDistances = (distances) => {
-		const min = Math.min(...distances)
-		const max = Math.max(...distances)
 		const scores = []
 		for (const distance of distances) {
 			//if (distance === min) scores.push(distance**2)
@@ -4578,7 +4582,7 @@ registerRule(
 		return scores
 	}
 
-	const getGradientImageFromColours = (colours, width, height, gradient = new ImageData(width, height)) => {
+	const getGradientImageFromColours = ({colours, width, height, gradient = new ImageData(width, height), stamp}) => {
 		
 		const ogWidth = width
 		const ogHeight = height
@@ -4645,6 +4649,7 @@ registerRule(
 		let i = 0
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
+
 				const distances = getDistancesFromGradientPoints(x / width, y / height, points)
 				const scores = getGradientPointScoresFromDistances(distances)
 				const sumValues = [0, 0, 0]
@@ -4655,10 +4660,20 @@ registerRule(
 					;[0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel])
 				}
 				const values = sumValues.map(value => value / sumScore)
-				gradient.data[i] = values[0]
-				gradient.data[i+1] = values[1]
-				gradient.data[i+2] = values[2]
-				gradient.data[i+3] = 255
+				if (stamp === "circle" && x >= width/4 && x < width*3/4 && y >= height/4 && y < height*3/4) {
+					/*
+					gradient.data[i] = values[0] / 3*2
+					gradient.data[i+1] = values[1] / 3*2
+					gradient.data[i+2] = values[2] / 3*2
+					*/
+					gradient.data[i+3] = 0
+				} else {
+					gradient.data[i] = values[0]
+					gradient.data[i+1] = values[1]
+					gradient.data[i+2] = values[2]
+					gradient.data[i+3] = 255
+				}
+
 				i += 4
 				if (i >= gradient.data.length) break
 			}
@@ -5014,9 +5029,11 @@ registerRule(
 				if (square.stamp === undefined) {
 					square.stamp = "circle"
 					square.value.stamp = "circle"
+					square.needsColoursUpdate = true
 				} else {
 					square.stamp = undefined
 					square.value.stamp = undefined
+					square.needsColoursUpdate = true
 				}
 
 				const diagramCell = makeDiagramCell({content: square.value})
@@ -5265,7 +5282,12 @@ registerRule(
 				if (atom.needsColoursUpdate) {
 					atom.needsColoursUpdate = false
 					atom.isGradient = true
-					atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
+					atom.gradient = getGradientImageFromColours({
+						colours: atom.colours,
+						width: atom.width * CT_SCALE,
+						height: atom.height * CT_SCALE,
+						gradient: atom.gradient
+					})
 					atom.updateColours(atom)
 				}
 			}
@@ -5310,7 +5332,12 @@ registerRule(
 				}
 
 				atom.isGradient = true
-				atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
+				atom.gradient = getGradientImageFromColours({
+					colours: atom.colours,
+					width: atom.width * CT_SCALE,
+					height: atom.height * CT_SCALE,
+					gradient: atom.gradient
+				})
 			}
 
 			atom.highlightedAtom = undefined
@@ -5844,7 +5871,12 @@ registerRule(
 
 		updateColours: (atom) => {
 			atom.isGradient = true
-			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
+			atom.gradient = getGradientImageFromColours({
+				colours: atom.colours,
+				width: atom.width * CT_SCALE,
+				height: atom.height * CT_SCALE,
+				gradient: atom.gradient
+			})
 		},
 
 		touch: (atom) => {
@@ -7768,7 +7800,13 @@ registerRule(
 		if (atom.toolbarNeedsColourUpdate && atom === squareTool) {
 			atom.toolbarNeedsColourUpdate = false
 			atom.isGradient = true
-			atom.gradient = getGradientImageFromColours(atom.colours, atom.width * CT_SCALE, atom.height * CT_SCALE, atom.gradient)
+			atom.gradient = getGradientImageFromColours({
+				colours: atom.colours,
+				width: atom.width * CT_SCALE,
+				height: atom.height * CT_SCALE,
+				gradient: atom.gradient,
+				stamp: atom.value.stamp,
+			})
 		} else {
 			atom.colour = Colour.splash(999)
 			atom.borderColour = Colour.splash(999)
