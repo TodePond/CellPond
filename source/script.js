@@ -337,6 +337,7 @@ const addCell = (cell) => {
 
 const deleteCell = (cell) => {
 	uncacheCell(cell)
+	cell.isDeleted = true
 	state.cellCount--
 }
 
@@ -520,11 +521,11 @@ on.load(() => {
 		if (!isCellVisible(cell)) return 0
 		drawQueuePriority.add(cell)
 		drawQueue.delete(cell)
-		return 1
+		return 0.01
 	}
 
 	const setCellColour = (cell, colour, override = false) => {
-		
+		if (cell.isDeleted) return 0
 		cell.colour = colour
 		if (!isCellVisible(cell)) return 0
 		
