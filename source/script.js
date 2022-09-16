@@ -3065,13 +3065,18 @@ registerRule(
 			}
 
 			const [mx, my] = Mouse.position
-			if (mx < state.view.left) return
-			if (mx > state.view.right) return
-			if (my < state.view.top) return
-			if (my > state.view.bottom) return
+
+			if (mx < state.view.left || mx > state.view.right || my < state.view.top || my > state.view.bottom) {
+				return
+			}
 			if (Mouse.Left) changeHandState(HAND.BRUSHING)
 			else if (Mouse.Middle) changeHandState(HAND.PENCILLING)
 			else changeHandState(HAND.BRUSH)
+		},
+
+		mousedown: (e) => {
+			if (!state.worldBuilt) return
+			changeHandState(HAND.VOIDING)
 		},
 
 		atommove: (atom, mx, my) => {
@@ -3093,6 +3098,27 @@ registerRule(
 				changeHandState(HAND.BRUSH)
 				return
 			}
+		},
+	}
+
+	let voidingType = true
+	HAND.VOIDING = {
+		cursor: "auto",
+		mouseup: (e) => {
+			const oldWorldSize = WORLD_SIZE
+			setWorldSize(0)
+			if (voidingType) {
+				brush(0.5, 0.5)
+			} else {
+				const oldBrushColour = state.brush.colour
+				state.brush.colour = 666
+				brush(0.5, 0.5)
+				state.brush.colour = oldBrushColour
+				state.worldBuilt = false
+			}
+			voidingType = !voidingType
+			setWorldSize(oldWorldSize)
+			changeHandState(HAND.FREE)
 		},
 	}
 
