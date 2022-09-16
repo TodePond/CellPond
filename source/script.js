@@ -3880,7 +3880,7 @@ registerRule(
 
 			else if (!atom.expanded) {
 
-				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
+				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.isPaddle) {
 					atom.expand(atom)
 				}
 
@@ -4365,6 +4365,9 @@ registerRule(
 					atom.dy = 0
 					
 					updatePaddleSize(paddle)
+					if (atom.expanded) {
+						atom.unexpand(atom)
+					}
 
 					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
 						registerAtom(atom.slotted)
@@ -4385,6 +4388,9 @@ registerRule(
 					atom.slottee = true
 
 					updatePaddleSize(slot.parent)
+					if (atom.expanded) {
+						atom.unexpand(atom)
+					}
 				}
 				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle && !(atom.highlightedAtom.joins.length > 0 && atom.highlightedAtom.joinExpanded)) {
 
@@ -4393,6 +4399,9 @@ registerRule(
 					atom.attached = true
 					giveChild(paddle, atom)
 					paddle.cellAtoms.push(atom)
+					if (atom.expanded) {
+						atom.unexpand(atom)
+					}
 
 					if (atom.highlightedSide === "left") {
 						atom.x = square.x - atom.width
@@ -4448,6 +4457,9 @@ registerRule(
 					const diagramCell = makeDiagramCell({content: joinee.value})
 					state.brush.colour = makeDiagram({left: [diagramCell]})
 					
+					if (atom.expanded) {
+						atom.unexpand(atom)
+					}
 					
 				}
 
