@@ -4621,38 +4621,43 @@ registerRule(
 
 		rightDraggable: true,
 		rightDrag: (atom) => {
-			const {x, y} = getAtomPosition(atom)
-			const clone = makeAtom(COLOURTODE_SQUARE)
-			hand.offset.x -= atom.x - x
-			hand.offset.y -= atom.y - y
-			clone.x = x
-			clone.y = y
+			const newAtom = makeAtom({...COLOURTODE_SQUARE, x: atom.x, y: atom.y})
+			registerAtom(newAtom)
 
-			const dragonArray = cloneDragonArray(atom.value)
-			clone.value = dragonArray
-
-			if (clone.value.joins !== undefined) {
-				for (const j of clone.value.joins) {
-					const joinAtom = makeAtom(COLOURTODE_SQUARE)
-					joinAtom.value = j
-					clone.joins.push(joinAtom)
+			if (newAtom.value !== undefined) {
+				if (newAtom.value.joins !== undefined) {
+					for (const j of newAtom.value.joins) {
+						const joinAtom = makeAtom(COLOURTODE_SQUARE)
+						joinAtom.value = j
+						newAtom.joins.push(joinAtom)
+					}
 				}
+				newAtom.stamp = newAtom.value.stamp
+
 			}
-			clone.stamp = clone.value.stamp
-			registerAtom(clone)
+			
+			if (newAtom.isSquare && !newAtom.value.isDiagram) {
 
-			/*if (atom.slotted !== undefined) {
-				clone.slotted = makeAtom(COLOURTODE_SQUARE)
-				const slottedDragonArray = cloneDragonArray(atom.slotted.value)
-				clone.slotted.value = slottedDragonArray
-				//registerAtom(clone)
-			}*/
+				for (let i = 0; i < 3; i++) {
+					const channel = newAtom.value.channels[i]
+					if (channel === undefined) continue
+					if (channel.variable === undefined) continue
+					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
+					newAtom.variableAtoms[i] = diamond
+					diamond.expand(diamond)
+					diamond.value = cloneDragonNumber(channel)
+					diamond.variable = channel.variable
+					diamond.makeOperationAtoms(diamond)
+					diamond.unexpand(diamond)
+				}
 
-			if (clone.value.isDiagram) {
-				clone.update(clone)
 			}
 
-			return clone
+			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
+				newAtom.update(newAtom)
+			}
+
+			return newAtom
 		},
 
 		drag: (atom) => {
@@ -5269,6 +5274,19 @@ registerRule(
 
 		},
 
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const clone = makeAtom(COLOURTODE_TRIANGLE)
+			clone.direction = atom.direction
+			const {x, y} = getAtomPosition(atom)
+			hand.offset.x -= atom.x - x
+			hand.offset.y -= atom.y - y
+			clone.x = x
+			clone.y = y
+			registerAtom(clone)
+			return clone
+		},
+
 		drag: (atom) => {
 			if (!atom.parent.isPaddle) return atom
 			const paddle = atom.parent
@@ -5353,6 +5371,21 @@ registerRule(
 		grab: (atom) => {
 			//if (atom.parent.isSquare) return atom.parent
 			return atom
+		},
+
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const clone = makeAtom(COLOURTODE_PICKER_CHANNEL)
+			registerAtom(clone)
+			const {x, y} = getAtomPosition(atom)
+			hand.offset.x -= atom.x - x
+			hand.offset.y -= atom.y - y
+			clone.value = cloneDragonNumber(atom.value)
+			if (atom.expanded) {
+				clone.createOptions(clone)
+				clone.expanded = true
+			}
+			return clone
 		},
 
 		drag: (atom) => {
@@ -6131,9 +6164,25 @@ registerRule(
 		"blue",
 	]
 
+	// DIAMOND
 	const COLOURTODE_TALL_RECTANGLE = {
 		behindChildren: true,
 		highlighter: true,
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const clone = makeAtom(COLOURTODE_TALL_RECTANGLE)
+			registerAtom(clone)
+			const {x, y} = getAtomPosition(atom)
+			hand.offset.x -= atom.x - x
+			hand.offset.y -= atom.y - y
+			print(atom)
+			clone.variable = atom.variable
+			if (atom.expanded) {
+				clone.expand(clone)
+			}
+			clone.updateAppearance(clone)
+			return clone
+		},
 		drag: (atom) => {
 			if (atom.parent.isSquare) {
 				const square = atom.parent
@@ -6707,7 +6756,24 @@ registerRule(
 				return square
 			}
 			return paddle
-		}
+		},
+
+		rightDraggable: true,
+		rightDrag: (paddle) => {
+			if (paddle.cellAtoms.length === 0) return paddle
+			const square = makeAtom(COLOURTODE_SQUARE)
+			hand.offset.x = -square.width/2
+			hand.offset.y = -square.height/2
+			const cells = makeDiagramCellsFromCellAtoms(paddle.cellAtoms)
+			const diagram = makeDiagram({left: cells})
+			normaliseDiagram(diagram)
+
+			square.value = diagram
+			registerAtom(square)
+			state.brush.colour = makeDiagram({left: [makeDiagramCell({content: diagram})]})
+			square.update(square)
+			return square
+		},
 	}
 
 	const fillPoints = (colour, points) => {
@@ -7533,6 +7599,19 @@ registerRule(
 
 			return atom
 		},
+
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const clone = makeAtom(SYMMETRY_CIRCLE)
+			clone.value = atom.value
+			const {x, y} = getAtomPosition(atom)
+			hand.offset.x -= atom.x - x
+			hand.offset.y -= atom.y - y
+			clone.x = x
+			clone.y = y
+			registerAtom(clone)
+			return clone
+		},
 	}
 
 	const HIGHLIGHT_THICKNESS = BORDER_THICKNESS
@@ -7937,7 +8016,7 @@ registerRule(
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
 	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	//menuRight += BORDER_THICKNESS
-	const tallRectangleTool = addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
+	const tallRectangleTool = {} //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
 	createPaddle()
 
 	circleTool.borderScale = 1
