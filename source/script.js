@@ -5166,7 +5166,6 @@ registerRule(
 				const others = getAllBaseAtoms()
 				for (const other of others) {
 					if (!other.isSquare) continue
-					if (other.parent.isPaddle && other.parent.pinhole.locked) continue
 					
 					const {x: px, y: py} = getAtomPosition(other)
 					const pleft = px
