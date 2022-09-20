@@ -6513,7 +6513,6 @@ registerRule(
 
 			updatePaddleSize(paddle)
 
-
 		},
 
 		setLimits: (paddle) => {
@@ -6547,8 +6546,14 @@ registerRule(
 			paddle.dx = 0
 		},
 
+		click: (paddle) => {
+			const cells = makeDiagramCellsFromCellAtoms(paddle.cellAtoms)
+			const diagram = makeDiagram({left: cells})
+			setBrushColour(diagram)
+		},
+
 		drag: (paddle, x, y) => {
-			if (paddle.pinhole.locked) {
+			if (false && paddle.pinhole.locked) {
 				const square = makeAtom(COLOURTODE_SQUARE)
 				hand.offset.x = -square.width/2
 				hand.offset.y = -square.height/2
