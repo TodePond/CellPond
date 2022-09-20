@@ -956,14 +956,15 @@ on.load(() => {
 			dropperMovement = 0
 		}
 
-
-		const {x: px, y: py} = state.cursor.previous
-		if (px === undefined || py === undefined) return
-		if (x === undefined || y === undefined) return
-		const [dx, dy] = [x - px, y - py]
-		state.camera.x += dx / state.camera.scale
-		state.camera.y += dy / state.camera.scale
-		updateImageSize()
+		if (hand.state === HAND.FREE || hand.state == HAND.VOIDING || hand.state === HAND.BRUSH || hand.state === HAND.BRUSHING || hand.state === HAND.PENCILLING) {
+			const {x: px, y: py} = state.cursor.previous
+			if (px === undefined || py === undefined) return
+			if (x === undefined || y === undefined) return
+			const [dx, dy] = [x - px, y - py]
+			state.camera.x += dx / state.camera.scale
+			state.camera.y += dy / state.camera.scale
+			updateImageSize()
+		}
 	}
 
 	const ZOOM = 0.05
@@ -3231,6 +3232,7 @@ registerRule(
 				hand.pityStartY = e.clientY
 				hand.pityStartT = Date.now()
 				hand.hasStartedDragging = false
+				hand.touchButton = 0
 				changeHandState(HAND.TOUCHING, "move")
 			}
 			else {
@@ -3238,6 +3240,7 @@ registerRule(
 				hand.pityStartY = e.clientY
 				hand.pityStartT = Date.now()
 				hand.hasStartedDragging = false
+				hand.touchButton = 0
 				changeHandState(HAND.TOUCHING)
 			}
 
@@ -3277,6 +3280,31 @@ registerRule(
 				return
 			}
 			changeHandState(HAND.FREE)
+		},
+
+		rightmousedown: (e) => {
+			const atom = getAtom(e.clientX / CT_SCALE, e.clientY / CT_SCALE)
+			if (atom === undefined) return
+			if (!atom.grabbable) return
+			grabAtom(atom, e.clientX / CT_SCALE, e.clientY / CT_SCALE)
+			
+			if (atom.dragOnly) {
+				
+				hand.pityStartX = e.clientX
+				hand.pityStartY = e.clientY
+				hand.pityStartT = Date.now()
+				hand.hasStartedDragging = false
+				hand.touchButton = 2
+				changeHandState(HAND.TOUCHING, "move")
+			}
+			else {
+				hand.pityStartX = e.clientX
+				hand.pityStartY = e.clientY
+				hand.pityStartT = Date.now()
+				hand.hasStartedDragging = false
+				hand.touchButton = 2
+				changeHandState(HAND.TOUCHING)
+			}
 		}
 	}
 
@@ -3289,6 +3317,7 @@ registerRule(
 		cursor: "pointer",
 		mousemove: (e) => {
 			if (e.movementX === 0 && e.movementY === 0) return
+			if (hand.touchButton === 2 && !hand.content.rightDraggable) return
 
 			const distanceFromPityStart = Math.hypot(e.clientX - hand.pityStartX, e.clientY - hand.pityStartY)
 			const pity = DRAG_PITY
@@ -3320,12 +3349,30 @@ registerRule(
 
 			const x = e.clientX / CT_SCALE
 			const y = e.clientY / CT_SCALE
-			if (hand.content.draggable) {				
+			if (hand.touchButton === 0 && hand.content.draggable) {
 				changeHandState(HAND.DRAGGING)
 
 				const attached = hand.content.attached && !hand.content.dragOnly && !hand.content.noDampen
 
 				hand.content = hand.content.drag(hand.content, x, y)
+				
+				if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, attached)) / CT_SCALE + hand.offset.x
+				if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, attached)) / CT_SCALE + hand.offset.y
+
+				hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
+				hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
+
+				/*hand.offset.x = hand.content.x - e.clientX / CT_SCALE
+				hand.offset.y = hand.content.y - e.clientY / CT_SCALE*/
+
+				HAND.DRAGGING.mousemove(e)
+				return
+			} else if (hand.touchButton === 2 && hand.content.rightDraggable) {
+				changeHandState(HAND.DRAGGING)
+
+				const attached = hand.content.attached && !hand.content.dragOnly && !hand.content.noDampen
+
+				hand.content = hand.content.rightDrag(hand.content, x, y)
 				
 				if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, attached)) / CT_SCALE + hand.offset.x
 				if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, attached)) / CT_SCALE + hand.offset.y
@@ -3359,7 +3406,34 @@ registerRule(
 			changeHandState(HAND.FREE)
 		},
 		mouseup: (e) => {
+			if (hand.touchButton !== 0) return
 			hand.clickContent.click(hand.clickContent)
+			hand.clickContent.dx = 0
+			hand.clickContent.dy = 0
+			hand.clickContent = undefined
+
+			if (hand.content.attached) {
+				hand.content.x = hand.pityStartX / CT_SCALE + hand.offset.x
+				hand.content.y = hand.pityStartY / CT_SCALE + hand.offset.y
+			}
+
+			hand.content.dx = 0
+			hand.content.dy = 0
+			hand.content = undefined
+
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
+				else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+				else changeHandState(HAND.HOVER)
+			}
+			else changeHandState(HAND.FREE)
+		},
+		rightmouseup: (e) => {
+			if (hand.touchButton !== 2) return
+			hand.clickContent.rightClick(hand.clickContent)
 			hand.clickContent.dx = 0
 			hand.clickContent.dy = 0
 			hand.clickContent = undefined
@@ -3388,7 +3462,6 @@ registerRule(
 	HAND.DRAGGING = {
 		cursor: "move",
 		mousemove: (e) => {
-
 			if (!hand.hasStartedDragging) {
 				hand.hasStartedDragging = true
 				hand.content = hand.content.drag(hand.content, e.clientX / CT_SCALE, e.clientY / CT_SCALE)
@@ -3411,6 +3484,32 @@ registerRule(
 			//hand.content.dy = hand.velocity.y
 		},
 		mouseup: (e) => {
+			if (hand.touchButton !== 0) return
+			hand.hasStartedDragging = true
+			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
+			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
+			hand.content.drop(hand.content)
+			if (hand.content.highlighter && hand.content.highlightedAtom !== undefined) {
+				hand.content.place(hand.content, hand.content.highlightedAtom)
+			}
+			hand.content = undefined
+			const x = e.clientX / CT_SCALE
+			const y = e.clientY / CT_SCALE
+			const atom = getAtom(x, y)
+			if (atom !== undefined) {
+				if (atom.grabbable) {
+					if (atom.cursor !== undefined) changeHandState(HAND.HOVER, atom.cursor(atom, HAND.HOVER))
+					else if (atom.dragOnly) changeHandState(HAND.HOVER, "move")
+					else changeHandState(HAND.HOVER)
+				}
+				else changeHandState(HAND.FREE)
+				return
+			}
+			else changeHandState(HAND.FREE)
+			return
+		},
+		rightmouseup: (e) => {
+			if (hand.touchButton !== 2) return
 			hand.hasStartedDragging = true
 			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
 			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
@@ -3449,10 +3548,12 @@ registerRule(
 
 		if (e.button === 0) if (hand.state.mousedown) hand.state.mousedown(e)
 		if (e.button === 1) if (hand.state.middlemousedown) hand.state.middlemousedown(e)
+		if (e.button === 2) if (hand.state.rightmousedown) hand.state.rightmousedown(e)
 	})
 	on.mouseup(e => {
 		if (e.button === 0) if (hand.state.mouseup) hand.state.mouseup(e)
 		if (e.button === 1) if (hand.state.middlemouseup) hand.state.middlemouseup(e)
+		if (e.button === 2) if (hand.state.rightmouseup) hand.state.rightmouseup(e)
 		
 	})
 
@@ -3471,7 +3572,9 @@ registerRule(
 			grabbable = true,
 			draggable = true,
 			click = () => {}, // Fires when you mouseup a click on the atom
+			rightClick = () => {},
 			drag = (a) => a, // Fires when you start dragging the atom
+			rightDrag = (a) => a,
 			move = () => {}, // Fires when you start or continue dragging the atom //TODO: change this to be whenever the atom moves for any reason
 			drop = () => {}, // Fires when you let go of the atom after a drag
 			draw = () => {},
@@ -3501,7 +3604,7 @@ registerRule(
 			hasInner = true,
 			...properties
 		} = {}, ...args) => {
-		const atom = {highlighter, place, hover, hasInner, move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, ...properties}
+		const atom = {highlighter, place, hover, hasInner, move, drop, maxX, minX, maxY, minY, update, construct, draggable, width, height, touch, parent, children, draw, grabbable, click, drag, overlaps, offscreen, grab, x, y, dx, dy, size, colour, rightClick, rightDrag, ...properties}
 		atom.construct(atom, ...args)
 		return atom
 	}
@@ -4514,6 +4617,42 @@ registerRule(
 			atom.needsColoursUpdate = true
 			atom.colourTicker = Infinity
 
+		},
+
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+			const clone = makeAtom(COLOURTODE_SQUARE)
+			hand.offset.x -= atom.x - x
+			hand.offset.y -= atom.y - y
+			clone.x = x
+			clone.y = y
+
+			const dragonArray = cloneDragonArray(atom.value)
+			clone.value = dragonArray
+
+			if (clone.value.joins !== undefined) {
+				for (const j of clone.value.joins) {
+					const joinAtom = makeAtom(COLOURTODE_SQUARE)
+					joinAtom.value = j
+					clone.joins.push(joinAtom)
+				}
+			}
+			clone.stamp = clone.value.stamp
+			registerAtom(clone)
+
+			/*if (atom.slotted !== undefined) {
+				clone.slotted = makeAtom(COLOURTODE_SQUARE)
+				const slottedDragonArray = cloneDragonArray(atom.slotted.value)
+				clone.slotted.value = slottedDragonArray
+				//registerAtom(clone)
+			}*/
+
+			if (clone.value.isDiagram) {
+				clone.update(clone)
+			}
+
+			return clone
 		},
 
 		drag: (atom) => {
