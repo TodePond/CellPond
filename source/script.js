@@ -1,5 +1,16 @@
-
 /*
+
+██████████████████████████████████████████████████████████████████████
+█─▄▄▄▄█▄─██─▄█▄─▄▄▀█▄─▄▄▀█▄─▄▄─██▀▄─██▄─▄███▄─▄█─▄▄▄▄█─▄─▄─█▄─▄█─▄▄▄─█
+█▄▄▄▄─██─██─███─▄─▄██─▄─▄██─▄█▀██─▀─███─██▀██─██▄▄▄▄─███─████─██─███▀█
+▀▄▄▄▄▄▀▀▄▄▄▄▀▀▄▄▀▄▄▀▄▄▀▄▄▀▄▄▄▄▄▀▄▄▀▄▄▀▄▄▄▄▄▀▄▄▄▀▄▄▄▄▄▀▀▄▄▄▀▀▄▄▄▀▄▄▄▄▄▀
+
+░█████╗░██╗░░░██╗████████╗░█████╗░███╗░░░███╗░█████╗░████████╗██╗░██████╗███╗░░░███╗
+██╔══██╗██║░░░██║╚══██╔══╝██╔══██╗████╗░████║██╔══██╗╚══██╔══╝██║██╔════╝████╗░████║
+███████║██║░░░██║░░░██║░░░██║░░██║██╔████╔██║███████║░░░██║░░░██║╚█████╗░██╔████╔██║
+██╔══██║██║░░░██║░░░██║░░░██║░░██║██║╚██╔╝██║██╔══██║░░░██║░░░██║░╚═══██╗██║╚██╔╝██║
+██║░░██║╚██████╔╝░░░██║░░░╚█████╔╝██║░╚═╝░██║██║░░██║░░░██║░░░██║██████╔╝██║░╚═╝░██║
+╚═╝░░╚═╝░╚═════╝░░░░╚═╝░░░░╚════╝░╚═╝░░░░░╚═╝╚═╝░░╚═╝░░░╚═╝░░░╚═╝╚═════╝░╚═╝░░░░░╚═╝
 
 Welcome traveller!
 Welcome to the SOURCE of the CellPond.
@@ -8,7 +19,7 @@ If you venture further, may tode be with you.
 What you are about to discover...
 	... is a single javascript file ...
 		... of gargantuan size ...
-			... over 7000 lines ...
+			... over 8000 lines ...
 				... globally scoped ...
 
 	>>> There is no room for fear here! <<<
@@ -18,9 +29,8 @@ Be brave.
 		Trust no names.
 
 A simple seed ... grown into a mountain ...
-Coding CellPond is a performance & ritual ...
-	and by reading this you JOIN THE CEREMONY ...
-
+	CellPond is a performance ...
+		and by reading this you JOIN THE RITUAL ...
 
 =============================================================
 
@@ -29,7 +39,6 @@ Coding CellPond is a performance & ritual ...
 	the source of CellPond calls me back
 
 	and it calls you too!
-
 
 */
 
@@ -8185,3 +8194,7 @@ registerRule(
 	tallRectangleTool.update = squareTool.update
 	
 })
+
+//=============================================================
+// just let go
+//  of what you know
