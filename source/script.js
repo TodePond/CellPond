@@ -4656,6 +4656,10 @@ registerRule(
 			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
 				newAtom.update(newAtom)
 			}
+			
+			const {x, y} = getAtomPosition(atom)
+			hand.offset.x -= atom.x - x
+			hand.offset.y -= atom.y - y
 
 			return newAtom
 		},
