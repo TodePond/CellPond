@@ -1677,6 +1677,14 @@ on.load(() => {
 
 	const cloneDragonArray = (array) => {
 
+		if (array === undefined) {
+			const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
+			const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
+			const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
+			const leftClone = makeArray({channels: [red, green, blue]})
+			return leftClone
+		}
+
 		if (array.isDiagram) {
 			return cloneDiagram(array)
 		}
@@ -3950,6 +3958,7 @@ registerRule(
 		}
 	}
 
+	// shortcut: defsq
 	const COLOURTODE_SQUARE = {
 		//behindChildren: true,
 		isSquare: true,
@@ -4495,6 +4504,9 @@ registerRule(
 						atom.unexpand(atom)
 					}
 				}
+				else if (atom.highlightedAtom.isLeftSlot) {
+
+				}
 				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle && !(atom.highlightedAtom.joins.length > 0 && atom.highlightedAtom.joinExpanded)) {
 
 					const square = atom.highlightedAtom
@@ -4708,12 +4720,19 @@ registerRule(
 					atom.attached = false
 					atom.slottee = false
 					freeChild(paddle, atom)
-					atom.cellAtom.slot.colour = Colour.Black
+					//atom.cellAtom.slot.colour = Colour.Black
 					atom.cellAtom.slotted = undefined
+					if (atom.cellAtom.isLeftSlot) {
+						deleteChild(paddle, atom.cellAtom)
+						const id = paddle.cellAtoms.indexOf(atom.cellAtom)
+						paddle.cellAtoms.splice(id, 1)
+					}
 					atom.cellAtom = undefined
+					updatePaddleSize(paddle)
 					return atom
 				}
 				
+				const {x, y} = atom
 				atom.attached = false
 				freeChild(paddle, atom)
 
@@ -4722,8 +4741,17 @@ registerRule(
 				
 				atom.slot = undefined
 				if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
-					freeChild(paddle, atom.slotted)
-					deleteAtom(atom.slotted)
+					const dummy = createChild(paddle, SLOT, {bottom: true})
+					dummy.x = x
+					dummy.y = y
+					dummy.isLeftSlot = true
+					//giveChild(paddle, dummy)
+					paddle.cellAtoms.push(dummy)
+					dummy.isLeftSlot = true
+					dummy.isSlot = false
+					dummy.slotted = atom.slotted
+					dummy.slotted.cellAtom = dummy
+					atom.slotted = undefined
 				}
 				//atom.slotted = undefined
 				updatePaddleSize(paddle)
@@ -5243,6 +5271,10 @@ registerRule(
 				triangleTool.toolbarNeedsColourUpdate = true
 				wideRectangleTool.toolbarNeedsColourUpdate = true
 				tallRectangleTool.toolbarNeedsColourUpdate = true
+
+				if (square.parent.isPaddle) {
+					updatePaddleRule(square.parent)
+				}
 				return
 			}
 			
@@ -5311,8 +5343,15 @@ registerRule(
 
 			for (const cellAtom of paddle.cellAtoms) {
 				if (cellAtom.slotted !== undefined) {
+					const {x, y} = getAtomPosition(cellAtom.slotted)
 					freeChild(paddle, cellAtom.slotted)
-					deleteAtom(cellAtom.slotted)
+					cellAtom.slotted.cellAtom = undefined
+					cellAtom.slotted.attached = false
+					cellAtom.slotted.x = x
+					cellAtom.slotted.y = y
+					cellAtom.slotted.slottee = false
+					//deleteAtom(cellAtom.slotted)
+					cellAtom.slotted = undefined
 				}
 			}
 
@@ -5776,7 +5815,7 @@ registerRule(
 				atom.dy = 0
 			}
 			
-			unlockMenuTool("tall_rectangle")
+			//unlockMenuTool("tall_rectangle")
 		},
 
 		click: (atom) => {
@@ -6763,11 +6802,38 @@ registerRule(
 
 		rightDraggable: true,
 		rightDrag: (paddle) => {
-			if (paddle.cellAtoms.length === 0) return paddle
+			let cellAtoms = paddle.cellAtoms
+			if (cellAtoms.length === 0) {
+				
+				const square = makeAtom(COLOURTODE_SQUARE)
+				hand.offset.x = -square.width/2
+				hand.offset.y = -square.height/2
+				const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
+				const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
+				const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
+				const leftClone = makeArray({channels: [red, green, blue]})
+				setBrushColour(leftClone)
+				registerAtom(square)
+				square.value = leftClone
+				square.update(square)
+				return square
+
+			} else if (cellAtoms.length === 1) {
+
+				const square = makeAtom(COLOURTODE_SQUARE)
+				hand.offset.x = -square.width/2
+				hand.offset.y = -square.height/2
+				const leftClone = cloneDragonArray(cellAtoms[0].value)
+				setBrushColour(leftClone)
+				registerAtom(square)
+				square.value = leftClone
+				square.update(square)
+				return square
+			}
 			const square = makeAtom(COLOURTODE_SQUARE)
 			hand.offset.x = -square.width/2
 			hand.offset.y = -square.height/2
-			const cells = makeDiagramCellsFromCellAtoms(paddle.cellAtoms)
+			const cells = makeDiagramCellsFromCellAtoms(cellAtoms)
 			const diagram = makeDiagram({left: cells})
 			normaliseDiagram(diagram)
 
@@ -6869,6 +6935,7 @@ registerRule(
 		dragOnly: true,
 	}
 
+	const cellAtomWidth = COLOURTODE_SQUARE.size
 	const updatePaddleSize = (paddle) => {
 		
 		let width = PADDLE.width
@@ -6884,9 +6951,9 @@ registerRule(
 				const cx = cellAtom.x
 				const cy = cellAtom.y
 				const cleft = cx
-				const cright = cx + cellAtom.width
+				const cright = cx + cellAtomWidth
 				const ctop = cy
-				const cbottom = cy + cellAtom.height
+				const cbottom = cy + cellAtomWidth
 
 				if (cleft < left) left = cleft
 				if (cright > right) right = cright
@@ -6942,7 +7009,6 @@ registerRule(
 		//=============================//
 		// ARRANGING PADDLE's CHILDREN //
 		//=============================//
-		
 		for (const slot of paddle.slots) {
 			deleteChild(paddle, slot)
 		}
@@ -7131,7 +7197,17 @@ registerRule(
 			//======//
 			// LEFT //
 			//======//
-			if (cellAtom.value.isDiagram) {
+			if (cellAtom.isLeftSlot) {
+
+				const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
+				const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
+				const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
+				const leftClone = makeArray({channels: [red, green, blue]})
+				applyRangeStamp(stampeds, leftClone)
+				const diagramCell = makeDiagramCell({x, y, content: leftClone})
+				left.push(diagramCell)
+
+			} else if (cellAtom.value.isDiagram) {
 
 				// Check for every mini-cell
 				const orderedMiniLeftCells = getOrderedCellAtoms(cellAtom.value.left)
@@ -7165,7 +7241,7 @@ registerRule(
 			//=======//
 
 			// Merge!!!
-			if (cellAtom.value.isDiagram) {
+			if (!cellAtom.isLeftSlot && cellAtom.value.isDiagram) {
 				const maxiLeft = makeMaximisedDiagram(cellAtom.value)
 				const [maxiWidth, maxiHeight] = getDiagramDimensions(maxiLeft)
 				
