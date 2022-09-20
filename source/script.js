@@ -4200,7 +4200,7 @@ registerRule(
 
 				if (atom.highlightedAtom === undefined) for (const paddle of paddles) {
 
-					if (!paddle.expanded || paddle.pinhole.locked) continue
+					if (!paddle.expanded) continue
 
 					const {x: px, y: py} = getAtomPosition(paddle)
 					const pleft = px
@@ -4521,7 +4521,7 @@ registerRule(
 			if (atom.attached) {
 
 				const paddle = atom.parent
-				if (paddle.pinhole.locked) {
+				if (false && paddle.pinhole.locked) {
 					const {x, y} = getAtomPosition(atom)
 					const clone = makeAtom(COLOURTODE_SQUARE)
 					hand.offset.x -= atom.x - x
@@ -5108,6 +5108,9 @@ registerRule(
 			atom.dx = 0
 			atom.dy = 0
 
+			atom.hasBorder = false
+			paddle.pinhole.locked = atom.colour === Colour.splash(999)
+
 			for (const cellAtom of paddle.cellAtoms) {
 				if (cellAtom.slotted !== undefined) {
 					registerAtom(cellAtom.slotted)
@@ -5130,7 +5133,7 @@ registerRule(
 		drag: (atom) => {
 			if (!atom.parent.isPaddle) return atom
 			const paddle = atom.parent
-			if (paddle.pinhole.locked) {
+			if (false && paddle.pinhole.locked) {
 				const clone = makeAtom(COLOURTODE_TRIANGLE)
 				clone.direction = atom.direction
 				const {x, y} = getAtomPosition(atom)
@@ -5152,6 +5155,13 @@ registerRule(
 					deleteAtom(cellAtom.slotted)
 				}
 			}
+
+			if (atom.colour !== Colour.splash(999)) {
+				atom.hasBorder = true
+				atom.borderColour = Colour.Grey
+			}
+
+			paddle.pinhole.locked = false
 
 			updatePaddleSize(paddle)
 			return atom
@@ -7145,6 +7155,7 @@ registerRule(
 		borderScale: 1/2,
 		borderColour: Colour.Black,
 		draw: (atom) => {
+			return
 			if (atom.locked) {
 				atom.hasBorder = true
 				atom.colour = Colour.Grey				
@@ -7162,6 +7173,7 @@ registerRule(
 		y: OPTION_MARGIN/2/2,
 		x: OPTION_MARGIN/2/2,
 		click: (atom) => {
+			return
 			const handle = atom.parent
 			const paddle = handle.parent
 			if (atom.locked) {
