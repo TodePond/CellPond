@@ -4414,7 +4414,7 @@ registerRule(
 							const spotBelow = [cleft, cbottom]
 
 							const dspotCenter = Math.hypot(x - spotCenter[0], y - spotCenter[1])
-							if (isCellAtomSlotFree(paddle, spotCenter, true) && dspotCenter < winningDistance) {
+							if (catom.slotted === undefined && isCellAtomSlotFree(paddle, spotCenter, true) && dspotCenter < winningDistance) {
 								winningDistance = dspotCenter
 								winningCellAtom = cellAtom
 								winningSide = "slot"
