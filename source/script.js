@@ -3953,9 +3953,32 @@ registerRule(
 	const isCellAtomSpotFilled = (paddle, [sx, sy]) => {
 		for (const cellAtom of paddle.cellAtoms) {
 			const {x, y} = getAtomPosition(cellAtom)
-			if (x === sx && y === sy) return true
+			if (x === sx && y === sy) {
+				//if (cellAtom.isLeftSlot) continue
+				return true
+			}
 		}
 		return false
+	}
+
+	const isCellAtomSlotFree = (paddle, [sx, sy]) => {
+		for (const cellAtom of paddle.cellAtoms) {
+			const {x, y} = getAtomPosition(cellAtom)
+			if (x === sx && y === sy) {
+				if (cellAtom.isLeftSlot) return true
+			}
+		}
+		return false
+	}
+
+	const getCellAtomSpotFilled = (paddle, [sx, sy]) => {
+		for (const cellAtom of paddle.cellAtoms) {
+			const {x, y} = getAtomPosition(cellAtom)
+			if (x === sx && y === sy) {
+				return cellAtom
+			}
+		}
+		return undefined
 	}
 
 	const setBrushColour = (value) => {
@@ -4212,7 +4235,7 @@ registerRule(
 		},
 
 		
-		// Ctrl+F: wsq
+		// Ctrl+F: wwsq
 		update: (atom) => {
 			
 			if (atom.value.isDiagram) {
@@ -4394,10 +4417,18 @@ registerRule(
 							const ctop = cy
 							const cbottom = cy + cellAtom.height
 
+							const spotCenter = [cleft, ctop]
 							const spotLeft = [cleft - cellAtom.width, ctop]
 							const spotAbove = [cleft, ctop - cellAtom.height]
 							const spotRight = [cright, ctop]
 							const spotBelow = [cleft, cbottom]
+
+							const dspotCenter = Math.hypot(x - spotCenter[0], y - spotCenter[1])
+							if (isCellAtomSlotFree(paddle, spotCenter) && dspotCenter < winningDistance) {
+								winningDistance = dspotCenter
+								winningCellAtom = cellAtom
+								winningSide = "slot"
+							}
 
 							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1])
 							if (!isCellAtomSpotFilled(paddle, spotLeft) && dspotLeft < winningDistance) {
@@ -4408,6 +4439,7 @@ registerRule(
 
 							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1])
 							if (!isCellAtomSpotFilled(paddle, spotAbove) && dspotAbove < winningDistance) {
+								const spot = getCellAtomSpotFilled(paddle, spotAbove)
 								winningDistance = dspotAbove
 								winningCellAtom = cellAtom
 								winningSide = "above"
@@ -4415,6 +4447,7 @@ registerRule(
 
 							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1])
 							if (!isCellAtomSpotFilled(paddle, spotRight) && dspotRight < winningDistance) {
+								const spot = getCellAtomSpotFilled(paddle, spotRight)
 								winningDistance = dspotRight
 								winningCellAtom = cellAtom
 								winningSide = "right"
@@ -4422,6 +4455,7 @@ registerRule(
 
 							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1])
 							if (!isCellAtomSpotFilled(paddle, spotBelow) && dspotBelow < winningDistance) {
+								const spot = getCellAtomSpotFilled(paddle, spotBelow)
 								winningDistance = dspotBelow
 								winningCellAtom = cellAtom
 								winningSide = "below"
@@ -4455,6 +4489,16 @@ registerRule(
 						else if (winningSide === "below") {
 							atom.highlight.x = cx
 							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2 + winningCellAtom.height
+						}
+
+						if (winningSide === "slot") {
+							atom.highlight.width = COLOURTODE_SQUARE.size
+							atom.highlight.height = COLOURTODE_SQUARE.size
+							const {x: cx, y: cy} = getAtomPosition(winningCellAtom)
+							atom.highlight.x = cx
+							atom.highlight.y = cy
+							atom.highlight.hasBorder = true
+							atom.highlight.colour = Colour.Grey
 						}
 
 						atom.highlightedAtom = winningCellAtom
@@ -4518,6 +4562,19 @@ registerRule(
 					}
 				}
 				else if (atom.highlightedAtom.isLeftSlot) {
+					const slot = atom.highlightedAtom
+					const paddle = slot.parent
+					const id = paddle.cellAtoms.indexOf(slot)
+					paddle.cellAtoms.splice(id, 1)
+					atom.x = slot.x
+					atom.y = slot.y
+
+					atom.attached = true
+					paddle.cellAtoms.push(atom)
+					atom.slotted = slot.slotted
+					slot.slotted.cellAtom = atom
+					giveChild(paddle, atom)
+					updatePaddleRule(paddle)
 
 				}
 				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle && !(atom.highlightedAtom.joins.length > 0 && atom.highlightedAtom.joinExpanded)) {
@@ -4689,6 +4746,7 @@ registerRule(
 			return newAtom
 		},
 
+		// Ctrl+f: drsq
 		drag: (atom) => {
 
 			if (atom.attached) {
@@ -4760,7 +4818,6 @@ registerRule(
 					dummy.isLeftSlot = true
 					//giveChild(paddle, dummy)
 					paddle.cellAtoms.push(dummy)
-					dummy.isLeftSlot = true
 					dummy.isSlot = false
 					dummy.slotted = atom.slotted
 					dummy.slotted.cellAtom = dummy
