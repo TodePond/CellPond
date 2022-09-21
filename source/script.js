@@ -4643,23 +4643,35 @@ registerRule(
 				if (atom.highlightedAtom.isPaddle) {
 					const paddle = atom.highlightedAtom
 					atom.attached = true
-					giveChild(paddle, atom)
-					paddle.cellAtoms.push(atom)
-					atom.x = PADDLE.width/2 - atom.width/2
-					atom.y = PADDLE.height/2 - atom.height/2
-					atom.dx = 0
-					atom.dy = 0
 
-					//TODO: make the square get placed on the correct side!!
-					
+					if (atom.highlightedSide === "right") {
+
+						const dummy = createChild(paddle, SLOT, {bottom: true})
+						dummy.x = PADDLE.width/2 - atom.width/2
+						dummy.y = PADDLE.height/2 - atom.height/2
+						dummy.isLeftSlot = true
+						dummy.isSlot = false
+						paddle.cellAtoms.push(dummy)
+
+						dummy.slotted = atom
+						atom.cellAtom = dummy
+						atom.x = atom.highlightedAtom.x
+						atom.y = atom.highlightedAtom.y
+						atom.slottee = true
+						giveChild(paddle, atom)
+
+					} else {
+						paddle.cellAtoms.push(atom)
+						atom.x = PADDLE.width/2 - atom.width/2
+						atom.y = PADDLE.height/2 - atom.height/2
+						atom.dx = 0
+						atom.dy = 0
+						giveChild(paddle, atom)
+					}
+
 					updatePaddleSize(paddle)
 					if (atom.expanded) {
 						atom.unexpand(atom)
-					}
-
-					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
-						registerAtom(atom.slotted)
-						giveChild(paddle, atom.slotted)
 					}
 				}
 				else if (atom.highlightedAtom.isSlot && atom.highlightedSide === "slot") {
