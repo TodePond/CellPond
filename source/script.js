@@ -3950,8 +3950,9 @@ registerRule(
 		},
 	}
 
-	const isCellAtomSpotFilled = (paddle, [sx, sy]) => {
-		for (const cellAtom of paddle.cellAtoms) {
+	const isCellAtomSpotFilled = (paddle, [sx, sy], slotted = false) => {
+		for (let cellAtom of paddle.cellAtoms) {
+			if (slotted) cellAtom = cellAtom.slot
 			const {x, y} = getAtomPosition(cellAtom)
 			if (x === sx && y === sy) {
 				//if (cellAtom.isLeftSlot) continue
@@ -3961,24 +3962,15 @@ registerRule(
 		return false
 	}
 
-	const isCellAtomSlotFree = (paddle, [sx, sy]) => {
-		for (const cellAtom of paddle.cellAtoms) {
+	const isCellAtomSlotFree = (paddle, [sx, sy], slotted = false) => {
+		for (let cellAtom of paddle.cellAtoms) {
+			if (slotted) cellAtom = cellAtom.slot
 			const {x, y} = getAtomPosition(cellAtom)
 			if (x === sx && y === sy) {
-				if (cellAtom.isLeftSlot) return true
+				if (cellAtom.isLeftSlot || cellAtom.isSlot) return true
 			}
 		}
 		return false
-	}
-
-	const getCellAtomSpotFilled = (paddle, [sx, sy]) => {
-		for (const cellAtom of paddle.cellAtoms) {
-			const {x, y} = getAtomPosition(cellAtom)
-			if (x === sx && y === sy) {
-				return cellAtom
-			}
-		}
-		return undefined
 	}
 
 	const setBrushColour = (value) => {
@@ -4235,7 +4227,7 @@ registerRule(
 		},
 
 		
-		// Ctrl+F: wwsq
+		// Ctrl+F: wwwsq
 		update: (atom) => {
 			
 			if (atom.value.isDiagram) {
@@ -4378,6 +4370,109 @@ registerRule(
 					}
 
 					else if (paddle.rightTriangle !== undefined && left > pleft + paddle.rightTriangle.x) {
+
+						let winningDistance = Infinity
+						let winningSide = undefined
+						let winningCellAtom = undefined
+
+						for (const catom of paddle.cellAtoms) {
+							const cellAtom = catom.slot
+							const {x: cx, y: cy} = getAtomPosition(cellAtom)
+							const cleft = cx
+							const cright = cx + cellAtom.width
+							const ctop = cy
+							const cbottom = cy + cellAtom.height
+
+							const spotCenter = [cleft, ctop]
+							const spotLeft = [cleft - cellAtom.width, ctop]
+							const spotAbove = [cleft, ctop - cellAtom.height]
+							const spotRight = [cright, ctop]
+							const spotBelow = [cleft, cbottom]
+
+							const dspotCenter = Math.hypot(x - spotCenter[0], y - spotCenter[1])
+							if (isCellAtomSlotFree(paddle, spotCenter, true) && dspotCenter < winningDistance) {
+								winningDistance = dspotCenter
+								winningCellAtom = cellAtom
+								winningSide = "slot"
+							}
+
+							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1])
+							if (!isCellAtomSpotFilled(paddle, spotLeft, true) && dspotLeft < winningDistance) {
+								winningDistance = dspotLeft
+								winningCellAtom = cellAtom
+								winningSide = "left"
+							}
+
+							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1])
+							if (!isCellAtomSpotFilled(paddle, spotAbove, true) && dspotAbove < winningDistance) {
+								winningDistance = dspotAbove
+								winningCellAtom = cellAtom
+								winningSide = "above"
+							}
+
+							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1])
+							if (!isCellAtomSpotFilled(paddle, spotRight, true) && dspotRight < winningDistance) {
+								winningDistance = dspotRight
+								winningCellAtom = cellAtom
+								winningSide = "right"
+							}
+
+							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1])
+							if (!isCellAtomSpotFilled(paddle, spotBelow, true) && dspotBelow < winningDistance) {
+								winningDistance = dspotBelow
+								winningCellAtom = cellAtom
+								winningSide = "below"
+							}
+						}
+
+						const {x: cx, y: cy} = getAtomPosition(winningCellAtom)
+
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+						if (winningSide === "left" || winningSide === "right") {
+							atom.highlight.width = HIGHLIGHT_THICKNESS
+							atom.highlight.height = winningCellAtom.height
+						}
+						else if (winningSide === "above" || winningSide === "below") {
+							atom.highlight.width = winningCellAtom.width
+							atom.highlight.height = HIGHLIGHT_THICKNESS
+						}
+
+						if (winningSide === "left") {
+							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2
+							atom.highlight.y = cy
+						}
+						else if (winningSide === "right") {
+							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2 + winningCellAtom.width
+							atom.highlight.y = cy
+						}
+						else if (winningSide === "above") {
+							atom.highlight.x = cx
+							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2
+						}
+						else if (winningSide === "below") {
+							atom.highlight.x = cx
+							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2 + winningCellAtom.height
+						}
+
+						if (winningSide === "slot") {
+							atom.highlight.width = COLOURTODE_SQUARE.size
+							atom.highlight.height = COLOURTODE_SQUARE.size
+							const {x: cx, y: cy} = getAtomPosition(winningCellAtom)
+							atom.highlight.x = cx
+							atom.highlight.y = cy
+							atom.highlight.hasBorder = true
+							atom.highlight.colour = Colour.Grey
+						}
+
+						atom.highlightedAtom = winningCellAtom
+						atom.highlightedSide = winningSide
+
+						break
+
+					}
+
+					/*
+					else if (paddle.rightTriangle !== undefined && left > pleft + paddle.rightTriangle.x) {
 						let winningDistance = Infinity
 						let winningSlot = undefined
 						for (const cellAtom of paddle.cellAtoms) {
@@ -4404,6 +4499,7 @@ registerRule(
 
 						break
 					}
+					*/
 					
 					else {
 						let winningDistance = Infinity
@@ -4439,7 +4535,6 @@ registerRule(
 
 							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1])
 							if (!isCellAtomSpotFilled(paddle, spotAbove) && dspotAbove < winningDistance) {
-								const spot = getCellAtomSpotFilled(paddle, spotAbove)
 								winningDistance = dspotAbove
 								winningCellAtom = cellAtom
 								winningSide = "above"
@@ -4447,7 +4542,6 @@ registerRule(
 
 							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1])
 							if (!isCellAtomSpotFilled(paddle, spotRight) && dspotRight < winningDistance) {
-								const spot = getCellAtomSpotFilled(paddle, spotRight)
 								winningDistance = dspotRight
 								winningCellAtom = cellAtom
 								winningSide = "right"
@@ -4455,7 +4549,6 @@ registerRule(
 
 							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1])
 							if (!isCellAtomSpotFilled(paddle, spotBelow) && dspotBelow < winningDistance) {
-								const spot = getCellAtomSpotFilled(paddle, spotBelow)
 								winningDistance = dspotBelow
 								winningCellAtom = cellAtom
 								winningSide = "below"
@@ -4543,7 +4636,7 @@ registerRule(
 						giveChild(paddle, atom.slotted)
 					}
 				}
-				else if (atom.highlightedAtom.isSlot) {
+				else if (atom.highlightedAtom.isSlot && atom.highlightedSide === "slot") {
 					const slot = atom.highlightedAtom
 					const paddle = slot.parent
 					atom.attached = true
@@ -4578,8 +4671,49 @@ registerRule(
 					deleteChild(paddle, slot)
 
 				}
-				else if ((atom.highlightedAtom.isLeftSlot || atom.highlightedAtom.isSquare) && atom.highlightedAtom.parent.isPaddle) {
+				else if (atom.highlightedAtom.isSlot && atom.highlightedSide !== "slot") {
+					const slot = atom.highlightedAtom
+					const paddle = slot.parent
+					atom.attached = true
+					giveChild(paddle, atom)
 
+					const dummy = createChild(paddle, SLOT, {bottom: true})
+					dummy.isLeftSlot = true
+					//giveChild(paddle, dummy)
+					paddle.cellAtoms.push(dummy)
+					dummy.isSlot = false
+					dummy.slotted = atom
+					dummy.slotted.cellAtom = dummy
+					atom.slotted = undefined
+
+					if (atom.expanded) {
+						atom.unexpand(atom)
+					}
+
+					if (atom.highlightedSide === "left") {
+						atom.x = slot.x - atom.width
+						atom.y = slot.y
+					} else if (atom.highlightedSide === "right") {
+						atom.x = slot.x + slot.width
+						atom.y = slot.y
+					} else if (atom.highlightedSide === "above") {
+						atom.x = slot.x
+						atom.y = slot.y - atom.height
+					} else if (atom.highlightedSide === "below") {
+						atom.x = slot.x
+						atom.y = slot.y + slot.height
+					}
+
+					dummy.x = atom.x - paddle.offset
+					dummy.y = atom.y
+
+					atom.cellAtom = dummy
+					atom.slottee = true
+					atom.dx = 0
+					atom.dy = 0
+					updatePaddleSize(paddle)
+				}
+				else if ((atom.highlightedAtom.isLeftSlot || atom.highlightedAtom.isSquare) && atom.highlightedAtom.parent.isPaddle) {
 					const square = atom.highlightedAtom
 					const paddle = square.parent
 					atom.attached = true
@@ -4601,19 +4735,6 @@ registerRule(
 					} else if (atom.highlightedSide === "below") {
 						atom.x = square.x
 						atom.y = square.y + square.height
-					}
-
-					
-					if (square.isLeftSlot) {
-						/*if (atom.highlightedSide === "left") {
-							atom.x -= square.width
-						} else if (atom.highlightedSide === "right") {
-							atom.x += square.width
-						} else if (atom.highlightedSide === "above") {
-							atom.y -= square.height
-						} else if (atom.highlightedSide === "below") {
-							atom.y += square.height
-						}*/
 					}
 
 					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
@@ -4760,7 +4881,7 @@ registerRule(
 			return newAtom
 		},
 
-		// Ctrl+f: drsq
+		// Ctrl+f: drasq
 		drag: (atom) => {
 
 			if (atom.attached) {
@@ -7077,6 +7198,13 @@ registerRule(
 		}
 
 		if (paddle.rightTriangle !== undefined) {
+
+			if (paddle.cellAtoms[0] !== undefined && paddle.cellAtoms[0].slot !== undefined) {
+				paddle.offset = paddle.cellAtoms[0].slot.x - paddle.cellAtoms[0].x
+			} else {
+				paddle.offset = 0
+			}
+
 			paddle.rightTriangle.x = width
 			paddle.rightTriangle.y = height/2 - paddle.rightTriangle.height/2
 			width = width+width + paddle.rightTriangle.width
