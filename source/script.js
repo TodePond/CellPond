@@ -4703,6 +4703,7 @@ registerRule(
 					atom.attached = true
 					paddle.cellAtoms.push(atom)
 					atom.slotted = slot.slotted
+					atom.slot = slot.slot
 					slot.slotted.cellAtom = atom
 					giveChild(paddle, atom)
 					updatePaddleRule(paddle)
@@ -4722,6 +4723,7 @@ registerRule(
 					dummy.isSlot = false
 					dummy.slotted = atom
 					dummy.slotted.cellAtom = dummy
+					dummy.slot = slot
 					atom.slotted = undefined
 
 					if (atom.expanded) {
