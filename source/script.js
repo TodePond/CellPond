@@ -3984,7 +3984,7 @@ registerRule(
 		}
 	}
 
-	// Ctrl+F: defsq
+	// Ctrl+F: sqdef
 	const COLOURTODE_SQUARE = {
 		//behindChildren: true,
 		isSquare: true,
@@ -4227,7 +4227,7 @@ registerRule(
 		},
 
 		
-		// Ctrl+F: wwwsq
+		// Ctrl+F: sqwww
 		update: (atom) => {
 			
 			if (atom.value.isDiagram) {
@@ -4355,16 +4355,40 @@ registerRule(
 
 					if (paddle.cellAtoms.length === 0) {
 
-						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
-						atom.highlight.hasBorder = true
-						atom.highlight.colour = Colour.Grey
-						atom.highlight.x = paddle.x
-						atom.highlight.y = paddle.y
-						atom.highlight.width = paddle.width
-						atom.highlight.height = paddle.height
+						const {x: dummyLeftX, y: dummyLeftY} = getAtomPosition(paddle.dummyLeft)
+						const {x: dummyRightX, y: dummyRightY} = getAtomPosition(paddle.dummyRight)
 
-						atom.highlightedAtom = paddle
+						if (paddle.rightTriangle === undefined) {
+							atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+							atom.highlight.hasBorder = true
+							atom.highlight.colour = Colour.Grey
+							atom.highlight.x = dummyLeftX
+							atom.highlight.y = dummyLeftY
+							atom.highlight.width = paddle.dummyLeft.width
+							atom.highlight.height = paddle.dummyLeft.height
 
+							atom.highlightedAtom = paddle
+						} else if (left > pleft + paddle.rightTriangle.x) {
+							atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+							atom.highlight.hasBorder = true
+							atom.highlight.colour = Colour.Grey
+							atom.highlight.x = dummyRightX
+							atom.highlight.y = dummyRightY
+							atom.highlight.width = paddle.dummyRight.width
+							atom.highlight.height = paddle.dummyRight.height
+							atom.highlightedSide = "right"
+							atom.highlightedAtom = paddle
+						} else {
+							atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+							atom.highlight.hasBorder = true
+							atom.highlight.colour = Colour.Grey
+							atom.highlight.x = dummyLeftX
+							atom.highlight.y = dummyLeftY
+							atom.highlight.width = paddle.dummyLeft.width
+							atom.highlight.height = paddle.dummyLeft.height
+							atom.highlightedSide = "left"
+							atom.highlightedAtom = paddle
+						}
 						break
 
 					}
@@ -4625,6 +4649,8 @@ registerRule(
 					atom.y = PADDLE.height/2 - atom.height/2
 					atom.dx = 0
 					atom.dy = 0
+
+					//TODO: make the square get placed on the correct side!!
 					
 					updatePaddleSize(paddle)
 					if (atom.expanded) {
@@ -4881,7 +4907,7 @@ registerRule(
 			return newAtom
 		},
 
-		// Ctrl+f: drasq
+		// Ctrl+f: sqdra
 		drag: (atom) => {
 
 			if (atom.attached) {
@@ -6946,6 +6972,12 @@ registerRule(
 
 			paddle.pinhole = createChild(handle, PIN_HOLE)
 
+			paddle.dummyLeft = createChild(paddle, SLOT)
+			paddle.dummyLeft.visible = false
+
+			paddle.dummyRight = createChild(paddle, SLOT)
+			paddle.dummyRight.visible = false
+
 			updatePaddleSize(paddle)
 
 		},
@@ -7065,6 +7097,7 @@ registerRule(
 	}
 
 	const SLOT = {
+		visible: true,
 		isSlot: true,
 		behindChildren: true,
 		//hasBorder: true,
@@ -7072,6 +7105,8 @@ registerRule(
 		draw: (atom) => {
 			//atom.colour = borderColours[atom.cellAtom.colour.splash]
 			//COLOURTODE_RECTANGLE.draw(atom)
+
+			if (!atom.visible) return
 			
 			const [x, y] = getAtomPosition(atom)
 
@@ -7265,6 +7300,14 @@ registerRule(
 		}
 		
 		paddle.handle.y = paddle.height/2 - paddle.handle.height/2
+
+		if (paddle.cellAtoms.length === 0) {
+			paddle.dummyLeft.x = PADDLE_MARGIN
+			paddle.dummyLeft.y = paddle.height/2 - paddle.dummyLeft.height/2
+			
+			paddle.dummyRight.x = paddle.width - PADDLE_MARGIN - paddle.dummyLeft.width
+			paddle.dummyRight.y = paddle.height/2 - paddle.dummyRight.height/2
+		}
 
 		updatePaddleRule(paddle)
 		positionPaddles()
