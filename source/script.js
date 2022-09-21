@@ -4561,7 +4561,7 @@ registerRule(
 						atom.unexpand(atom)
 					}
 				}
-				else if (atom.highlightedAtom.isLeftSlot) {
+				else if (atom.highlightedAtom.isLeftSlot && atom.highlightedSide === "slot") {
 					const slot = atom.highlightedAtom
 					const paddle = slot.parent
 					const id = paddle.cellAtoms.indexOf(slot)
@@ -4575,9 +4575,10 @@ registerRule(
 					slot.slotted.cellAtom = atom
 					giveChild(paddle, atom)
 					updatePaddleRule(paddle)
+					deleteChild(paddle, slot)
 
 				}
-				else if (atom.highlightedAtom.isSquare && atom.highlightedAtom.parent.isPaddle && !(atom.highlightedAtom.joins.length > 0 && atom.highlightedAtom.joinExpanded)) {
+				else if ((atom.highlightedAtom.isLeftSlot || atom.highlightedAtom.isSquare) && atom.highlightedAtom.parent.isPaddle) {
 
 					const square = atom.highlightedAtom
 					const paddle = square.parent
@@ -4600,6 +4601,19 @@ registerRule(
 					} else if (atom.highlightedSide === "below") {
 						atom.x = square.x
 						atom.y = square.y + square.height
+					}
+
+					
+					if (square.isLeftSlot) {
+						/*if (atom.highlightedSide === "left") {
+							atom.x -= square.width
+						} else if (atom.highlightedSide === "right") {
+							atom.x += square.width
+						} else if (atom.highlightedSide === "above") {
+							atom.y -= square.height
+						} else if (atom.highlightedSide === "below") {
+							atom.y += square.height
+						}*/
 					}
 
 					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
