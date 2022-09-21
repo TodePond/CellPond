@@ -4704,7 +4704,9 @@ registerRule(
 					paddle.cellAtoms.push(atom)
 					atom.slotted = slot.slotted
 					atom.slot = slot.slot
-					slot.slotted.cellAtom = atom
+					if (slot.slotted !== undefined) {
+						slot.slotted.cellAtom = atom
+					}
 					giveChild(paddle, atom)
 					updatePaddleRule(paddle)
 					deleteChild(paddle, slot)
