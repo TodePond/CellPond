@@ -6433,8 +6433,17 @@ registerRule(
 				button.x = buttonPositions[i][0] - HEXAGON_BUTTON.size/2
 				button.y = buttonPositions[i][1] - HEXAGON_BUTTON.size/2
 				atom.buttons.push(button)
+				button.id = i
+
+				if (atom.ons[i]) {
+					button.inner.selected = true
+					button.inner.colour = Colour.Silver
+				}
 				
 			}
+		},
+		construct: (atom) => {
+			atom.ons = [false, false, false, false, false, false]
 		},
 	}
 
@@ -6455,9 +6464,39 @@ registerRule(
 		overlaps: CIRCLE.overlaps,
 		colour: Colour.Grey,
 		grab: (atom) => atom.parent,
+		behindChildren: true,
 		draw: (atom) => {
 			CIRCLE.draw(atom)
 		},
+		construct: (atom) => {
+			atom.inner = createChild(atom, HEXAGON_BUTTON_INNER, {bottom: false})
+			atom.inner.x = atom.width/2 - atom.inner.width/2
+			atom.inner.y = atom.height/2 - atom.inner.height/2
+		},
+		click: (atom) => {
+			if (atom.inner.selected) {
+				atom.inner.selected = false
+				atom.inner.colour = Colour.Grey
+			} else {
+				atom.inner.selected = true
+				atom.inner.colour = Colour.Silver
+			}
+
+			const hexagon = atom.parent
+			hexagon.ons[atom.id] = atom.inner.selected
+		}
+	}
+
+	const HEXAGON_BUTTON_INNER = {
+		size: COLOURTODE_SQUARE.size * 2/3,
+		offscreen: CIRCLE.offscreen,
+		overlaps: CIRCLE.overlaps,
+		grab: (atom) => atom.parent,
+		touch: (atom) => atom.parent,
+		draw: CIRCLE.draw,
+		hasBorder: true,
+		borderColour: Colour.Black,
+		colour: Colour.Grey,
 	}
 
 	const HEXAGON_HANDLE = {
