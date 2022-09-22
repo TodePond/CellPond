@@ -5413,6 +5413,7 @@ registerRule(
 		},
 	}
 
+	// Ctrl+F: trdef
 	const COLOURTODE_TRIANGLE = {
 		behindOtherChildren: true,
 		expanded: false,
@@ -5688,6 +5689,7 @@ registerRule(
 		"blue",
 	]
 
+	// Ctrl+F: redef
 	const COLOURTODE_PICKER_CHANNEL = {
 		
 		//behindChildren: true,
@@ -6288,6 +6290,43 @@ registerRule(
 			
 			atom.updateColours(atom)
 		}
+	}
+
+	// Ctrl+F: exdef
+	const MAGIC_NUMBER = 0.8660254
+	const MINUS_MAGIC_NUMBER = (1 - MAGIC_NUMBER)
+	const COLOURTODE_HEXAGON = {
+		colour: Colour.White,
+		width: COLOURTODE_PICKER_CHANNEL.width * (MAGIC_NUMBER-MINUS_MAGIC_NUMBER/2),
+		height: COLOURTODE_PICKER_CHANNEL.width * (MAGIC_NUMBER-MINUS_MAGIC_NUMBER/2),
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		draw: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+			const {width, height} = atom
+			let points = [
+				[x + width*MINUS_MAGIC_NUMBER*2, y],
+				[x + width*(MAGIC_NUMBER-MINUS_MAGIC_NUMBER), y],
+				[x + width, y + height*MAGIC_NUMBER/2],
+				[x + width*(MAGIC_NUMBER-MINUS_MAGIC_NUMBER), y + height*MAGIC_NUMBER],
+				[x + width*MINUS_MAGIC_NUMBER*2, y + height*MAGIC_NUMBER],
+				[x, y + height*MAGIC_NUMBER/2],
+			]
+
+			points = points.map(([x, y]) => [x, y + MINUS_MAGIC_NUMBER/2*height])
+
+			const [head, ...tail] = points
+
+			const path = new Path2D()
+			path.moveTo(...head)
+			for (const point of tail) {
+				path.lineTo(...point)
+			}
+			path.closePath()
+
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+		},
 	}
 
 	const COLOURTODE_CHANNEL_SELECTION_END = {
@@ -7844,6 +7883,7 @@ registerRule(
 
 	const getXYR = getRGB
 
+	// Ctrl+F: sedef
 	const SYMMETRY_CIRCLE = {
 		hasBorder: true,
 		draw: (atom) => {
@@ -8409,6 +8449,7 @@ registerRule(
 	menuRight -= BORDER_THICKNESS
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
 	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
+	const hexagonTool = addMenuTool(COLOURTODE_HEXAGON, "hexagon")
 	//menuRight += BORDER_THICKNESS
 	const tallRectangleTool = {} //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
 	createPaddle()
@@ -8498,6 +8539,7 @@ registerRule(
 	circleTool.update = squareTool.update
 	wideRectangleTool.update = squareTool.update
 	tallRectangleTool.update = squareTool.update
+	hexagonTool.update = squareTool.update
 	
 })
 
