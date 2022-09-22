@@ -6401,10 +6401,15 @@ registerRule(
 			}
 
 			if (atom.hasBorder) {
-
 				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
 				colourTodeContext.strokeStyle = atom.borderColour
 				colourTodeContext.stroke(path)
+
+				const hpath = new Path2D()
+				hpath.moveTo(x + width/2, y)
+				hpath.lineTo(x + width/2, y + height)
+				//colourTodeContext.strokeStyle = atom.borderColour
+				//colourTodeContext.stroke(hpath)
 			}
 		},
 		click: (atom) => {
