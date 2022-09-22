@@ -42,6 +42,48 @@ A simple seed ... grown into a mountain ...
 
 	and it calls you too!
 
+=============================================================
+
+//------//
+// FAQs //
+//------//
+Q: why is cellpond just one file?
+A: it's a secret
+
+Q: why is the code so messy?
+A: it's a secret
+
+Q: why is there an faq section here?
+A: it's a secret
+
+Q: how do you find your way around such a large file?
+A: it's a secret
+
+Q: why are you acting like it being one file is intentional when it's probably because you organised it badly?
+A: it's a secret
+
+Q: why would anyone read this?
+A: it's a secret
+
+Q: do you really think it's artistic to write code like this?
+A: it's a secret
+
+Q: are you actually trying to 'say' anything?
+A: it's a secret
+
+Q: what kind of person would read all these faqs?
+A: it's a secret
+
+Q: do you think anyone will skip some questions instead of reading each one in order?
+A: it's a secret
+
+Q: is it a secret?
+A: it's a secret
+
+Q: how do you feel?
+A: i'm good, how are you?
+Q: i don't know
+
 */
 
 const urlParams = new URLSearchParams(window.location.search)
