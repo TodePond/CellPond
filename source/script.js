@@ -3992,6 +3992,37 @@ registerRule(
 		},
 	}
 
+	const CIRCLE = {
+		draw: (atom) => {
+			const {x, y} = getAtomPosition(atom)
+
+			const X = x + atom.width/2
+			const Y = y + atom.height/2
+			let R = (atom.width/2)
+
+			if (atom.hasBorder) {
+				if (atom.isTool) {
+					atom.borderColour = toolBorderColours[atom.colour.splash]
+				}
+				colourTodeContext.fillStyle = atom.borderColour !== undefined? atom.borderColour : Colour.Void
+				colourTodeContext.beginPath()
+				colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
+				colourTodeContext.fill()
+				let borderScale = atom.borderScale !== undefined? atom.borderScale : 1.0
+				R = (atom.width/2 - BORDER_THICKNESS*1.5 * borderScale)
+			}
+
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.beginPath()
+			colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
+			colourTodeContext.fill()
+
+		},
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: COLOURTODE_RECTANGLE.overlaps,
+		
+	}
+
 	const isCellAtomSpotFilled = (paddle, [sx, sy], slotted = false) => {
 		for (let cellAtom of paddle.cellAtoms) {
 			if (slotted) cellAtom = cellAtom.slot
@@ -6296,9 +6327,11 @@ registerRule(
 	const MAGIC_NUMBER = 0.8660254
 	const MINUS_MAGIC_NUMBER = (1 - MAGIC_NUMBER)
 	const COLOURTODE_HEXAGON = {
-		colour: Colour.White,
-		width: COLOURTODE_PICKER_CHANNEL.width * (MAGIC_NUMBER-MINUS_MAGIC_NUMBER/2),
-		height: COLOURTODE_PICKER_CHANNEL.width * (MAGIC_NUMBER-MINUS_MAGIC_NUMBER/2),
+		colour: Colour.Black,
+		hasBorder: true,
+		borderColour: Colour.Grey,
+		width: COLOURTODE_PICKER_CHANNEL.width,
+		height: COLOURTODE_PICKER_CHANNEL.width,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		draw: (atom) => {
@@ -6326,7 +6359,139 @@ registerRule(
 
 			colourTodeContext.fillStyle = atom.colour
 			colourTodeContext.fill(path)
+
+			if (atom.hasBorder) {
+				colourTodeContext.strokeStyle = atom.borderColour
+				colourTodeContext.stroke(path)
+			}
 		},
+		click: (atom) => {
+			if (atom.expanded) {
+				atom.unexpand(atom)
+			} else {
+				atom.expand(atom)
+			}
+		},
+		unexpand: (atom) => {
+			atom.expanded = false
+			for (const thing of atom.handles) {
+				deleteChild(atom, thing)
+			}
+			for (const thing of atom.buttons) {
+				deleteChild(atom, thing)
+			}
+
+			atom.handles = []
+			atom.buttons = []
+		},
+		expand: (atom) => {
+			atom.expanded = true
+			atom.handles = []
+			atom.buttons = []
+
+
+			const {width, height} = atom
+
+			const edge = width*MINUS_MAGIC_NUMBER*1.67
+			const handlePositions = [
+				[width, height/2 - HEXAGON_HANDLE.height/2],
+				[width - edge, height  - HEXAGON_HANDLE.height/2],
+				[edge, height  - HEXAGON_HANDLE.height/2],
+				[0, height/2  - HEXAGON_HANDLE.height/2],
+				[edge, 0 - HEXAGON_HANDLE.height/2],
+				[width - edge, 0 - HEXAGON_HANDLE.height/2],
+			]
+
+			let buttonPositions = [
+				[width, height/2],
+				[width*MAGIC_NUMBER, height],
+				[width*MINUS_MAGIC_NUMBER, height],
+				[0, height/2],
+				[width*MINUS_MAGIC_NUMBER, 0],
+				[width*MAGIC_NUMBER, 0],
+			]
+
+			for (let i = 0; i < 6; i++) {
+				const handle = createChild(atom, HEXAGON_HANDLE)
+				handle.rotation = i
+				handle.x = handlePositions[i][0] - HEXAGON_HANDLE.width/2
+				handle.y = handlePositions[i][1]
+				atom.handles.push(handle)
+				/*
+				const button = createChild(atom, HEXAGON_BUTTON)
+				button.x = buttonPositions[i][0] - HEXAGON_BUTTON.size/2
+				button.y = buttonPositions[i][1] - HEXAGON_BUTTON.size/2
+				atom.buttons.push(button)
+				*/
+			}
+		},
+	}
+
+	const rotate = ([x, y], [ox, oy], radians) => {
+		const [dx, dy] = [x - ox, y - oy];
+		const d = Math.sqrt(dx ** 2 + dy ** 2);
+		const angle = Math.atan2(dy, dx);
+		const [rx, ry] = [
+			d * Math.cos(radians + angle),
+			d * Math.sin(radians + angle),
+		];
+		return [ox + rx, oy + ry];
+	};
+
+	const HEXAGON_BUTTON = {
+		size: COLOURTODE_SQUARE.size / 2,
+		offscreen: CIRCLE.offscreen,
+		overlaps: CIRCLE.overlaps,
+		colour: Colour.Grey,
+		draw: (atom) => {
+			CIRCLE.draw(atom)
+		},
+	}
+
+	const HEXAGON_HANDLE = {
+		offscreen: COLOURTODE_RECTANGLE.offscreen,
+		overlaps: (atom, x, y) => {
+			atom.y -= atom.height/2
+			atom.height *= 2
+			const result = COLOURTODE_RECTANGLE.overlaps(atom, x, y)
+			atom.height /= 2
+			atom.y += atom.height/2
+			return result
+		},
+		colour: Colour.Grey,
+		rotation: 0,
+		touch: (atom) => atom.parent,
+		grab: (atom) => atom.parent,
+		x: 50,
+		width: COLOURTODE_SQUARE.size/2 + COLOURTODE_SQUARE.size/4,
+		height: COLOURTODE_SQUARE.size / 3,
+		draw: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+			const {width, height} = atom
+
+			const path = new Path2D()
+			let points = [
+				[x, y],
+				[x+width, y],
+				[x+width, y+height],
+				[x, y+height],
+			]
+			
+			if (atom.rotation > 0) {
+				points = points.map(point => rotate(point, [x+width/2, y+height/2], atom.rotation * Math.PI/3))
+			}
+
+			const [head, ...tail] = points
+
+			path.moveTo(...head)
+			for (const point of tail) {
+				path.lineTo(...point)
+			}
+
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+		}
 	}
 
 	const COLOURTODE_CHANNEL_SELECTION_END = {
@@ -7760,37 +7925,6 @@ registerRule(
 		},
 	}
 
-	const CIRCLE = {
-		draw: (atom) => {
-			const {x, y} = getAtomPosition(atom)
-
-			const X = x + atom.width/2
-			const Y = y + atom.height/2
-			let R = (atom.width/2)
-
-			if (atom.hasBorder) {
-				if (atom.isTool) {
-					atom.borderColour = toolBorderColours[atom.colour.splash]
-				}
-				colourTodeContext.fillStyle = atom.borderColour !== undefined? atom.borderColour : Colour.Void
-				colourTodeContext.beginPath()
-				colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
-				colourTodeContext.fill()
-				let borderScale = atom.borderScale !== undefined? atom.borderScale : 1.0
-				R = (atom.width/2 - BORDER_THICKNESS*1.5 * borderScale)
-			}
-
-			colourTodeContext.fillStyle = atom.colour
-			colourTodeContext.beginPath()
-			colourTodeContext.arc(X, Y, R, 0, 2*Math.PI)
-			colourTodeContext.fill()
-
-		},
-		offscreen: COLOURTODE_RECTANGLE.offscreen,
-		overlaps: COLOURTODE_RECTANGLE.overlaps,
-		
-	}
-
 	const PIN_HOLE = {
 		isPinhole: true,
 		attached: true,
@@ -8448,8 +8582,8 @@ registerRule(
 	//triangleTool.y += BORDER_THICKNESS*1.5 / 2
 	menuRight -= BORDER_THICKNESS
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
-	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	const hexagonTool = addMenuTool(COLOURTODE_HEXAGON, "hexagon")
+	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	//menuRight += BORDER_THICKNESS
 	const tallRectangleTool = {} //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
 	createPaddle()
