@@ -6348,6 +6348,28 @@ registerRule(
 
 			points = points.map(([x, y]) => [x, y + MINUS_MAGIC_NUMBER/2*height])
 
+
+
+			const extraSegmentCorners = []
+			for (let i = 0; i < 6; i++) {
+				const nextId = wrap(i+1, 0, 5)
+				const point = points[i]
+				const next = points[nextId]
+				const mid = [0, 1].map(axis => (point[axis] + next[axis])/2)
+				extraSegmentCorners.push(mid)
+			}
+
+			const center = [x+width/2, y+height/2]
+			const segmentPoints = points.map((p, i) => {
+				const offset = 1
+				const id = wrap(i+offset, 0, 5)
+				const point = points[wrap(i+offset+1, 0, 5)]
+				const nextId = wrap(i+offset+1, 0, 5)
+				const nextMid = extraSegmentCorners[nextId]
+				const mid = extraSegmentCorners[id]
+				return [center, mid, point, nextMid]
+			})
+
 			const [head, ...tail] = points
 
 			const path = new Path2D()
@@ -6360,7 +6382,27 @@ registerRule(
 			colourTodeContext.fillStyle = atom.colour
 			colourTodeContext.fill(path)
 
+			if (atom.ons !== undefined) {
+				for (let i = 0; i < 6; i++) {
+					if (!atom.ons[i]) continue
+					const [shead, ...stail] = segmentPoints[i]
+					const spath = new Path2D()
+					spath.moveTo(...shead)
+					for (const point of stail) {
+						spath.lineTo(...point)
+					}
+					spath.closePath()
+					colourTodeContext.fillStyle = Colour.Silver
+					colourTodeContext.fill(spath)
+					colourTodeContext.lineWidth = 1 / CT_SCALE
+					colourTodeContext.strokeStyle = Colour.Silver
+					colourTodeContext.stroke(spath)
+				}
+			}
+
 			if (atom.hasBorder) {
+
+				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
 				colourTodeContext.strokeStyle = atom.borderColour
 				colourTodeContext.stroke(path)
 			}
