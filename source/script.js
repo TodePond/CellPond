@@ -7291,13 +7291,6 @@ registerRule(
 		}
 
 		if (paddle.rightTriangle !== undefined) {
-
-			if (paddle.cellAtoms[0] !== undefined && paddle.cellAtoms[0].slot !== undefined) {
-				paddle.offset = paddle.cellAtoms[0].slot.x - paddle.cellAtoms[0].x
-			} else {
-				paddle.offset = 0
-			}
-
 			paddle.rightTriangle.x = width
 			paddle.rightTriangle.y = height/2 - paddle.rightTriangle.height/2
 			width = width+width + paddle.rightTriangle.width
@@ -7335,6 +7328,15 @@ registerRule(
 					slot.colour = Colour.Grey
 				}
 				
+			}
+		}
+
+
+		if (paddle.rightTriangle !== undefined) {
+			if (paddle.cellAtoms[0] !== undefined && paddle.cellAtoms[0].slot !== undefined) {
+				paddle.offset = paddle.cellAtoms[0].slot.x - paddle.cellAtoms[0].x
+			} else {
+				paddle.offset = 0
 			}
 		}
 
