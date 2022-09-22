@@ -6404,12 +6404,23 @@ registerRule(
 
 			let buttonPositions = [
 				[width, height/2],
-				[width*MAGIC_NUMBER, height],
-				[width*MINUS_MAGIC_NUMBER, height],
+				[width - edge, height],
+				[edge, height],
 				[0, height/2],
-				[width*MINUS_MAGIC_NUMBER, 0],
-				[width*MAGIC_NUMBER, 0],
+				[edge, 0],
+				[width - edge, 0],
 			]
+
+			buttonPositions = buttonPositions.map(([x, y], i) => {
+				const [tx, ty] = [x - atom.width/2, y - atom.height/2]
+				let [sx, sy] = []
+				if (i % 3 === 0) {
+					;[sx, sy] = [tx * 2.2, ty * 2.2]
+				} else {
+					;[sx, sy] = [tx * 2, ty * 2]
+				}
+				return [sx + atom.width/2, sy + atom.height/2]
+			})
 
 			for (let i = 0; i < 6; i++) {
 				const handle = createChild(atom, HEXAGON_HANDLE)
@@ -6417,12 +6428,12 @@ registerRule(
 				handle.x = handlePositions[i][0] - HEXAGON_HANDLE.width/2
 				handle.y = handlePositions[i][1]
 				atom.handles.push(handle)
-				/*
+				
 				const button = createChild(atom, HEXAGON_BUTTON)
 				button.x = buttonPositions[i][0] - HEXAGON_BUTTON.size/2
 				button.y = buttonPositions[i][1] - HEXAGON_BUTTON.size/2
 				atom.buttons.push(button)
-				*/
+				
 			}
 		},
 	}
@@ -6439,10 +6450,11 @@ registerRule(
 	};
 
 	const HEXAGON_BUTTON = {
-		size: COLOURTODE_SQUARE.size / 2,
+		size: COLOURTODE_SQUARE.size,
 		offscreen: CIRCLE.offscreen,
 		overlaps: CIRCLE.overlaps,
 		colour: Colour.Grey,
+		grab: (atom) => atom.parent,
 		draw: (atom) => {
 			CIRCLE.draw(atom)
 		},
