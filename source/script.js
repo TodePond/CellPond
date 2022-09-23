@@ -1990,6 +1990,16 @@ on.load(() => {
 	// Note: This function doesn't check for safety
 	// eg: If it is a locked-in rule or not
 	// Or if the left side matches the shape of the right side
+	const chanceAmounts = [
+		0.000001,
+		0.00001,
+		0.0001,
+		0.001,
+		0.01,
+		0.1,
+		1.0,
+	]
+
 	registerRule = (rule) => {
 
 		// Apply Symmetry!
@@ -2095,7 +2105,7 @@ on.load(() => {
 
 	}
 
-	const makeConditionFunction = (diagram, stampNames, chance) => {
+	const makeConditionFunction = (diagram, stampNames, chance = 6) => {
 
 		const conditions = []
 
@@ -2135,19 +2145,8 @@ on.load(() => {
 
 			conditions.push(condition)
 		}
-
-		let chanceCondition = undefined
-		if (chance !== undefined) {
-			// TODO: make this work for diamonds eventually?
-			const chanceValues = getNumbersFromDragonValues(chance.values).map(v => 2 ** (9-v)).map(v => v === 512? 0 : v)
-			if (chanceValues.length === 1) {
-				const chanceValue = chanceValues[0]
-				//if (chanceValue === 1) chance = undefined
-				chanceCondition = () => oneIn(chanceValue)
-			} else {
-				chanceCondition = () => oneIn(chanceValues[Random.Uint8 % chanceValues.length])
-			}
-		}
+		const chanceAmount = 10 ** (6-chance)
+		const chanceCondition = () => oneIn(chanceAmount)
 
 		const conditionFunction = (origin) => {
 
@@ -2983,7 +2982,7 @@ registerRule(
 		}
 
 		// HIGHLIGHT
-		if (atom.highlighter) {
+		if (atom.hover !== undefined) {
 			updateAtomHighlight(atom)
 		}
 
@@ -3014,29 +3013,33 @@ registerRule(
 	const updateAtomHighlight = (atom) => {
 		// Remove the previous highlight
 		atom.highlightedAtom = undefined
+
+		// Only highlight if I'm being dragged
+		if (hand.content !== atom) return
+		if (hand.state !== HAND.DRAGGING) return
+		
 		if (atom.highlight !== undefined) {
 			deleteChild(atom, atom.highlight)
 			atom.highlight = undefined
 		}
 
-		// Only highlight if I'm being dragged
-		if (hand.content !== atom) return
-		if (hand.state !== HAND.DRAGGING) return
-
 		const highlightedAtom = atom.hover(atom)
 
 		// Create the highlight
 		if (highlightedAtom === undefined) return
-		const highlight = createChild(atom, HIGHLIGHT, {bottom: true})
-		highlight.hasBorder = true
-		highlight.colour = Colour.Grey
-		const {x, y} = getAtomPosition(highlightedAtom)
-		highlight.x = x
-		highlight.y = y
-		highlight.width = highlightedAtom.width
-		highlight.height = highlightedAtom.height
 
-		atom.highlight = highlight
+		if (atom.highlight === undefined) {
+			const highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+			highlight.hasBorder = true
+			highlight.colour = Colour.Grey
+			const {x, y} = getAtomPosition(highlightedAtom)
+			highlight.x = x
+			highlight.y = y
+			highlight.width = highlightedAtom.width
+			highlight.height = highlightedAtom.height
+			atom.highlight = highlight
+		}
+
 		atom.highlightedAtom = highlightedAtom
 	}
 
@@ -3516,8 +3519,12 @@ registerRule(
 			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
 			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
 			hand.content.drop(hand.content)
-			if (hand.content.highlighter && hand.content.highlightedAtom !== undefined) {
+			if (hand.content.highlightedAtom !== undefined) {
 				hand.content.place(hand.content, hand.content.highlightedAtom)
+				if (hand.content.highlight !== undefined) {
+					deleteChild(hand.content, hand.content.highlight)
+					hand.content.highlight = undefined
+				}
 			}
 			hand.content = undefined
 			const x = e.clientX / CT_SCALE
@@ -3611,7 +3618,7 @@ registerRule(
 			grab = (a) => a, // Fires when you start a clock on the atom - returns atom that gets dragged
 			touch = (a) => a, // Fires when you start a click on the atom - returns atom that handles the click
 			highlighter = false, // If true, enables the hover and place events
-			hover = () => {}, // Fires whenever you are dragging the atom - returns what atom should get highlighted (if any)
+			hover = () => {}, // Fires whenever you are dragging the atom - returns what atom should get highlighted (if any) (the returned atom gets auto-highlighted unless you manually set the 'highlight' property in this function)
 			place = () => {}, // Fires whenever you drop the atom onto a highlighted atom
 			x = 0,
 			y = 0,
@@ -6017,6 +6024,7 @@ registerRule(
 					atom.highlight.height = atom.highlightedAtom.height
 				} else {
 
+					/*
 					left -= OPTION_MARGIN
 					right += OPTION_MARGIN
 					top -= OPTION_MARGIN
@@ -6042,6 +6050,7 @@ registerRule(
 							return
 						}
 					}
+					*/
 				}
 
 			}
@@ -6051,11 +6060,13 @@ registerRule(
 				atom.highlight = undefined
 			}
 			
+			/*
 			if (atom.highlightPaddle !== undefined) {
 				deleteChild(atom, atom.highlightPaddle)
 				atom.highlightPaddle = undefined
 				atom.highlightedPaddle = undefined
 			}
+			*/
 
 		},
 
@@ -6314,8 +6325,6 @@ registerRule(
 
 			points = points.map(([x, y]) => [x, y + MINUS_MAGIC_NUMBER/2*height])
 
-
-
 			const extraSegmentCorners = []
 			for (let i = 0; i < 6; i++) {
 				const nextId = wrap(i+1, 0, 5)
@@ -6371,12 +6380,17 @@ registerRule(
 				colourTodeContext.strokeStyle = atom.borderColour
 				colourTodeContext.stroke(path)
 
-				const hpath = new Path2D()
-				hpath.moveTo(x + width/2, y)
-				hpath.lineTo(x + width/2, y + height)
-
-				SYMMETRY_TOGGLE_Y.drawY(atom, atom.size - 8, 4)
+				if (atom.parent.isSquare) {
+					SYMMETRY_TOGGLE_Y.drawY(atom, atom.size - 8, 4)
+				}
 			}
+		},
+		getValue: (atom) => {
+			let score = 0
+			for (const on of atom.ons) {
+				if (on) score++
+			}
+			return score
 		},
 		click: (atom) => {
 			if (atom.expanded) {
@@ -6458,6 +6472,56 @@ registerRule(
 		construct: (atom) => {
 			atom.ons = [false, false, false, false, false, false]
 		},
+		hover: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+			let left = x
+			let top = y
+			let right = x + atom.width
+			let bottom = y + atom.height
+
+			for (const paddle of paddles) {
+				const {x: px, y: py} = getAtomPosition(paddle)
+				const pright = px + paddle.width
+				const ptop = py
+				const pbottom = py + paddle.height
+
+				if (paddle.chance === undefined && paddle.expanded && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
+					if (atom.highlightPaddle !== undefined) {
+						deleteChild(atom, atom.highlightPaddle)
+					}
+
+					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+					atom.highlight.width = HIGHLIGHT_THICKNESS
+					atom.highlight.height = paddle.height
+					atom.highlight.y = ptop
+					atom.highlight.x = pright - HIGHLIGHT_THICKNESS/2
+					return paddle
+				}
+			}
+
+			return
+		},
+		place: (atom, paddle) => {
+			atom.attached = true
+			giveChild(paddle, atom)
+			
+			paddle.chance = atom
+			updatePaddleSize(paddle)
+			
+			atom.dx = 0
+			atom.dy = 0
+		},
+		drag: (atom) => {
+			if (atom.parent.isPaddle) {
+				const paddle = atom.parent
+				freeChild(paddle, atom)
+				paddle.chance = undefined
+				updatePaddleSize(paddle)
+			}
+
+			return atom
+		},
 	}
 
 	const rotate = ([x, y], [ox, oy], radians) => {
@@ -6497,6 +6561,11 @@ registerRule(
 
 			const hexagon = atom.parent
 			hexagon.ons[atom.id] = atom.inner.selected
+			
+			if (hexagon.parent.isPaddle) {
+				const paddle = hexagon.parent
+				updatePaddleSize(paddle)
+			}
 		}
 	}
 
@@ -7502,6 +7571,7 @@ registerRule(
 	}
 
 	const cellAtomWidth = COLOURTODE_SQUARE.size
+	// Ctrl+F: adwww
 	const updatePaddleSize = (paddle) => {
 		
 		let width = PADDLE.width
@@ -7897,7 +7967,7 @@ registerRule(
 		const diagram = makeMaximisedDiagram(makeDiagram({left, right}))
 
 		const locked = paddle.pinhole.locked
-		const chance = paddle.chance === undefined? undefined : paddle.chance.value
+		const chance = paddle.chance === undefined? undefined : paddle.chance.getValue(paddle.chance)
 		const rule = makeRule({steps: [diagram], transformations, locked, chance})
 		paddle.rule = rule
 		if (paddle.registry !== undefined) {
