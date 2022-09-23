@@ -6374,8 +6374,8 @@ registerRule(
 				const hpath = new Path2D()
 				hpath.moveTo(x + width/2, y)
 				hpath.lineTo(x + width/2, y + height)
-				//colourTodeContext.strokeStyle = atom.borderColour
-				//colourTodeContext.stroke(hpath)
+
+				SYMMETRY_TOGGLE_Y.drawY(atom, atom.size - 8, 4)
 			}
 		},
 		click: (atom) => {
@@ -8081,7 +8081,7 @@ registerRule(
 
 	const getXYR = getRGB
 
-	// Ctrl+F: sedef
+	// Ctrl+F: cedef
 	const SYMMETRY_CIRCLE = {
 		hasBorder: true,
 		draw: (atom) => {
@@ -8448,13 +8448,13 @@ registerRule(
 			CIRCLE.draw(atom)
 			atom.drawY(atom)
 		},
-		drawY: (atom) => {
+		drawY: (atom, height = atom.size, offset = 0) => {
 			const {x, y} = getAtomPosition(atom)
 
 			const W = (BORDER_THICKNESS*1.0)
-			const H = (atom.size)
+			const H = (height)
 			const X = (x + atom.size/2 - BORDER_THICKNESS*1.0/2)
-			const Y = (y)
+			const Y = (y) + offset
 
 			colourTodeContext.fillStyle = atom.borderColour
 			colourTodeContext.fillRect(X, Y, W, H)
