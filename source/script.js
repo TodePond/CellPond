@@ -6526,6 +6526,25 @@ registerRule(
 
 			return atom
 		},
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const clone = atom.clone(atom)
+			registerAtom(clone)
+			return clone
+		},
+		clone: (atom) => {
+			const clone = makeAtom(COLOURTODE_HEXAGON)
+			for (let i = 0; i < 6; i++) {
+				clone.ons[i] = atom.ons[i]
+			}
+			if (atom.expanded) {
+				clone.expand(clone)
+			}
+			const {x, y} = getAtomPosition(atom)
+			clone.x = x
+			clone.y = y
+			return clone
+		}
 	}
 
 	const rotate = ([x, y], [ox, oy], radians) => {
