@@ -8012,6 +8012,10 @@ registerRule(
 		if (paddles.length > 1) {
 			unlockMenuTool("triangle")
 		}
+		
+		if (paddles.length > 2) {
+			unlockMenuTool("hexagon")
+		}
 
 		let previous = undefined
 		for (const paddle of paddles) {
