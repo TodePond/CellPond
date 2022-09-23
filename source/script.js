@@ -44,6 +44,12 @@ A simple seed ... grown into a mountain ...
 
 =============================================================
 
+//------//
+// FAQs //
+//------//
+Q:
+A: it's a secret
+
 */
 
 const urlParams = new URLSearchParams(window.location.search)
