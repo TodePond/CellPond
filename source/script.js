@@ -3550,6 +3550,10 @@ registerRule(
 			hand.content.drop(hand.content)
 			if (hand.content.highlighter && hand.content.highlightedAtom !== undefined) {
 				hand.content.place(hand.content, hand.content.highlightedAtom)
+				if (hand.content.highlight !== undefined) {
+					deleteChild(hand.content, hand.content.highlight)
+					hand.content.highlight = undefined
+				}
 			}
 			hand.content = undefined
 			const x = e.clientX / CT_SCALE
