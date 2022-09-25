@@ -2145,7 +2145,7 @@ on.load(() => {
 
 			conditions.push(condition)
 		}
-		const chanceAmount = 10 ** (6-chance)
+		const chanceAmount = Math.round(10 ** (3-chance/2))
 		const chanceCondition = () => oneIn(chanceAmount)
 
 		const conditionFunction = (origin) => {
