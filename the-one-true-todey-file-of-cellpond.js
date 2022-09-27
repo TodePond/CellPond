@@ -4303,30 +4303,19 @@ registerRule(
 
 				if (atom.needsColoursUpdate) {
 
-					let drawTarget = atom.value
-					if (atom.joins.length > 0 && !atom.joinExpanded) {
-						if (atom.joinDrawId >= 0) {
-							drawTarget = atom.joins[atom.joinDrawId].value
-						}
-					}
-
-					const valueClone = cloneDragonArray(drawTarget)
-					if (atom.value === drawTarget) valueClone.joins = []
+					const valueClone = cloneDragonArray(atom.value)
+					if (atom.joinExpanded) valueClone.joins = []
 					atom.colours = getSplashesArrayFromArray(valueClone)
 
 					// Create pixel values for gradient
-					atom.isGradient = false
-					if (true || atom.colours.length > 1) {
-						atom.isGradient = true
-						atom.gradient = getGradientImageFromColours({
-							colours: atom.colours,
-							width: atom.width * CT_SCALE,
-							height: atom.height * CT_SCALE,
-							gradient: atom.gradient,
-							stamp: atom.value.stamp,
-						})
-						
-					}
+					atom.isGradient = true
+					atom.gradient = getGradientImageFromColours({
+						colours: atom.colours,
+						width: atom.width * CT_SCALE,
+						height: atom.height * CT_SCALE,
+						gradient: atom.gradient,
+						stamp: atom.value.stamp,
+					})
 					atom.colourId = Random.Uint32 % atom.colours.length
 					atom.needsColoursUpdate = false
 
@@ -5079,7 +5068,7 @@ registerRule(
 		return scores
 	}
 
-	const getGradientImageFromColours = ({colours, width, height, gradient = new ImageData(width, height), stamp}) => {
+	const getGradientImageFromColours = ({colours, width, height, gradient = new ImageData(width, height), stamp, joins}) => {
 		
 		const ogWidth = width
 		const ogHeight = height
