@@ -4970,6 +4970,8 @@ registerRule(
 			hand.offset.x -= atom.x - x
 			hand.offset.y -= atom.y - y
 
+			setBrushColour(atom.value)
+
 			return newAtom
 		},
 
