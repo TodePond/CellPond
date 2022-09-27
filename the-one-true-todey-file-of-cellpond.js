@@ -922,6 +922,11 @@ on.load(() => {
 			if (atom !== undefined) {
 				if (atom.isSquare || atom === squareTool) {
 					state.brush.hoverColour = atom.value
+					if (atom.joinExpanded) {
+						const clon = cloneDragonArray(atom.value)
+						clon.joins = []
+						state.brush.hoverColour = clon
+					}
 				} else if (atom.isTallRectangle) {
 					// TODO: what colour should rectangles set the brush?
 				} else {
