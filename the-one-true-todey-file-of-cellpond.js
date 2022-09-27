@@ -4027,9 +4027,11 @@ registerRule(
 		if (typeof value === "number") {
 			state.brush.colour = value
 			squareTool.toolbarNeedsColourUpdate = true
+			squareTool.value = makeArrayFromSplash(value)
 		} else {
 			const diagramCell = makeDiagramCell({content: value})
 			state.brush.colour = makeDiagram({left: [diagramCell]})
+			squareTool.value = diagramCell.content
 			squareTool.toolbarNeedsColourUpdate = true
 		}
 	}
@@ -4046,8 +4048,7 @@ registerRule(
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		touch: (atom) => {
-			const diagramCell = makeDiagramCell({content: atom.value})
-			state.brush.colour = makeDiagram({left: [diagramCell]})
+			setBrushColour(atom.value)
 			return atom
 		},
 		click: (atom) => {
@@ -4860,9 +4861,7 @@ registerRule(
 					joinee.needsColoursUpdate = true
 					joinee.colourTicker = Infinity
 
-					const diagramCell = makeDiagramCell({content: joinee.value})
-					state.brush.colour = makeDiagram({left: [diagramCell]})
-					
+					setBrushColour(joinee.value)
 					
 				}
 				
@@ -8664,7 +8663,7 @@ registerRule(
 		},
 		drag: (atom) => {
 
-			if (atom.isSquare) {
+			if (atom === squareTool) {
 				const newAtom = makeSquareFromValue(atom.value)
 				registerAtom(newAtom)
 				return newAtom
@@ -8752,6 +8751,8 @@ registerRule(
 	//menuRight += BORDER_THICKNESS
 	const tallRectangleTool = {} //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
 	createPaddle()
+	
+	squareTool.value = makeArrayFromSplash(state.brush.colour)
 
 	circleTool.borderScale = 1
 	
@@ -8762,19 +8763,20 @@ registerRule(
 			atom.joinDrawTimer = 0
 		}
 
+		/*
 		if (typeof state.brush.colour === "number") {
 			atom.value = makeArrayFromSplash(state.brush.colour)
 		} else {
 			const content = state.brush.colour.left[0].content
-			atom.value = cloneDragonArray(content)
+			//atom.value = cloneDragonArray(content)
 			if (atom === squareTool) {
 				atom.stamp = atom.value.stamp
 			}
-		}
+		}*/
 
-		if (atom.value !== undefined) {
+		if (atom.value !== undefined && atom === squareTool) {
 
-			if (atom === squareTool) {
+			/*if (false && atom === squareTool) {
 				if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
 					atom.previousBrushColour = state.brush.colour
 					if (atom.multiAtoms === undefined) {
@@ -8808,7 +8810,7 @@ registerRule(
 				const id = wrap(atom.menuId, 0, diagram.left.length-1)
 				const diagramCell = diagram.left[id]
 				atom.value = diagramCell.content
-			}
+			}*/
 		}
 
 		const valueClone = cloneDragonArray(atom.value)
