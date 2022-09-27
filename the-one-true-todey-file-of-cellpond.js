@@ -4416,6 +4416,7 @@ registerRule(
 							atom.highlight.y = dummyLeftY
 							atom.highlight.width = paddle.dummyLeft.width
 							atom.highlight.height = paddle.dummyLeft.height
+							atom.highlightedSide = "left"
 
 							atom.highlightedAtom = paddle
 						} else if (left > pleft + paddle.rightTriangle.x) {
@@ -4712,8 +4713,8 @@ registerRule(
 
 					} else {
 						paddle.cellAtoms.push(atom)
-						atom.x = PADDLE.width/2 - atom.width/2
-						atom.y = PADDLE.height/2 - atom.height/2
+						atom.x = atom.highlightedAtom.x
+						atom.y = atom.highlightedAtom.y
 						atom.dx = 0
 						atom.dy = 0
 						giveChild(paddle, atom)
@@ -6504,10 +6505,8 @@ registerRule(
 		rightDrag: (atom) => {
 			const clone = atom.clone(atom)
 			registerAtom(clone)
-			if (hand.content === atom) {
-				hand.offset.x -= atom.x - clone.x
-				hand.offset.y -= atom.y - clone.y
-			}
+			hand.offset.x -= atom.x - clone.x
+			hand.offset.y -= atom.y - clone.y
 			return clone
 		},
 		clone: (atom) => {
