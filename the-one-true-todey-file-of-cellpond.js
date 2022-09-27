@@ -4928,49 +4928,26 @@ registerRule(
 
 		},
 
-		rightDraggable: true,
-		rightDrag: (atom) => {
-			const newAtom = makeAtom({...COLOURTODE_SQUARE, x: atom.x, y: atom.y})
-			registerAtom(newAtom)
-
-			if (newAtom.value !== undefined) {
-				if (newAtom.value.joins !== undefined) {
-					for (const j of newAtom.value.joins) {
-						const joinAtom = makeAtom(COLOURTODE_SQUARE)
-						joinAtom.value = j
-						newAtom.joins.push(joinAtom)
-					}
-				}
-				newAtom.stamp = newAtom.value.stamp
-
-			}
-			
-			if (newAtom.isSquare && !newAtom.value.isDiagram) {
-
-				for (let i = 0; i < 3; i++) {
-					const channel = newAtom.value.channels[i]
-					if (channel === undefined) continue
-					if (channel.variable === undefined) continue
-					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
-					newAtom.variableAtoms[i] = diamond
-					diamond.expand(diamond)
-					diamond.value = cloneDragonNumber(channel)
-					diamond.variable = channel.variable
-					diamond.makeOperationAtoms(diamond)
-					diamond.unexpand(diamond)
-				}
-
-			}
-
-			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
-				newAtom.update(newAtom)
-			}
+		// ONLY USE .value NOT ANYTHING ELSE
+		clone: (atom) => {
+			const newAtom = makeSquareFromValue(atom.value)
 			
 			const {x, y} = getAtomPosition(atom)
-			hand.offset.x -= atom.x - x
-			hand.offset.y -= atom.y - y
+			newAtom.x = x
+			newAtom.y = y
 
-			setBrushColour(atom.value)
+			return newAtom
+		},
+
+		rightDraggable: true,
+		rightDrag: (atom) => {
+			const newAtom = atom.clone(atom)
+
+			hand.offset.x -= atom.x - newAtom.x
+			hand.offset.y -= atom.y - newAtom.y
+
+			registerAtom(newAtom)
+			setBrushColour(newAtom.value)
 
 			return newAtom
 		},
@@ -4981,6 +4958,7 @@ registerRule(
 			if (atom.attached) {
 
 				const paddle = atom.parent
+				/*
 				if (false && paddle.pinhole.locked) {
 					const {x, y} = getAtomPosition(atom)
 					const clone = makeAtom(COLOURTODE_SQUARE)
@@ -5002,19 +4980,13 @@ registerRule(
 					clone.stamp = clone.value.stamp
 					registerAtom(clone)
 
-					/*if (atom.slotted !== undefined) {
-						clone.slotted = makeAtom(COLOURTODE_SQUARE)
-						const slottedDragonArray = cloneDragonArray(atom.slotted.value)
-						clone.slotted.value = slottedDragonArray
-						//registerAtom(clone)
-					}*/
-
 					if (clone.value.isDiagram) {
 						clone.update(clone)
 					}
 
 					return clone
 				}
+				*/
 
 				if (atom.slottee) {
 					atom.attached = false
@@ -7480,11 +7452,10 @@ registerRule(
 				return square
 
 			} else if (cellAtoms.length === 1) {
-
-				const square = makeAtom(COLOURTODE_SQUARE)
+				const leftClone = cloneDragonArray(cellAtoms[0].value)
+				const square = cellAtoms[0].clone(cellAtoms[0])
 				hand.offset.x = -square.width/2
 				hand.offset.y = -square.height/2
-				const leftClone = cloneDragonArray(cellAtoms[0].value)
 				setBrushColour(leftClone)
 				registerAtom(square)
 				square.value = leftClone
@@ -8634,6 +8605,48 @@ registerRule(
 	//====================//
 	// COLOURTODE - TOOLS //
 	//====================//
+	const makeSquareFromValue = (value) => {
+
+		const newAtom = makeAtom({...COLOURTODE_SQUARE})
+
+			if (newAtom.value !== undefined) {
+				if (newAtom.value.joins !== undefined) {
+					for (const j of newAtom.value.joins) {
+						const joinAtom = makeAtom(COLOURTODE_SQUARE)
+						joinAtom.value = j
+						newAtom.joins.push(joinAtom)
+					}
+				}
+				newAtom.stamp = newAtom.value.stamp
+
+			}
+			
+			if (newAtom.isSquare && !newAtom.value.isDiagram) {
+
+				/*
+				for (let i = 0; i < 3; i++) {
+					const channel = newAtom.value.channels[i]
+					if (channel === undefined) continue
+					if (channel.variable === undefined) continue
+					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
+					newAtom.variableAtoms[i] = diamond
+					diamond.expand(diamond)
+					diamond.value = cloneDragonNumber(channel)
+					diamond.variable = channel.variable
+					diamond.makeOperationAtoms(diamond)
+					diamond.unexpand(diamond)
+				}
+				*/
+
+			}
+
+			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
+				newAtom.update(newAtom)
+			}
+
+			return newAtom
+	}
+
 	let menuRight = 10
 
 	const COLOURTODE_TOOL = {
@@ -8651,10 +8664,18 @@ registerRule(
 			return atom
 		},
 		drag: (atom) => {
+
+			if (atom.isSquare) {
+				const newAtom = makeSquareFromValue(atom.value)
+				registerAtom(newAtom)
+				return newAtom
+			}
+
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y})
 			registerAtom(newAtom)
 
 			if (newAtom.value !== undefined) {
+				/*
 				if (newAtom.value.joins !== undefined) {
 					for (const j of newAtom.value.joins) {
 						const joinAtom = makeAtom(COLOURTODE_SQUARE)
@@ -8662,29 +8683,7 @@ registerRule(
 						newAtom.joins.push(joinAtom)
 					}
 				}
-				newAtom.stamp = newAtom.value.stamp
-
-			}
-			
-			if (newAtom.isSquare && !newAtom.value.isDiagram) {
-
-				for (let i = 0; i < 3; i++) {
-					const channel = newAtom.value.channels[i]
-					if (channel === undefined) continue
-					if (channel.variable === undefined) continue
-					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
-					newAtom.variableAtoms[i] = diamond
-					diamond.expand(diamond)
-					diamond.value = cloneDragonNumber(channel)
-					diamond.variable = channel.variable
-					diamond.makeOperationAtoms(diamond)
-					diamond.unexpand(diamond)
-				}
-
-			}
-
-			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
-				newAtom.update(newAtom)
+				*/
 			}
 
 			return newAtom
