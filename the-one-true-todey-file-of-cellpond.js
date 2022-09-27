@@ -4059,7 +4059,7 @@ registerRule(
 		click: (atom) => {
 
 			if (atom.joins.length > 0) {
-				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.pinhole.locked) {
+				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.isPaddle) {
 					if (atom.joinExpanded) {
 						atom.joinUnepxand(atom)
 					} else {
