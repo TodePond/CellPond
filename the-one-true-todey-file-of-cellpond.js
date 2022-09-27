@@ -1030,9 +1030,9 @@ on.load(() => {
 	const doZoom = (dy, centerX, centerY) => {
 
 		const sign = -Math.sign(dy)
-		const d = Math.abs(dy)
+		const dd = Math.abs(dy)
 
-		for (let i = 0; i < d; i++) {
+		for (let i = 0; i < dd; i++) {
 
 			const zoom = ZOOM * state.camera.underScale
 
@@ -1103,10 +1103,10 @@ on.load(() => {
 	const updateCamera = () => {
 		if (state.camera.mscale !== state.camera.mscaleTarget) {
 
-			const d = state.camera.mscaleTarget - state.camera.mscale
-			state.camera.mscale += d * state.camera.mscaleTargetSpeed
+			const dd = state.camera.mscaleTarget - state.camera.mscale
+			state.camera.mscale += dd * state.camera.mscaleTargetSpeed
 
-			const sign = Math.sign(d)
+			const sign = Math.sign(dd)
 			const snap = state.camera.mscaleTarget * state.camera.mscaleTargetControl * state.camera.mscaleTargetSpeed
 			if (sign === 1 && state.camera.mscale > state.camera.mscaleTarget - snap) state.camera.mscale = state.camera.mscaleTarget
 			if (sign === -1 && state.camera.mscale < state.camera.mscaleTarget + snap) state.camera.mscale = state.camera.mscaleTarget
@@ -1115,10 +1115,10 @@ on.load(() => {
 
 		if (state.camera.dx !== state.camera.dxTarget) {
 
-			const d = state.camera.dxTarget - state.camera.dx
-			state.camera.dx += d * state.camera.dsTargetSpeed
+			const dd = state.camera.dxTarget - state.camera.dx
+			state.camera.dx += dd * state.camera.dsTargetSpeed
 
-			const sign = Math.sign(d)
+			const sign = Math.sign(dd)
 			const snap = state.camera.dxTarget * state.camera.dsControl * state.camera.dsTargetSpeed
 			if (sign === 1 && state.camera.dx > state.camera.dxTarget - snap) state.camera.dx = state.camera.dxTarget
 			if (sign === -1 && state.camera.dx < state.camera.dxTarget + snap) state.camera.dx = state.camera.dxTarget
@@ -1127,10 +1127,10 @@ on.load(() => {
 
 		if (state.camera.dy !== state.camera.dyTarget) {
 
-			const d = state.camera.dyTarget - state.camera.dy
-			state.camera.dy += d * state.camera.dsTargetSpeed
+			const dd = state.camera.dyTarget - state.camera.dy
+			state.camera.dy += dd * state.camera.dsTargetSpeed
 
-			const sign = Math.sign(d)
+			const sign = Math.sign(dd)
 			const snap = state.camera.dyTarget * state.camera.dsControl * state.camera.dsTargetSpeed
 			if (sign === 1 && state.camera.dy > state.camera.dyTarget - snap) state.camera.dy = state.camera.dyTarget
 			if (sign === -1 && state.camera.dy < state.camera.dyTarget + snap) state.camera.dy = state.camera.dyTarget
@@ -6525,11 +6525,11 @@ registerRule(
 
 	const rotate = ([x, y], [ox, oy], radians) => {
 		const [dx, dy] = [x - ox, y - oy];
-		const d = Math.sqrt(dx ** 2 + dy ** 2);
+		const dd = Math.sqrt(dx ** 2 + dy ** 2);
 		const angle = Math.atan2(dy, dx);
 		const [rx, ry] = [
-			d * Math.cos(radians + angle),
-			d * Math.sin(radians + angle),
+			dd * Math.cos(radians + angle),
+			dd * Math.sin(radians + angle),
 		];
 		return [ox + rx, oy + ry];
 	};
@@ -7334,6 +7334,7 @@ registerRule(
 
 	paddles = []
 
+	// Ctrl+F: addef
 	const PADDLE_MARGIN = COLOURTODE_SQUARE.size/2
 	const PADDLE = {
 		stayAtBack: true,
@@ -7469,7 +7470,7 @@ registerRule(
 
 			square.value = diagram
 			registerAtom(square)
-			state.brush.colour = makeDiagram({left: [makeDiagramCell({content: diagram})]})
+			setBrushColour(diagram)
 			square.update(square)
 			return square
 		},
@@ -8776,41 +8777,34 @@ registerRule(
 
 		if (atom.value !== undefined && atom === squareTool) {
 
-			/*if (false && atom === squareTool) {
-				if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
-					atom.previousBrushColour = state.brush.colour
-					if (atom.multiAtoms === undefined) {
-						atom.multiAtoms = []
-					}
-					for (const multiAtom of atom.multiAtoms) {
-						deleteChild(atom, multiAtom)
-					}
-
+			if (atom.previousBrushColour !== state.brush.colour || atom.toolbarNeedsColourUpdate) {
+				atom.previousBrushColour = state.brush.colour
+				if (atom.multiAtoms === undefined) {
 					atom.multiAtoms = []
+				}
+				for (const multiAtom of atom.multiAtoms) {
+					deleteChild(atom, multiAtom)
+				}
 
-					if (atom.value.isDiagram) {
-						const diagram = atom.value
-						const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
-						const cellAtomWidth = atom.width / diagramWidth
-						const cellAtomHeight = atom.height / diagramHeight
-						for (const diagramCell of diagram.left) {
-							const multiAtom = createChild(atom, COLOURTODE_SQUARE)
-							multiAtom.x = diagramCell.x * cellAtomWidth
-							multiAtom.y = diagramCell.y * cellAtomHeight
-							multiAtom.width = diagramCell.width * cellAtomWidth
-							multiAtom.height = diagramCell.height * cellAtomHeight
-							multiAtom.value = diagramCell.content
-							multiAtom.update(multiAtom)
-							atom.multiAtoms.push(multiAtom)
-						}
+				atom.multiAtoms = []
+
+				if (atom.value.isDiagram) {
+					const diagram = atom.value
+					const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
+					const cellAtomWidth = atom.width / diagramWidth
+					const cellAtomHeight = atom.height / diagramHeight
+					for (const diagramCell of diagram.left) {
+						const multiAtom = createChild(atom, COLOURTODE_SQUARE)
+						multiAtom.x = diagramCell.x * cellAtomWidth
+						multiAtom.y = diagramCell.y * cellAtomHeight
+						multiAtom.width = diagramCell.width * cellAtomWidth
+						multiAtom.height = diagramCell.height * cellAtomHeight
+						multiAtom.value = diagramCell.content
+						multiAtom.update(multiAtom)
+						atom.multiAtoms.push(multiAtom)
 					}
 				}
-			} else if (atom.value.isDiagram) {
-				const diagram = atom.value
-				const id = wrap(atom.menuId, 0, diagram.left.length-1)
-				const diagramCell = diagram.left[id]
-				atom.value = diagramCell.content
-			}*/
+			}
 		}
 
 		const valueClone = cloneDragonArray(atom.value)
