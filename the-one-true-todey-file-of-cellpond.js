@@ -4721,9 +4721,6 @@ registerRule(
 					}
 
 					updatePaddleSize(paddle)
-					if (atom.expanded) {
-						atom.unexpand(atom)
-					}
 				}
 				else if (atom.highlightedAtom.isSlot && atom.highlightedSide === "slot") {
 					const slot = atom.highlightedAtom
@@ -4739,9 +4736,6 @@ registerRule(
 					atom.slottee = true
 
 					updatePaddleSize(slot.parent)
-					if (atom.expanded) {
-						atom.unexpand(atom)
-					}
 				}
 				else if (atom.highlightedAtom.isLeftSlot && atom.highlightedSide === "slot") {
 					const slot = atom.highlightedAtom
@@ -4858,7 +4852,6 @@ registerRule(
 
 					joinee.joins.push(joiner)
 					deleteAtom(joiner)
-					joinee.isJoinee = true
 					
 					joinee.joinExpand(joinee)
 					
@@ -4870,10 +4863,15 @@ registerRule(
 					const diagramCell = makeDiagramCell({content: joinee.value})
 					state.brush.colour = makeDiagram({left: [diagramCell]})
 					
-					if (atom.expanded) {
-						atom.unexpand(atom)
-					}
 					
+				}
+				
+				if (atom.expanded) {
+					atom.unexpand(atom)
+				}
+				
+				if (atom.joinExpanded) {
+					atom.joinUnepxand(atom)
 				}
 
 			}
@@ -4886,22 +4884,33 @@ registerRule(
 			atom.pickerPad = pickerPad
 			pickerPad.width = atom.width + OPTION_MARGIN*2
 			pickerPad.x = -OPTION_MARGIN
-			pickerPad.height = (atom.joins.length+1) * (atom.height + OPTION_MARGIN) + OPTION_MARGIN
-			pickerPad.y = -OPTION_MARGIN
-			pickerPad.dragOnly = false
-			pickerPad.touch = (atom) => atom.parent
+			pickerPad.height = (atom.joins.length) * (atom.height + OPTION_MARGIN) + OPTION_MARGIN
+			pickerPad.y = atom.height + OPTION_MARGIN
+			pickerPad.touch = (atom) => atom
+			pickerPad.grab = (atom) => atom.parent
+			pickerPad.dragOnly = true
+
+			const pickerHandle = createChild(atom, COLOURTODE_PICKER_PAD)
+			atom.pickerHandle = pickerHandle
+			pickerHandle.width = SYMMETRY_HANDLE.height
+			pickerHandle.x = atom.width/2 - pickerHandle.width/2
+			pickerHandle.height = SYMMETRY_HANDLE.width
+			pickerHandle.y = atom.height
+			pickerHandle.touch = (atom) => atom
+			pickerHandle.grab = (atom) => atom.parent
+			pickerHandle.dragOnly = true
 
 			for (let i = 0; i < atom.joins.length; i++) {
 				const joiner = atom.joins[i]
 				registerAtom(joiner)
 				giveChild(atom, joiner)
 				joiner.x = 0
-				joiner.y = (i+1) * (atom.height + OPTION_MARGIN)
+				joiner.y = (i+1) * (atom.height + OPTION_MARGIN) + OPTION_MARGIN
 				joiner.dx = 0
 				joiner.dy = 0
+				joiner.isJoiner = true
 				joiner.touch = (atom) => atom.parent
-				joiner.grab = (atom) => atom.parent
-				
+				//joiner.grab = (atom) => atom.parent
 			}
 			
 			atom.needsColoursUpdate = true
@@ -4912,12 +4921,15 @@ registerRule(
 					bringAtomToFront(multiAtom)
 				}
 			}
+
+			atom.attached = false
 			
 		},
 
 		joinUnepxand: (atom) => {
 			atom.joinExpanded = false
 			deleteChild(atom, atom.pickerPad)
+			deleteChild(atom, atom.pickerHandle)
 
 			for (let i = 0; i < atom.joins.length; i++) {
 				const joiner = atom.joins[i]
@@ -4956,38 +4968,26 @@ registerRule(
 		// Ctrl+f: sqdra
 		drag: (atom) => {
 
+			if (atom.joins.length > 0 && atom.joinExpanded) {
+				return atom
+			}
+
+			if (atom.isJoiner) {
+				const id = atom.parent.joins.indexOf(atom)
+				atom.parent.joins.splice(id, 1)
+				atom.parent.value.joins.splice(id, 1)
+				atom.parent.joinUnepxand(atom.parent)
+				if (atom.parent.joins.length > 0) {
+					atom.parent.joinExpand(atom.parent)
+				}
+				freeChild(atom.parent, atom)
+				atom.isJoiner = false
+				atom.touch = COLOURTODE_SQUARE.touch
+			}
+
 			if (atom.attached) {
 
 				const paddle = atom.parent
-				/*
-				if (false && paddle.pinhole.locked) {
-					const {x, y} = getAtomPosition(atom)
-					const clone = makeAtom(COLOURTODE_SQUARE)
-					hand.offset.x -= atom.x - x
-					hand.offset.y -= atom.y - y
-					clone.x = x
-					clone.y = y
-
-					const dragonArray = cloneDragonArray(atom.value)
-					clone.value = dragonArray
-
-					if (clone.value.joins !== undefined) {
-						for (const j of clone.value.joins) {
-							const joinAtom = makeAtom(COLOURTODE_SQUARE)
-							joinAtom.value = j
-							clone.joins.push(joinAtom)
-						}
-					}
-					clone.stamp = clone.value.stamp
-					registerAtom(clone)
-
-					if (clone.value.isDiagram) {
-						clone.update(clone)
-					}
-
-					return clone
-				}
-				*/
 
 				if (atom.slottee) {
 					atom.attached = false
@@ -8607,43 +8607,43 @@ registerRule(
 	const makeSquareFromValue = (value) => {
 
 		const newAtom = makeAtom({...COLOURTODE_SQUARE})
+		newAtom.value = cloneDragonArray(value)
 
-			if (newAtom.value !== undefined) {
-				if (newAtom.value.joins !== undefined) {
-					for (const j of newAtom.value.joins) {
-						const joinAtom = makeAtom(COLOURTODE_SQUARE)
-						joinAtom.value = j
-						newAtom.joins.push(joinAtom)
-					}
+		if (newAtom.value !== undefined) {
+			if (newAtom.value.joins !== undefined) {
+				for (const j of newAtom.value.joins) {
+					const joinAtom = makeSquareFromValue(j)
+					newAtom.joins.push(joinAtom)
 				}
-				newAtom.stamp = newAtom.value.stamp
-
 			}
-			
-			if (newAtom.isSquare && !newAtom.value.isDiagram) {
+			newAtom.stamp = newAtom.value.stamp
 
-				/*
-				for (let i = 0; i < 3; i++) {
-					const channel = newAtom.value.channels[i]
-					if (channel === undefined) continue
-					if (channel.variable === undefined) continue
-					const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
-					newAtom.variableAtoms[i] = diamond
-					diamond.expand(diamond)
-					diamond.value = cloneDragonNumber(channel)
-					diamond.variable = channel.variable
-					diamond.makeOperationAtoms(diamond)
-					diamond.unexpand(diamond)
-				}
-				*/
+		}
+		
+		if (newAtom.isSquare && !newAtom.value.isDiagram) {
 
+			/*
+			for (let i = 0; i < 3; i++) {
+				const channel = newAtom.value.channels[i]
+				if (channel === undefined) continue
+				if (channel.variable === undefined) continue
+				const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
+				newAtom.variableAtoms[i] = diamond
+				diamond.expand(diamond)
+				diamond.value = cloneDragonNumber(channel)
+				diamond.variable = channel.variable
+				diamond.makeOperationAtoms(diamond)
+				diamond.unexpand(diamond)
 			}
+			*/
 
-			if (newAtom.value !== undefined && newAtom.value.isDiagram) {
-				newAtom.update(newAtom)
-			}
+		}
 
-			return newAtom
+		if (newAtom.value !== undefined && newAtom.value.isDiagram) {
+			newAtom.update(newAtom)
+		}
+
+		return newAtom
 	}
 
 	let menuRight = 10
