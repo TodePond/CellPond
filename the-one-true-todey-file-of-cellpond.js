@@ -6530,6 +6530,10 @@ registerRule(
 		rightDrag: (atom) => {
 			const clone = atom.clone(atom)
 			registerAtom(clone)
+			if (hand.content === atom) {
+				hand.offset.x -= atom.x - clone.x
+				hand.offset.y -= atom.y - clone.y
+			}
 			return clone
 		},
 		clone: (atom) => {
