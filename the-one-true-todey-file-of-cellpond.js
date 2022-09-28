@@ -4279,9 +4279,51 @@ registerRule(
 			atom.variableAtoms = []
 
 			atom.gradient = new ImageData(atom.width * CT_SCALE, atom.height * CT_SCALE)
+			atom.headGradient = new ImageData(atom.width * CT_SCALE, atom.height * CT_SCALE)
 
 		},
 
+		updateGradient: (atom) => {
+			const valueClone = cloneDragonArray(atom.value)
+			valueClone.joins = []
+			atom.colours = getSplashesArrayFromArray(valueClone)
+
+			// Create pixel values for gradient
+			atom.isGradient = true
+
+			if (atom.joins.length > 0 && !atom.joinExpanded) {
+				const joinGradients = []
+				for (const join of atom.joins) {
+					join.updateGradient(join)
+					joinGradients.push(join.gradient)
+				}
+				atom.headGradient = getGradientImageFromColours({
+					colours: atom.colours,
+					width: atom.width * CT_SCALE,
+					height: atom.height * CT_SCALE,
+					stamp: atom.value.stamp,
+					gradient: atom.headGradient,
+				})
+
+				const gradients = [atom.headGradient, ...joinGradients]
+				atom.gradient = getMergedGradient({
+					gradients,
+					width: atom.width * CT_SCALE,
+					height: atom.height * CT_SCALE,
+					stamp: atom.value.stamp,
+					mergedGradient: atom.gradient,
+				})
+				
+			} else {
+				atom.gradient = getGradientImageFromColours({
+					colours: atom.colours,
+					width: atom.width * CT_SCALE,
+					height: atom.height * CT_SCALE,
+					gradient: atom.gradient,
+					stamp: atom.value.stamp,
+				})
+			}
+		},
 		
 		// Ctrl+F: sqwww
 		update: (atom) => {
@@ -4307,23 +4349,8 @@ registerRule(
 			} else {
 
 				if (atom.needsColoursUpdate) {
-
-					const valueClone = cloneDragonArray(atom.value)
-					if (atom.joinExpanded) valueClone.joins = []
-					atom.colours = getSplashesArrayFromArray(valueClone)
-
-					// Create pixel values for gradient
-					atom.isGradient = true
-					atom.gradient = getGradientImageFromColours({
-						colours: atom.colours,
-						width: atom.width * CT_SCALE,
-						height: atom.height * CT_SCALE,
-						gradient: atom.gradient,
-						stamp: atom.value.stamp,
-					})
-					atom.colourId = Random.Uint32 % atom.colours.length
+					atom.updateGradient(atom)
 					atom.needsColoursUpdate = false
-
 				}
 			}
 
@@ -5073,16 +5100,107 @@ registerRule(
 		return scores
 	}
 
-	const getGradientImageFromColours = ({colours, width, height, gradient = new ImageData(width, height), stamp, joins}) => {
+	const lerp = (distance, line) => {
+
+		const [a, b] = line
+		const [ax, ay] = a
+		const [bx, by] = b
 		
-		const ogWidth = width
-		const ogHeight = height
+		const x = ax + (bx - ax) * distance
+		const y = ay + (by - ay) * distance
+	
+		const point = [x, y]
+		return point
+	
+	}
+
+	const getMergedGradient = ({gradients, width, height, mergedGradient = new ImageData(width, height), stamp}) => {
+		
+		;[width, height] = [width, height].map(dimension => Math.round(dimension))
+		const newLength = width * height * 4
+		if (mergedGradient.data.length !== newLength) {
+			mergedGradient = new ImageData(width, height)
+		}
+
+		const count = gradients.length
+		const step = 2*Math.PI / count
+		let offset = -step/2 - Math.PI/2
+		if (count === 2) offset -= Math.PI/4
+		const limits = gradients.map((gradient, i) => {
+			let angle = i*step+step
+			/*while (angle < 0) angle += 2*Math.PI
+			while (angle > 2*Math.PI) angle -= 2*Math.PI*/
+			return angle
+		})
+		
+		let i = 0
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+				const dx = x - width/2
+				const dy = y - height/2
+				let angle = Math.atan2(dy, dx) - offset
+				while (angle < 0) angle += 2*Math.PI
+				while (angle > 2*Math.PI) angle -= 2*Math.PI
+				let id = 0
+				
+				let blend = false
+				let blendScore = 0
+				while (angle > limits[id]) {
+					id++
+					if (id >= gradients.length) {
+						id = 0
+						break
+					}
+				}
+				
+				const diff = limits[id] - angle 
+				const prevId = (id-1 < 0)? limits.length-1 : id-1
+				const prevLimit = limits[prevId]
+				const prefDiff = prevLimit - angle
+				const nextId = (id+1 >= limits.length)? 0 : id+1
+				let blendId = undefined
+
+				const pity = 0.05
+				if (Math.abs(prefDiff) < pity) {
+					blend = true
+					blendScore = (-prefDiff) / pity / 2 + 0.5
+					blendId = prevId
+				} else if (Math.abs(diff) < pity) {
+					blend = true
+					blendScore = (diff) / pity / 2 + 0.5
+					blendId = nextId
+				} else if (angle < pity) {
+					blend = true
+					blendScore = angle / pity / 2 + 0.5
+					blendId = prevId
+				}
+				if (blend) {
+					mergedGradient.data[i] = (gradients[id].data[i]*(blendScore) + gradients[blendId].data[i]*((1-blendScore)))
+					mergedGradient.data[i+1] = (gradients[id].data[i+1]*(blendScore) + gradients[blendId].data[i+1]*((1-blendScore)))
+					mergedGradient.data[i+2] = (gradients[id].data[i+2]*(blendScore) + gradients[blendId].data[i+2]*((1-blendScore)))
+					mergedGradient.data[i+3] = (gradients[id].data[i+3]*(blendScore) + gradients[blendId].data[i+3]*((1-blendScore)))
+				} else {
+					mergedGradient.data[i] = gradients[id].data[i]
+					mergedGradient.data[i+1] = gradients[id].data[i+1]
+					mergedGradient.data[i+2] = gradients[id].data[i+2]
+					mergedGradient.data[i+3] = gradients[id].data[i+3]
+				}
+				
+				i += 4
+			}
+		}
+
+		return mergedGradient
+	}
+
+	const getGradientImageFromColours = ({colours, width, height, gradient = new ImageData(width, height), stamp}) => {
+		
 		;[width, height] = [width, height].map(dimension => Math.round(dimension))
 		//const size = Math.max(width, height)
 		//width = height = size
-		const newLength = ogWidth * ogHeight * 4
+		const newLength = width * height * 4
 		if (gradient.data.length !== newLength) {
-			gradient = new ImageData(ogWidth, ogHeight)
+			gradient = new ImageData(width, height)
 		}
 		let minRed = Infinity
 		let maxRed = -Infinity
