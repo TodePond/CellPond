@@ -251,7 +251,7 @@ const state = {
 		count: 4096 * 0.4,
 		dynamic: false,
 		//aer: 1.0,
-		redraw: 2.0,
+		redraw: 2.5,
 		redrawRepeatScore: 0.5,
 		redrawRepeatPenalty: 0.0,
 	},
