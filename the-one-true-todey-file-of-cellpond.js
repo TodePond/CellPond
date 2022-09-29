@@ -238,17 +238,17 @@ const state = {
 	time: 0,
 	maxTime: 9999999,
 
-	speed: {
+	/*speed: {
 		count: 100,
 		dynamic: false,
 		aer: 2.0,
 		redraw: 300.0,
 		redrawRepeatScore: 1.0,
 		redrawRepeatPenalty: 0.0,
-	},
+	},*/
 
 	speed: {
-		count: 4096 * 0.5,
+		count: 4096 * 0.4,
 		dynamic: false,
 		//aer: 1.0,
 		redraw: 2.0,
