@@ -1,7 +1,7 @@
 <img align="right" height="100" src="https://user-images.githubusercontent.com/15892272/164454144-25d4aa67-4942-463e-b4fe-edbd3b17adc1.png">
 
 # CellPond
-CellPond is a weird 'cellular automata' engine that I made for fun.
+CellPond is a slightly-surreal 'cellular automata' engine that I made for fun.
 
 I've made two videos about it! Check them out:<br>
 🦠 [**Cells in Cells in Cells**](https://youtu.be/gv40Z9tVjAI)<br>
