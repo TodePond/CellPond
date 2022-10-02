@@ -6766,6 +6766,8 @@ registerRule(
 				const slotId = CHANNEL_IDS[hexagon.variable]
 				square.receiveNumber(square, hexagon.value, slotId, {expanded: hexagon.expanded, numberAtom: hexagon})
 			}
+
+			bringAtomToFront(atom.parent)
 		}
 	}
 
