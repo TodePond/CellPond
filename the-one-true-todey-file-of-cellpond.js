@@ -4093,6 +4093,10 @@ registerRule(
 		expand: (atom) => {
 			atom.expanded = true
 			atom.createPicker(atom)
+			if (atom.value.channels.some(v => v === undefined)) {
+				unlockMenuTool("hexagon")
+				unlockMenuTool("wide_rectangle")
+			}
 		},
 
 		unexpand: (atom) => {
