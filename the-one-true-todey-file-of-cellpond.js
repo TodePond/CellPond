@@ -931,6 +931,10 @@ on.load(() => {
 					}
 				} else if (atom.isTallRectangle) {
 					// TODO: what colour should rectangles set the brush?
+				} else if (atom.isPaddle) {
+					state.brush.hoverColour = atom.getColour(atom)
+				} else if (atom.isSlot) {
+					state.brush.hoverColour = atom.parent.getColour(atom.parent)
 				} else {
 					state.brush.hoverColour = atom.colour.splash
 				}
@@ -7630,6 +7634,25 @@ registerRule(
 		},
 
 		rightDraggable: true,
+		getColour: (paddle) => {
+			let cellAtoms = paddle.cellAtoms
+			if (cellAtoms.length === 0) {
+				
+				//const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
+				//const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
+				//const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
+				const leftClone = makeArray({channels: [undefined, undefined, undefined]})
+				return leftClone
+
+			} else if (cellAtoms.length === 1) {
+				const leftClone = cloneDragonArray(cellAtoms[0].value)
+				return leftClone
+			}
+			const cells = makeDiagramCellsFromCellAtoms(cellAtoms)
+			const diagram = makeDiagram({left: cells})
+			normaliseDiagram(diagram)
+			return diagram
+		},
 		rightDrag: (paddle) => {
 			let cellAtoms = paddle.cellAtoms
 			if (cellAtoms.length === 0) {
@@ -7637,10 +7660,10 @@ registerRule(
 				const square = makeAtom(COLOURTODE_SQUARE)
 				hand.offset.x = -square.width/2
 				hand.offset.y = -square.height/2
-				const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
-				const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
-				const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
-				const leftClone = makeArray({channels: [red, green, blue]})
+				//const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
+				//const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
+				//const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
+				const leftClone = makeArray({channels: [undefined, undefined, undefined]})
 				setBrushColour(leftClone)
 				registerAtom(square)
 				square.value = leftClone
