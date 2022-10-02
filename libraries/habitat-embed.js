@@ -335,7 +335,7 @@ const Habitat = {}
 	Habitat.Colour.Void = Habitat.Colour.make("rgb(6, 7, 10)")
 	Habitat.Colour.Black = Habitat.Colour.make(000)
 	Habitat.Colour.Grey = Habitat.Colour.make(11)
-	Habitat.Colour.Silver = Habitat.Colour.make(556)
+	Habitat.Colour.Silver = Habitat.Colour.make(956)
 	Habitat.Colour.White = Habitat.Colour.make(888)
 
 	Habitat.Colour.Green = Habitat.Colour.make(293)

@@ -2354,7 +2354,7 @@ on.load(() => {
 		const choices = new Set()
 		for (const augendChoice of augendChoices) {
 			for (const addendChoice of addendChoices) {
-				const choice = clamp(augendChoice + addendChoice*multiplier, 0, 9)
+				const choice = wrap(augendChoice + addendChoice*multiplier, 0, 9)
 				choices.add(choice)
 			}
 		}
