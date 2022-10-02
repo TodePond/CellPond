@@ -8929,13 +8929,12 @@ registerRule(
 		if (atom.toolbarNeedsColourUpdate && atom === squareTool) {
 			atom.toolbarNeedsColourUpdate = false
 			atom.isGradient = true
-			atom.gradient = getGradientImageFromColours({
-				colours: atom.colours,
-				width: atom.width * CT_SCALE,
-				height: atom.height * CT_SCALE,
-				gradient: atom.gradient,
-				stamp: atom.value.stamp,
-			})
+			atom.joins = []
+			for (const joinValue of atom.value.joins) {
+				const joinSquare = makeSquareFromValue(joinValue)
+				atom.joins.push(joinSquare)
+			}
+			COLOURTODE_SQUARE.updateGradient(atom)
 		} else {
 			atom.colour = Colour.splash(999)
 			atom.borderColour = Colour.splash(999)
