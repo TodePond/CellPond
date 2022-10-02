@@ -8121,7 +8121,15 @@ registerRule(
 		}
 		
 		if (paddles.length > 2) {
-			unlockMenuTool("hexagon")
+			let ruleCount = 0
+			for (const paddle of paddles) {
+				if (paddle.rightTriangle !== undefined) {
+					ruleCount++
+				}
+			}
+			if (ruleCount >= 2) {
+				unlockMenuTool("hexagon")
+			}
 		}
 
 		let previous = undefined
