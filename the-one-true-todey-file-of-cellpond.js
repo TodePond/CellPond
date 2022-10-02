@@ -3558,7 +3558,7 @@ registerRule(
 			if (!hand.content.dragLockX) hand.content.dx = hand.velocity.x * HAND_RELEASE
 			if (!hand.content.dragLockY) hand.content.dy = hand.velocity.y * HAND_RELEASE
 			hand.content.drop(hand.content)
-			if (hand.content.highlighter && hand.content.highlightedAtom !== undefined) {
+			if (hand.content.highlightedAtom !== undefined) {
 				hand.content.place(hand.content, hand.content.highlightedAtom)
 				if (hand.content.highlight !== undefined) {
 					deleteChild(hand.content, hand.content.highlight)
