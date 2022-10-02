@@ -739,7 +739,7 @@ on.load(() => {
 
 		if (Mouse.Middle && !pencilled) {
 			const [x, y] = Mouse.position
-			brush(...getCursorView(x, y))
+			brush(...getCursorView(x, y), {single: true})
 			pencilled = true
 		}
 
@@ -815,16 +815,16 @@ on.load(() => {
 		return [x, y]
 	}
 
-	const brush = (x, y) => {
+	const brush = (x, y, {single = false} = {}) => {
 
 		let cell = pickCell(x, y)
 		if (cell === undefined) return
-
-		if (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE) {
+		if (!single && (cell.width !== WORLD_CELL_SIZE || cell.height != WORLD_CELL_SIZE)) {
 			const worldCells = getWorldCellsSet(x, y)
-			if (worldCells === undefined) return
-			const merged = mergeCells([...worldCells])
-			cell = merged
+			if (worldCells !== undefined) {
+				const merged = mergeCells([...worldCells])
+				cell = merged
+			}
 		}
 
 		if (typeof state.brush.colour === "number") {
