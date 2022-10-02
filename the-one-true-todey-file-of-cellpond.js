@@ -1358,7 +1358,7 @@ on.load(() => {
 		const children = []
 		for (const diagramCell of diagram.left) {
 
-			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour, debug: true})
+			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour})
 			const colour = colours[Random.Uint32 % colours.length]
 
 			const child = makeCell({
@@ -1653,7 +1653,6 @@ on.load(() => {
 			return splashes
 		 }
 
-
 		//if (array.channels === undefined) print(array)
 		let [reds, greens, blues] = array.channels
 
@@ -1661,7 +1660,7 @@ on.load(() => {
 		if (greens === undefined) greens = makeNumber({channel: 1, variable: "green"})
 		if (blues === undefined) blues = makeNumber({channel: 2, variable: "blue"})
 
-		const rvalues = evaluateNumber(reds, {...args, debug: args.debug})
+		const rvalues = evaluateNumber(reds, args)
 		const gvalues = evaluateNumber(greens, args)
 		const bvalues = evaluateNumber(blues, args)
 
@@ -2368,7 +2367,7 @@ on.load(() => {
 		if (addend.subtract !== undefined) {
 			results = addChannelToResults(results, addend.add, {source, multiplier: -1})
 		}
-
+		
 		return results
 		
 	}
@@ -4045,7 +4044,7 @@ registerRule(
 
 	// Ctrl+F: sqdef
 	const COLOURTODE_SQUARE = {
-		//behindChildren: true,
+		behindChildren: true,
 		isSquare: true,
 		hasBorder: true,
 		draw: (atom) => {
@@ -4123,17 +4122,15 @@ registerRule(
 					if (atom.blueExpanded) atom.blue.click(atom.blue)
 					atom.blue.attached = true
 				} else {
-					let diamond = atom.variableAtoms[2]
-					registerAtom(diamond)
-					giveChild(atom, diamond)
-					diamond.channelSlot = "blue"
-					diamond.updateAppearance(diamond)
-					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*3 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
-					diamond.y = atom.height/2 - diamond.height/2
-					diamond.attached = true
+					const hexagon = atom.variableAtoms[2]
+					registerAtom(hexagon)
+					giveChild(atom, hexagon)
+					hexagon.variable = "blue"
+					hexagon.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*3 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - hexagon.width/3
+					hexagon.y = atom.height/2 - hexagon.height/2
+					hexagon.attached = true
 
-					atom.blue = diamond
-					//if (atom.redExpanded) diamond.expand(diamond)
+					atom.blue = hexagon
 				}
 			}
 
@@ -4150,17 +4147,15 @@ registerRule(
 					if (atom.greenExpanded) atom.green.click(atom.green)
 					atom.green.attached = true
 				} else {
-					let diamond = atom.variableAtoms[1]
-					registerAtom(diamond)
-					giveChild(atom, diamond)
-					diamond.channelSlot = "green"
-					diamond.updateAppearance(diamond)
-					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*2 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
-					diamond.y = atom.height/2 - diamond.height/2
-					diamond.attached = true
+					const hexagon = atom.variableAtoms[1]
+					registerAtom(hexagon)
+					giveChild(atom, hexagon)
+					hexagon.variable = "green"
+					hexagon.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size)*2 + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - hexagon.width/3
+					hexagon.y = atom.height/2 - hexagon.height/2
+					hexagon.attached = true
 
-					atom.green = diamond
-					//if (atom.redExpanded) diamond.expand(diamond)
+					atom.green = hexagon
 				}
 			}
 
@@ -4177,17 +4172,15 @@ registerRule(
 					if (atom.redExpanded) atom.red.click(atom.red)
 					atom.red.attached = true
 				} else {
-					let diamond = atom.variableAtoms[0]
-					registerAtom(diamond)
-					giveChild(atom, diamond)
-					diamond.channelSlot = "red"
-					diamond.updateAppearance(diamond)
-					diamond.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - diamond.width/3
-					diamond.y = atom.height/2 - diamond.height/2
-					diamond.attached = true
+					const hexagon = atom.variableAtoms[0]
+					registerAtom(hexagon)
+					giveChild(atom, hexagon)
+					hexagon.variable = "red"
+					hexagon.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - hexagon.width/3
+					hexagon.y = atom.height/2 - hexagon.height/2
+					hexagon.attached = true
 
-					atom.red = diamond
-					//if (atom.redExpanded) diamond.expand(diamond)
+					atom.red = hexagon
 				}
 			}
 		},
@@ -5221,9 +5214,10 @@ registerRule(
 			if (b > maxBlue) maxBlue = b
 		}
 
+
 		const makeGradientColour = (red, green, blue) => {
 			//return Colour.splash(maxRed + maxGreen + maxBlue)
-			return Colour.splash((red === 1? maxRed : minRed) + (green === 1? maxGreen : minGreen) + (blue === 1? maxBlue : minBlue))
+			return Colour.splash(((red === 1? maxRed : minRed) + (green === 1? maxGreen : minGreen) + (blue === 1? maxBlue : minBlue)))
 		}
 
 		const gradientColours = [
@@ -6206,6 +6200,7 @@ registerRule(
 				atom.dy = 0
 			}
 			
+			unlockMenuTool("hexagon")
 			//unlockMenuTool("tall_rectangle")
 		},
 
@@ -6564,6 +6559,19 @@ registerRule(
 		construct: (atom) => {
 			atom.ons = [false, false, false, false, false, false]
 		},
+		updateValue: (atom) => {
+			const channel = CHANNEL_IDS[atom.variable]
+			const addZero = !atom.ons[1] && !atom.ons[0] && !atom.ons[5]
+			const subtractZero = !atom.ons[2] && !atom.ons[3] && !atom.ons[4]
+			const bothZero = !addZero && !subtractZero
+			const addValues = [addZero || bothZero, atom.ons[1], atom.ons[0], atom.ons[5], false, false, false, false, false, false]
+			const subtractValues = [subtractZero || bothZero, atom.ons[2], atom.ons[3], atom.ons[4], false, false, false, false, false, false]
+			const add = makeNumber({values: addValues})
+			const subtract = makeNumber({values: subtractValues})
+			
+			const value = makeNumber({channel, variable: atom.variable, add, subtract})
+			atom.value = value
+		},
 		hover: (atom) => {
 
 			const {x, y} = getAtomPosition(atom)
@@ -6591,18 +6599,81 @@ registerRule(
 					return paddle
 				}
 			}
+			
+			let winningDistance = Infinity
+			let winningSquare = undefined
+			let winningSlot = undefined
 
-			return
+			const atoms = getAllBaseAtoms()
+			for (const other of atoms) {
+				if (other === atom) continue
+				if (!other.isSquare) continue
+				if (!other.expanded) continue
+
+				const {x: px, y: py} = getAtomPosition(other.pickerPad)
+				const pleft = px
+				const pright = px + other.pickerPad.width
+				const ptop = py
+				const pbottom = py + other.pickerPad.height
+
+				if (left > pright) continue
+				if (right < pleft) continue
+				if (bottom < ptop) continue
+				if (top > pbottom) continue
+
+				const slots = ["red", "green", "blue"].filter(slot => other[slot] === undefined)
+				if (slots.length === 0) continue
+				const {x: ax, y: ay} = getAtomPosition(other)
+
+				for (const slot of slots) {
+					const slotId = CHANNEL_IDS[slot]
+					const sx = ax + other.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+					const sy = ay + OPTION_MARGIN
+					const distance = Math.hypot(x - sx, y - sy)
+					if (distance < winningDistance) {
+						winningDistance = distance
+						winningSlot = slot
+						winningSquare = other
+					}
+				}
+
+				if (winningSquare !== undefined) {
+
+					const {x: ax, y: ay} = getAtomPosition(winningSquare)
+					const slotId = CHANNEL_IDS[winningSlot]
+
+					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+					atom.highlight.hasBorder = true
+					atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
+					atom.highlight.y = ay
+					atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
+					atom.highlightedAtom = winningSquare
+					atom.highlightedSlot = winningSlot
+				}
+			}
+
+			return winningSquare
 		},
 		place: (atom, paddle) => {
-			atom.attached = true
-			giveChild(paddle, atom)
-			
-			paddle.chance = atom
-			updatePaddleSize(paddle)
-			
-			atom.dx = 0
-			atom.dy = 0
+			if (paddle.isPaddle) {
+				atom.attached = true
+				giveChild(paddle, atom)
+				
+				paddle.chance = atom
+				updatePaddleSize(paddle)
+				
+				atom.dx = 0
+				atom.dy = 0
+			} else if (paddle.isSquare) {
+				const square = paddle
+				atom.variable = atom.highlightedSlot
+				atom.updateValue(atom)
+				const slotId = CHANNEL_IDS[atom.highlightedSlot]
+				square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded, numberAtom: atom})
+				deleteAtom(atom)
+				atom.dx = 0
+				atom.dy = 0
+			}
 		},
 		drag: (atom) => {
 			if (atom.parent.isPaddle) {
@@ -6610,6 +6681,13 @@ registerRule(
 				freeChild(paddle, atom)
 				paddle.chance = undefined
 				updatePaddleSize(paddle)
+			} else if (atom.parent.isSquare) {
+				const square = atom.parent
+				square[atom.variable] = undefined
+				const channelId = CHANNEL_IDS[atom.variable]
+				square.receiveNumber(square, undefined, channelId)
+				freeChild(square, atom)
+				atom.attached = false
 			}
 
 			return atom
@@ -6678,6 +6756,11 @@ registerRule(
 			if (hexagon.parent.isPaddle) {
 				const paddle = hexagon.parent
 				updatePaddleSize(paddle)
+			} else if (hexagon.parent.isSquare) {
+				const square = hexagon.parent
+				hexagon.updateValue(hexagon)
+				const slotId = CHANNEL_IDS[hexagon.variable]
+				square.receiveNumber(square, hexagon.value, slotId, {expanded: hexagon.expanded, numberAtom: hexagon})
 			}
 		}
 	}
@@ -6946,6 +7029,7 @@ registerRule(
 	]
 
 	// DIAMOND
+	// Ctrl+F: dedef
 	const COLOURTODE_TALL_RECTANGLE = {
 		behindChildren: true,
 		highlighter: true,
@@ -6956,7 +7040,6 @@ registerRule(
 			const {x, y} = getAtomPosition(atom)
 			hand.offset.x -= atom.x - x
 			hand.offset.y -= atom.y - y
-			print(atom)
 			clone.variable = atom.variable
 			if (atom.expanded) {
 				clone.expand(clone)
@@ -7390,7 +7473,7 @@ registerRule(
 		click: (atom) => {
 			if (atom.value === atom.parent.variable) return
 
-			atom.parent.variable = atom.value			
+			atom.parent.variable = atom.value
 			atom.parent.value.variable = atom.value
 
 			atom.parent.winnerPin.x = atom.x + atom.parent.winnerPin.width/2
@@ -8742,22 +8825,19 @@ registerRule(
 
 		}
 		
-		if (newAtom.isSquare && !newAtom.value.isDiagram) {
+		if (!newAtom.value.isDiagram) {
 
-			/*
 			for (let i = 0; i < 3; i++) {
 				const channel = newAtom.value.channels[i]
 				if (channel === undefined) continue
 				if (channel.variable === undefined) continue
-				const diamond = makeAtom(COLOURTODE_TALL_RECTANGLE)
-				newAtom.variableAtoms[i] = diamond
-				diamond.expand(diamond)
-				diamond.value = cloneDragonNumber(channel)
-				diamond.variable = channel.variable
-				diamond.makeOperationAtoms(diamond)
-				diamond.unexpand(diamond)
+				const hexagon = makeAtom(COLOURTODE_HEXAGON)
+				newAtom.variableAtoms[i] = hexagon
+				hexagon.variable = channel.variable
+				const {add, subtract} = channel
+				hexagon.ons = [add.values[2], add.values[1], subtract.values[1], subtract.values[2], subtract.values[3], add.values[3]]
+				hexagon.updateValue(hexagon)
 			}
-			*/
 
 		}
 
