@@ -4048,7 +4048,6 @@ registerRule(
 
 	// Ctrl+F: sqdef
 	const COLOURTODE_SQUARE = {
-		behindChildren: true,
 		isSquare: true,
 		hasBorder: true,
 		draw: (atom) => {
