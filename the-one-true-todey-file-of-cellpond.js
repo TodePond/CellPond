@@ -998,7 +998,7 @@ on.load(() => {
 	}
 
 	const ZOOM = 0.05
-	let CT_SCALE = 1.0
+	CT_SCALE = 1.0
 	on.wheel((e) => {
 
 		e.preventDefault()
