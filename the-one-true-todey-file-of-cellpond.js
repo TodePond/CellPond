@@ -1034,6 +1034,15 @@ on.load(() => {
 		if (e.key === "Alt") e.preventDefault()
 	}, {passive: false})
 
+	on.keydown(e => {
+		if (e.key === "f") {
+			state.camera.x = 1920 * 1/3
+			state.camera.y = 30
+			state.camera.scale = 0.95
+			updateImageSize()
+		}
+	})
+
 	const getNeatScale = (underScale) => {
 		return underScale
 	}
@@ -1595,12 +1604,13 @@ on.load(() => {
 		}
 
 		let results = VARIABLE_EVALUATOR[number.variable](number, args)
+		const isHue = number.variable === "red"
 
 		if (number.add !== undefined) {
-			results = addChannelToResults(results, number.add, {source: args.source, multiplier: 1})
+			results = addChannelToResults(results, number.add, {source: args.source, multiplier: 1, isHue})
 		}
 		if (number.subtract !== undefined) {
-			results = addChannelToResults(results, number.subtract, {source: args.source, multiplier: -1})
+			results = addChannelToResults(results, number.subtract, {source: args.source, multiplier: -1, isHue})
 		}
 		
 		return results
@@ -2317,11 +2327,12 @@ on.load(() => {
 					const channel = cell.content.channels[i]
 					if (channel.variable === undefined) continue
 					let results = VARIABLE_EVALUATOR[channel.variable](channel, {source})
+					const isHue = channel.variable === "red"
 					if (channel.add !== undefined) {
-						results = addChannelToResults(results, channel.add, {source, multiplier: 1})
+						results = addChannelToResults(results, channel.add, {source, multiplier: 1, isHue})
 					}
 					if (channel.subtract !== undefined) {
-						results = addChannelToResults(results, channel.subtract, {source, multiplier: -1})
+						results = addChannelToResults(results, channel.subtract, {source, multiplier: -1, isHue})
 					}
 					const choices = results.map((v, i) => v === true? i : false).filter(v => v !== false)
 					const newPart = choices[Random.Uint8 % choices.length]
@@ -2342,7 +2353,7 @@ on.load(() => {
 	}
 	DRAGON_INSTRUCTION.recolour.type = "RECOLOUR"
 
-	const addChannelToResults = (augendResults, addend, {source, multiplier = 1}) => {
+	const addChannelToResults = (augendResults, addend, {source, multiplier = 1, isHue = false}) => {
 		let addendResults = addend.values
 		if (addend.variable !== undefined) {
 			addendResults = VARIABLE_EVALUATOR[addend.variable](addend, {source})
@@ -2354,7 +2365,7 @@ on.load(() => {
 		const choices = new Set()
 		for (const augendChoice of augendChoices) {
 			for (const addendChoice of addendChoices) {
-				const choice = clamp(augendChoice + addendChoice*multiplier, 0, 9)
+				const choice = isHue? wrap(augendChoice + addendChoice*multiplier, 0, 9) : clamp(augendChoice + addendChoice*multiplier, 0, 9)
 				choices.add(choice)
 			}
 		}
@@ -2365,11 +2376,11 @@ on.load(() => {
 		}
 
 		if (addend.add !== undefined) {
-			results = addChannelToResults(results, addend.add, {source, multiplier: 1})
+			results = addChannelToResults(results, addend.add, {source, multiplier: 1, isHue})
 		}
 
 		if (addend.subtract !== undefined) {
-			results = addChannelToResults(results, addend.add, {source, multiplier: -1})
+			results = addChannelToResults(results, addend.add, {source, multiplier: -1, isHue})
 		}
 		
 		return results
