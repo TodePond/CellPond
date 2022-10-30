@@ -139,11 +139,11 @@ const Habitat = {}
 			const greenId = parseInt(string[1])
 			const blueId = parseInt(string[2])
 
-			const red = reds[redId]
-			const green = greens[greenId]
-			const blue = blues[blueId]
+			const red = Math.floor((reds[redId] / 255) * 360 + 200)
+			const green = Math.floor(greens[greenId] / 255 * 100)
+			const blue = Math.floor(blues[blueId] / 255 * 100)
 
-			const rgb = `rgb(${red}, ${green}, ${blue})`
+			const rgb = `hsl(${red}, ${green}%, ${blue}%)`
 
 			const colour = Habitat.Colour.make(rgb)
 			colour.splash = style
@@ -334,8 +334,8 @@ const Habitat = {}
 	
 	Habitat.Colour.Void = Habitat.Colour.make("rgb(6, 7, 10)")
 	Habitat.Colour.Black = Habitat.Colour.make(000)
-	Habitat.Colour.Grey = Habitat.Colour.make(112)
-	Habitat.Colour.Silver = Habitat.Colour.make(556)
+	Habitat.Colour.Grey = Habitat.Colour.make(11)
+	Habitat.Colour.Silver = Habitat.Colour.make(956)
 	Habitat.Colour.White = Habitat.Colour.make(888)
 
 	Habitat.Colour.Green = Habitat.Colour.make(293)

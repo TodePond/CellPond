@@ -46040,4 +46040,5 @@ const PREBUILT_BORDER_COLOURS = []
 	PREBUILT_BORDER_COLOURS[999] = colour
 }
 
-Colour.cache = PREBUILT_COLOURS
+Colour.splash()
+//Colour.cache = PREBUILT_COLOURS

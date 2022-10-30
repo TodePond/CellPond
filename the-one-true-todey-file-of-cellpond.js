@@ -2365,7 +2365,7 @@ on.load(() => {
 		const choices = new Set()
 		for (const augendChoice of augendChoices) {
 			for (const addendChoice of addendChoices) {
-				const choice = isHue? clamp(augendChoice + addendChoice*multiplier, 0, 9) : clamp(augendChoice + addendChoice*multiplier, 0, 9)
+				const choice = isHue? wrap(augendChoice + addendChoice*multiplier, 0, 9) : clamp(augendChoice + addendChoice*multiplier, 0, 9)
 				choices.add(choice)
 			}
 		}
