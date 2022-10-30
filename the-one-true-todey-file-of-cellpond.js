@@ -998,7 +998,7 @@ on.load(() => {
 	}
 
 	const ZOOM = 0.05
-	let CT_SCALE = 1.0
+	CT_SCALE = 1.0
 	on.wheel((e) => {
 
 		e.preventDefault()
@@ -1033,6 +1033,15 @@ on.load(() => {
 	on.keydown(e => {
 		if (e.key === "Alt") e.preventDefault()
 	}, {passive: false})
+
+	on.keydown(e => {
+		if (e.key === "f") {
+			state.camera.x = 1920 * 1/3
+			state.camera.y = 30
+			state.camera.scale = 0.95
+			updateImageSize()
+		}
+	})
 
 	const getNeatScale = (underScale) => {
 		return underScale
