@@ -9243,6 +9243,10 @@ registerRule(
 
 	const unpackPaddles = (pack) => {
 		loadedColour = false
+		unlockMenuTool("triangle")
+		unlockMenuTool("circle")
+		unlockMenuTool("hexagon")
+		unlockMenuTool("wide_rectangle")
 		try {
 			while (paddles.length > 0) {
 				deletePaddle(paddles[paddles.length-1])
