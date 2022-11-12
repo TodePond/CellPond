@@ -9174,20 +9174,24 @@ registerRule(
 	}
 
 	PADDLE_PACK.symmetryCircle = (paddle, value) => {
+		if (value === undefined) return undefined
 		return value.value
 	}
 
 	PADDLE_UNPACK.symmetryCircle = (paddle, value) => {
+		if (value === undefined) return undefined
 		const circle = createChild(paddle, SYMMETRY_CIRCLE)
 		circle.value = value
 		return circle
 	}
 
 	PADDLE_PACK.chance = (paddle, value) => {
+		if (value === undefined) return undefined
 		return value.ons
 	}
 
 	PADDLE_UNPACK.chance = (paddle, value) => {
+		if (value === undefined) return undefined
 		const hex = createChild(paddle, COLOURTODE_HEXAGON)
 		hex.ons = value
 		return hex
