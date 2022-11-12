@@ -9174,24 +9174,22 @@ registerRule(
 	}
 
 	PADDLE_PACK.symmetryCircle = (paddle, value) => {
-		if (value === undefined) return undefined
+		if (value === undefined) return
 		return value.value
 	}
 
 	PADDLE_UNPACK.symmetryCircle = (paddle, value) => {
-		if (value === undefined) return undefined
 		const circle = createChild(paddle, SYMMETRY_CIRCLE)
 		circle.value = value
 		return circle
 	}
 
 	PADDLE_PACK.chance = (paddle, value) => {
-		if (value === undefined) return undefined
+		if (value === undefined) return
 		return value.ons
 	}
 
 	PADDLE_UNPACK.chance = (paddle, value) => {
-		if (value === undefined) return undefined
 		const hex = createChild(paddle, COLOURTODE_HEXAGON)
 		hex.ons = value
 		return hex
@@ -9238,7 +9236,10 @@ registerRule(
 			for (const key in paddle) {
 				const packer = PADDLE_PACK[key]
 				if (packer === undefined) continue
-				packedPaddle[key] = packer(paddle, paddle[key])
+				const v = packer(paddle, paddle[key])
+				if (v !== undefined) {
+					packedPaddle[key] = v
+				}
 			}
 			packedPaddles.push(packedPaddle)
 		}
@@ -9260,7 +9261,10 @@ registerRule(
 				for (const key in packed) {
 					const unpacker = PADDLE_UNPACK[key]
 					if (unpacker === undefined) continue
-					paddle[key] = unpacker(paddle, packed[key])
+					const v = unpacker(paddle, packed[key])
+					if (v !== undefined) {
+						paddle[key] = v
+					}
 				}
 				updatePaddleSize(paddle)
 				updatePaddleRule(paddle)
@@ -9284,13 +9288,17 @@ registerRule(
 		const result = await showSaveFilePicker({
 			excludeAcceptAllOption: true,
 			suggestedName: 'spell',
+			startIn: 'downloads',
 			types: [{
 				description: 'JSON',
 				accept: {'application/json': [".json"]}
 			}],
 		})
+		const writable = await result.createWritable()
 		const pack = packPaddles(paddles)
-		download(pack, result.name, 'text/plain')
+		await writable.write(pack)
+		await writable.close()
+		//download(pack, result.name, 'text/plain')
 	}
 
 	const openPaddles = () => {
