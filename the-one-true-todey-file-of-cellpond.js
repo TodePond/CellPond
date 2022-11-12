@@ -9117,9 +9117,16 @@ registerRule(
 		return cellAtoms
 	}
 
+	let loadedColour = false
 	PADDLE_UNPACK.cellAtoms = (paddle, value) => {
 		const atoms = []
 		for (const v of value) {
+			if (!loadedColour) {
+				if (!v.isLeftSlot) {
+					setBrushColour(v.value)
+				}
+				loadedColour = true
+			}
 			const square = v.isLeftSlot ? makeAtom(SLOT) : makeSquareFromValue(v.value)
 			square.isLeftSlot = v.isLeftSlot
 			registerAtom(square)
@@ -9213,6 +9220,7 @@ registerRule(
 	}
 
 	const unpackPaddles = (pack) => {
+		loadedColour = false
 		try {
 			while (paddles.length > 0) {
 				deletePaddle(paddles[paddles.length-1])
@@ -9242,9 +9250,17 @@ registerRule(
 		a.click()
 	}
 	
-	const savePaddles = () => {
+	const savePaddles = async () => {
+		const result = await showSaveFilePicker({
+			excludeAcceptAllOption: true,
+			suggestedName: 'spell',
+			types: [{
+				description: 'JSON',
+				accept: {'application/json': [".json"]}
+			}],
+		})
 		const pack = packPaddles(paddles)
-		download(pack, 'spell.json', 'text/plain')
+		download(pack, result.name, 'text/plain')
 	}
 
 	const openPaddles = () => {
