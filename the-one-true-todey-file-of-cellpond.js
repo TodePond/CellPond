@@ -324,7 +324,7 @@ const state = {
 		colour: Colour.Grey.splash,
 		colour: Colour.Green.splash,
 		colour: 999,
-		size: 1,
+		size: 3,
 	},
 
 	cursor: {
