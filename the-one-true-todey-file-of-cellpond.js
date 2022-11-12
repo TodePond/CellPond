@@ -9095,10 +9095,32 @@ registerRule(
 		}
 	}, {passive: false})
 
-	on.paste(e => {
+	on.paste(async e => {
 		const pack = e.clipboardData.getData('text')
-		unpackPaddles(pack)
+		if (pack !== "") {
+			unpackPaddles(pack)
+			return
+		}
+
+		const item = e.clipboardData.items[0]
+		const file = item.getAsFile()
+		const p = await file.text()
+		unpackPaddles(p)
 	})
+
+	on.dragover(e => {
+		e.stopPropagation();
+		e.preventDefault()
+	}, {passive: false})
+
+	on.drop(async (e) => {
+		e.stopPropagation();
+		e.preventDefault()
+		const item = e.dataTransfer.items[0]
+		const file = item.getAsFile()
+		const p = await file.text()
+		unpackPaddles(p)
+	}, {passive: false})
 
 	const PADDLE_PACK = {}
 	const PADDLE_UNPACK = {}
@@ -9280,11 +9302,6 @@ registerRule(
 		const pack = packPaddles(paddles)
 		print(pack)
 		navigator.clipboard.writeText(pack)
-	}
-
-	const pastePaddles = async () => {
-		savedPaddles = await navigator.clipboard.readText()
-		openPaddles(savedPaddles)
 	}
 
 })
