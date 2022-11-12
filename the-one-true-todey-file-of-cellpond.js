@@ -1085,7 +1085,7 @@ on.load(() => {
 	//==========//
 	on.keydown(e => {
 		const keydown = KEYDOWN[e.key]
-		if (keydown !== undefined) keydown()
+		if (keydown !== undefined) keydown(e)
 	})
 
 	const KEYDOWN = {}
@@ -1093,7 +1093,10 @@ on.load(() => {
 	KEYDOWN.q = () => state.camera.mscaleTarget -= state.camera.mscaleTargetControl
 	
 	KEYDOWN.w = () => state.camera.dyTarget += state.camera.dsControl
-	KEYDOWN.s = () => state.camera.dyTarget -= state.camera.dsControl
+	KEYDOWN.s = (e) => {
+		if (e.ctrlKey) return
+		state.camera.dyTarget -= state.camera.dsControl
+	}
 	KEYDOWN.a = () => state.camera.dxTarget += state.camera.dsControl
 	KEYDOWN.d = () => state.camera.dxTarget -= state.camera.dsControl
 
@@ -1734,15 +1737,15 @@ on.load(() => {
 
 		const stamp = array.stamp
 
-		if (array.channels[0] !== undefined) {
+		if (array.channels[0] !== undefined && array.channels[0] !== null) {
 			red = cloneDragonNumber(array.channels[0])
 		}
 		
-		if (array.channels[1] !== undefined) {
+		if (array.channels[1] !== undefined && array.channels[1] !== null) {
 			green = cloneDragonNumber(array.channels[1])
 		}
 		
-		if (array.channels[2] !== undefined) {
+		if (array.channels[2] !== undefined && array.channels[2] !== null) {
 			blue = cloneDragonNumber(array.channels[2])
 		}
 
@@ -7569,6 +7572,7 @@ registerRule(
 		dragOnly: true,
 		dragLockY: true,
 		scroll: 0,
+		rightTriangle: undefined,
 		x: Math.round(PADDLE_MARGIN), //needed for handle creation
 		y: COLOURTODE_SQUARE.size + OPTION_MARGIN + PADDLE_MARGIN,
 		construct: (paddle) => {
@@ -8281,11 +8285,10 @@ registerRule(
 
 	const createPaddle = () => {
 		const paddle = makeAtom(PADDLE)
-		
 		paddles.push(paddle)
 		positionPaddles()
-
 		registerAtom(paddle)
+		return paddle
 	}
 
 	const PADDLE_HANDLE = {
@@ -9076,6 +9079,198 @@ registerRule(
 	tallRectangleTool.update = squareTool.update
 	hexagonTool.update = squareTool.update
 	
+	//=========//
+	// SHARING //
+	//=========//
+	on.keydown(e => {
+		if (e.ctrlKey && e.key === 's') {
+			e.preventDefault()
+			savePaddles()
+		} else if (e.ctrlKey && e.key === 'o') {
+			e.preventDefault()
+			openPaddles()
+		} else if (e.ctrlKey && e.key === 'c') {
+			e.preventDefault()
+			copyPaddles()
+		}
+	}, {passive: false})
+
+	on.paste(e => {
+		const pack = e.clipboardData.getData('text')
+		unpackPaddles(pack)
+	})
+
+	const PADDLE_PACK = {}
+	const PADDLE_UNPACK = {}
+
+	PADDLE_PACK.cellAtoms = (paddle, value) => {
+		const cellAtoms = []
+		for (const atom of value) {
+			cellAtoms.push({
+				isLeftSlot: atom.isLeftSlot,
+				value: atom.value,
+				x: atom.x,
+				y: atom.y,
+				slotted: atom.slotted ? atom.slotted.value : undefined,
+			})
+		}
+		return cellAtoms
+	}
+
+	PADDLE_UNPACK.cellAtoms = (paddle, value) => {
+		const atoms = []
+		for (const v of value) {
+			const square = v.isLeftSlot ? makeAtom(SLOT) : makeSquareFromValue(v.value)
+			square.isLeftSlot = v.isLeftSlot
+			registerAtom(square)
+			giveChild(paddle, square)
+			square.attached = true
+			square.x = v.x
+			square.y = v.y
+			square.highlightedSide = "left"
+			atoms.push(square)
+
+			if (v.slotted !== undefined) {
+				const slotted = makeSquareFromValue(v.slotted)
+				registerAtom(slotted)
+				giveChild(paddle, slotted)
+				slotted.attached = true
+				slotted.cellAtom = square
+				slotted.highlightedSide = "slot"
+				slotted.slottee = true
+				square.slotted = slotted
+			}
+		}
+		return atoms
+	}
+
+	PADDLE_PACK.symmetryCircle = (paddle, value) => {
+		return value.value
+	}
+
+	PADDLE_UNPACK.symmetryCircle = (paddle, value) => {
+		const circle = createChild(paddle, SYMMETRY_CIRCLE)
+		circle.value = value
+		return circle
+	}
+
+	PADDLE_PACK.chance = (paddle, value) => {
+		return value.ons
+	}
+
+	PADDLE_UNPACK.chance = (paddle, value) => {
+		const hex = createChild(paddle, COLOURTODE_HEXAGON)
+		hex.ons = value
+		return hex
+	}
+
+	const keep = (paddle, value) => value
+	PADDLE_PACK.expanded = keep
+	PADDLE_PACK.x = keep
+	PADDLE_PACK.y = keep
+	PADDLE_PACK.width = keep
+	PADDLE_PACK.height = keep
+	PADDLE_PACK.hasSymmetry = keep
+
+	PADDLE_UNPACK.expanded = keep
+	PADDLE_UNPACK.x = keep
+	PADDLE_UNPACK.y = keep
+	PADDLE_UNPACK.width = keep
+	PADDLE_UNPACK.height = keep
+	PADDLE_UNPACK.hasSymmetry = keep
+
+	PADDLE_PACK.pinhole = (paddle, value) => {
+		return value.locked
+	}
+
+	PADDLE_UNPACK.pinhole = (paddle, value) => {
+		paddle.pinhole.locked = value
+		return paddle.pinhole
+	}
+
+	PADDLE_PACK.rightTriangle = (paddle, value) => {
+		return value !== undefined
+	}
+
+	PADDLE_UNPACK.rightTriangle = (paddle, value) => {
+		if (!value) return undefined
+		const arrow = createChild(paddle, COLOURTODE_TRIANGLE)
+		return arrow
+	}
+
+	const packPaddles = () => {
+		const packedPaddles = []
+		for (const paddle of paddles) {
+			const packedPaddle = {}
+			for (const key in paddle) {
+				const packer = PADDLE_PACK[key]
+				if (packer === undefined) continue
+				packedPaddle[key] = packer(paddle, paddle[key])
+			}
+			packedPaddles.push(packedPaddle)
+		}
+		return JSON.stringify(packedPaddles)		
+	}
+
+	const unpackPaddles = (pack) => {
+		try {
+			while (paddles.length > 0) {
+				deletePaddle(paddles[paddles.length-1])
+			}
+			for (const packed of JSON.parse(pack)) {
+				const paddle = createPaddle()
+				for (const key in packed) {
+					const unpacker = PADDLE_UNPACK[key]
+					if (unpacker === undefined) continue
+					paddle[key] = unpacker(paddle, packed[key])
+				}
+				updatePaddleSize(paddle)
+				updatePaddleRule(paddle)
+			}
+			positionPaddles()
+		} catch(e) {
+			console.error(e)
+			alert("Error loading rules... Sorry! Please contact @todepond :)")
+		}
+	}
+
+	const download = (content, fileName, contentType) => {
+		var a = document.createElement("a")
+		var file = new Blob([content], {type: contentType})
+		a.href = URL.createObjectURL(file)
+		a.download = fileName
+		a.click()
+	}
+	
+	const savePaddles = () => {
+		const pack = packPaddles(paddles)
+		download(pack, 'spell.json', 'text/plain')
+	}
+
+	const openPaddles = () => {
+		const opener = document.createElement('input')
+		opener.type = "file"
+		opener.onchange = async e => {
+			const file = opener.files[0]
+			const pack = await file.text()
+			unpackPaddles(pack)
+			Keyboard.Control = false
+		}
+		opener.click()
+		Keyboard.Control = false
+	}
+
+	const copyPaddles = () => {
+		const pack = packPaddles(paddles)
+		print(pack)
+		navigator.clipboard.writeText(pack)
+	}
+
+	const pastePaddles = async () => {
+		savedPaddles = await navigator.clipboard.readText()
+		openPaddles(savedPaddles)
+	}
+
 })
 
 //=============================================================
