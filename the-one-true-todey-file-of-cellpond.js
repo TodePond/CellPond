@@ -608,7 +608,7 @@ on.load(() => {
 		let borderGreen = Colour.Void.green
 		let borderBlue = Colour.Void.blue
 
-		if (width <= 3 || bottom-top <= 3) {
+		if (!gridMode || width <= 3 || bottom-top <= 3) {
 			/*
 			borderRed = Colour.Void.red
 			borderGreen = Colour.Void.green
@@ -1119,6 +1119,12 @@ on.load(() => {
 
 	KEYDOWN["="] = () => edgeMode = 1
 	KEYDOWN["-"] = () => edgeMode = 0
+
+	gridMode = true
+	KEYDOWN["g"] = () => {
+		gridMode = !gridMode
+		drawQueueNeedsReset = true
+	}
 
 	//========//
 	// CAMERA //
