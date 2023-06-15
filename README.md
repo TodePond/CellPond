@@ -22,8 +22,6 @@ Or, you can [download the source code](https://github.com/TodePond/CellPond/arch
 ## How does it work? What do all the shapes do?
 It's a secret.
 
----
-
 ## Where's the diamond gone?
 
 There used to be a diamond shape! It let you add/subtract/swap channels. But I rewrote a lot of stuff for the [Spellular Automata](https://youtu.be/xvlsJ3FqNYU) video and it broke.
