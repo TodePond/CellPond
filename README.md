@@ -22,7 +22,7 @@ Or, you can [download the source code](https://github.com/TodePond/CellPond/arch
 ## How does it work? What do all the shapes do?
 It's a secret.
 
---+
+---
 
 ## Where's the diamond gone?
 
