@@ -19,9 +19,13 @@ You can try it out at [cellpond.cool](https://cellpond.cool)<br>
 
 Or, you can [download the source code](https://github.com/TodePond/CellPond/archive/refs/heads/main.zip) and open `index.html` in a browser.
 
-## Where's the diamond gone?
-
-I rewrote a lot of stuff for the [Spellular Automata](https://youtu.be/xvlsJ3FqNYU) video and they broke. To add or subtract, you can use the new Hexagon shape. You can't channel-swap yet but it's [planned](https://github.com/TodePond/CellPond/issues/281).
-
 ## How does it work? What do all the shapes do?
 It's a secret.
+
+--+
+
+## Where's the diamond gone?
+
+There used to be a diamond shape! It let you add/subtract/swap channels. But I rewrote a lot of stuff for the [Spellular Automata](https://youtu.be/xvlsJ3FqNYU) video and it broke.
+
+To add/subtract, use the new Hexagon shape instead. You can't swap yet but it's [planned](https://github.com/TodePond/CellPond/issues/281).
