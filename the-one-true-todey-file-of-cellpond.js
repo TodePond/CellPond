@@ -54,6 +54,14 @@ A: it's a secret
 
 */
 
+var middleClicked = false
+
+document.addEventListener('mousedown', function(event) {
+    if (event.button === 1) {
+        middleClicked = true
+    }
+})
+
 const urlParams = new URLSearchParams(window.location.search)
 const NO_SECRET_MODE = urlParams.has("nosecret")
 const NO_FOOLS_MODE = urlParams.has("nofools")
@@ -9253,6 +9261,11 @@ registerRule(
 	}
 
 	const unpackPaddles = (pack) => {
+	    	if (middleClicked) {
+	        	middleClicked = false
+	        	return
+	    	}
+
 		loadedColour = false
 		unlockMenuTool("triangle")
 		unlockMenuTool("circle")
