@@ -9304,20 +9304,37 @@ registerRule(
 	}
 	
 	const savePaddles = async () => {
-		const result = await showSaveFilePicker({
-			excludeAcceptAllOption: true,
-			suggestedName: 'spell',
-			startIn: 'downloads',
-			types: [{
-				description: 'JSON',
-				accept: {'application/json': [".json"]}
-			}],
-		})
-		const writable = await result.createWritable()
-		const pack = packPaddles(paddles)
-		await writable.write(pack)
-		await writable.close()
-		//download(pack, result.name, 'text/plain')
+		const pack = packPaddles(paddles);
+
+		if (window.showSaveFilePicker) {
+			// Use the Native File System API if available
+			try {
+				const result = await showSaveFilePicker({
+					excludeAcceptAllOption: true,
+					suggestedName: 'spell',
+					startIn: 'downloads',
+					types: [{
+						description: 'JSON',
+						accept: {'application/json': [".json"]}
+					}],
+				})
+				const writable = await result.createWritable();
+				await writable.write(pack);
+				await writable.close();
+			} catch (err) {
+				console.error('Failed to save file:', err);
+			}
+		} else {
+			// Fallback to the Blob and link method
+			const blob = new Blob([JSON.stringify(pack)], {type: 'application/json'});
+			const url = URL.createObjectURL(blob);
+
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = 'spell.json';
+			link.click();
+			URL.revokeObjectURL(url);
+		}
 	}
 
 	const openPaddles = () => {
