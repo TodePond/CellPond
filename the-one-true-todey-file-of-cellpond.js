@@ -8072,7 +8072,7 @@ registerRule(
 			if (paddle.pinhole.locked) {
 				paddle.rightTriangle.colour = Colour.splash(999)
 			} else {
-				paddle.rightTriangle.colour = Colour.splash(000)
+				paddle.rightTriangle.colour = Colour.splash(0)
 			}
 		}
 
@@ -8404,14 +8404,14 @@ registerRule(
 	}
 
 	const SYMMETRY_TOGGLINGS = new Map()
-	SYMMETRY_TOGGLINGS.set(000, DRAGON_TRANSFORMATIONS.NONE)
+	SYMMETRY_TOGGLINGS.set(0, DRAGON_TRANSFORMATIONS.NONE)
 	SYMMETRY_TOGGLINGS.set(100, DRAGON_TRANSFORMATIONS.X)
-	SYMMETRY_TOGGLINGS.set(010, DRAGON_TRANSFORMATIONS.Y)
+	SYMMETRY_TOGGLINGS.set(10, DRAGON_TRANSFORMATIONS.Y)
 	SYMMETRY_TOGGLINGS.set(110, DRAGON_TRANSFORMATIONS.XY)
-	SYMMETRY_TOGGLINGS.set(001, DRAGON_TRANSFORMATIONS.R)
+	SYMMETRY_TOGGLINGS.set(1, DRAGON_TRANSFORMATIONS.R)
 	SYMMETRY_TOGGLINGS.set(111, DRAGON_TRANSFORMATIONS.XYR)
 	SYMMETRY_TOGGLINGS.set(101, DRAGON_TRANSFORMATIONS.XYR)
-	SYMMETRY_TOGGLINGS.set(011, DRAGON_TRANSFORMATIONS.XYR)
+	SYMMETRY_TOGGLINGS.set(11, DRAGON_TRANSFORMATIONS.XYR)
 
 	const getXYR = getRGB
 
@@ -8432,7 +8432,7 @@ registerRule(
 		expanded: false,
 		borderColour: Colour.Grey,
 		colour: Colour.Black,
-		value: 000,
+		value: 0,
 		click: (atom) => {
 			
 			if (atom.expanded) {
