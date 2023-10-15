@@ -3195,6 +3195,8 @@ registerRule(
 				brush(0.5, 0.5)
 				state.brush.colour = oldBrushColour
 				state.worldBuilt = false
+				show.paused = false
+				canvas.style["background-color"] = Colour.Void
 			}
 			voidingType = !voidingType
 			setWorldSize(oldWorldSize)

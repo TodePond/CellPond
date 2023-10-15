@@ -333,7 +333,7 @@ const Habitat = {}
 	const blues  = [40, 70, 98, 128, 159, 174, 204, 222, 247, 255]
 	
 	Habitat.Colour.Void = Habitat.Colour.make("rgb(6, 7, 10)")
-	Habitat.Colour.Black = Habitat.Colour.make(000)
+	Habitat.Colour.Black = Habitat.Colour.make(0)
 	Habitat.Colour.Grey = Habitat.Colour.make(112)
 	Habitat.Colour.Silver = Habitat.Colour.make(556)
 	Habitat.Colour.White = Habitat.Colour.make(888)
