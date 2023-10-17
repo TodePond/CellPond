@@ -1013,12 +1013,12 @@ on.load(() => {
 
 		const dy = e.deltaY / 100
 
-		if (Keyboard.Alt) {
+		if (e.altKey) {
 			PADDLE.scroll -= 50 * dy
 			positionPaddles()
 		}
 
-		else if (Keyboard.Control) {
+		else if (e.ctrlKey || e.metaKey) {
 			CT_SCALE -= dy * 0.1
 			const allAtoms = getAllAtoms()
 			for (const atom of allAtoms) {
@@ -1102,7 +1102,7 @@ on.load(() => {
 	
 	KEYDOWN.w = () => state.camera.dyTarget += state.camera.dsControl
 	KEYDOWN.s = (e) => {
-		if (e.ctrlKey) return
+		if ((e.ctrlKey || e.metaKey)) return
 		state.camera.dyTarget -= state.camera.dsControl
 	}
 	KEYDOWN.a = () => state.camera.dxTarget += state.camera.dsControl
@@ -4125,7 +4125,7 @@ registerRule(
 			atom.createPicker(atom)
 			if (atom.value.channels.some(v => v === undefined)) {
 				unlockMenuTool("hexagon")
-				unlockMenuTool("wide_rectangle")
+				// unlockMenuTool("wide_rectangle")
 			}
 		},
 
@@ -4281,7 +4281,7 @@ registerRule(
 			squareTool.toolbarNeedsColourUpdate = true
 			triangleTool.toolbarNeedsColourUpdate = true
 			circleTool.toolbarNeedsColourUpdate = true
-			wideRectangleTool.toolbarNeedsColourUpdate = true
+			// wideRectangleTool.toolbarNeedsColourUpdate = true
 			tallRectangleTool.toolbarNeedsColourUpdate = true
 
 		},
@@ -5686,7 +5686,7 @@ registerRule(
 				squareTool.toolbarNeedsColourUpdate = true
 				circleTool.toolbarNeedsColourUpdate = true
 				triangleTool.toolbarNeedsColourUpdate = true
-				wideRectangleTool.toolbarNeedsColourUpdate = true
+				// wideRectangleTool.toolbarNeedsColourUpdate = true
 				tallRectangleTool.toolbarNeedsColourUpdate = true
 
 				if (square.parent.isPaddle) {
@@ -5863,7 +5863,7 @@ registerRule(
 				atom.needsColoursUpdate = true
 				atom.colourTicker = Infinity
 
-				unlockMenuTool("wide_rectangle")
+				// unlockMenuTool("wide_rectangle")
 			}
 
 			else if (atom.parent.isTallRectangle) {
@@ -9008,7 +9008,7 @@ registerRule(
 	menuRight -= BORDER_THICKNESS
 	const circleTool = addMenuTool(SYMMETRY_CIRCLE, "circle")
 	const hexagonTool = addMenuTool(COLOURTODE_HEXAGON, "hexagon")
-	const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
+	// const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle")
 	//menuRight += BORDER_THICKNESS
 	const tallRectangleTool = {} //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle")
 	createPaddle()
@@ -9091,7 +9091,7 @@ registerRule(
 
 	triangleTool.update = squareTool.update
 	circleTool.update = squareTool.update
-	wideRectangleTool.update = squareTool.update
+	// wideRectangleTool.update = squareTool.update
 	tallRectangleTool.update = squareTool.update
 	hexagonTool.update = squareTool.update
 	
@@ -9099,13 +9099,13 @@ registerRule(
 	// SHARING //
 	//=========//
 	on.keydown(e => {
-		if (e.ctrlKey && e.key === 's') {
+		if ((e.ctrlKey || e.metaKey) && e.key === 's') {
 			e.preventDefault()
 			savePaddles()
-		} else if (e.ctrlKey && e.key === 'o') {
+		} else if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
 			e.preventDefault()
 			openPaddles()
-		} else if (e.ctrlKey && e.key === 'c') {
+		} else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
 			e.preventDefault()
 			copyPaddles()
 		}
@@ -9272,7 +9272,7 @@ registerRule(
 		unlockMenuTool("triangle")
 		unlockMenuTool("circle")
 		unlockMenuTool("hexagon")
-		unlockMenuTool("wide_rectangle")
+		// unlockMenuTool("wide_rectangle")
 		try {
 			while (paddles.length > 0) {
 				deletePaddle(paddles[paddles.length-1])
