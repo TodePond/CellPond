@@ -575,6 +575,18 @@ const Habitat = {}
 			global.addEventListener("keyup", e => {
 				Keyboard[e.key] = false
 			})
+
+			global.addEventListener("focus", e => {
+				for (const key in Keyboard) {
+					Keyboard[key] = undefined
+				}
+			})
+
+			global.addEventListener("blur", e => {
+				for (const key in Keyboard) {
+					Keyboard[key] = undefined
+				}
+			})
 			
 			Reflect.defineProperty(Keyboard, "installed", {
 				value: true,
