@@ -1011,7 +1011,7 @@ on.load(() => {
 		}
 	}
 
-	const ZOOM = 0.05
+	const ZOOM = 0.02
 	let CT_SCALE = DPR * SCALE
 	on.wheel((e) => {
 
@@ -1062,6 +1062,9 @@ on.load(() => {
 	}
 
 	const doZoom = (dy, centerX, centerY) => {
+
+		centerX *= DPR
+		centerY *= DPR
 
 		const sign = -Math.sign(dy)
 		const dd = Math.abs(dy)
@@ -3139,7 +3142,9 @@ registerRule(
 				return
 			}
 
-			const [mx, my] = Mouse.position
+			let [mx, my] = Mouse.position
+			mx *= DPR
+			my *= DPR
 
 			if (mx < state.view.left || mx > state.view.right || my < state.view.top || my > state.view.bottom) {
 				return
@@ -3169,7 +3174,9 @@ registerRule(
 			else changeHandState(HAND.HOVER)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position
+			let [x, y] = Mouse.position
+			x *= DPR
+			y *= DPR
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
@@ -3244,7 +3251,9 @@ registerRule(
 			else changeHandState(HAND.FREE)
 		},
 		camerapan: () => {
-			const [x, y] = Mouse.position
+			let [x, y] = Mouse.position
+			x *= DPR
+			y *= DPR
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -3266,7 +3275,9 @@ registerRule(
 			changeHandState(HAND.BRUSH)
 		},
 		camerapan: () => {
-			const [mx, my] = Mouse.position
+			let [mx, my] = Mouse.position
+			mx *= DPR
+			my *= DPR
 			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				return
 			}
@@ -3350,7 +3361,9 @@ registerRule(
 			if (newAtom !== undefined) {
 				return
 			}
-			const [mx, my] = Mouse.position
+			let [mx, my] = Mouse.position
+			mx *= DPR
+			my *= DPR
 			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return
