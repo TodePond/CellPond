@@ -67,6 +67,7 @@ const NO_SECRET_MODE = urlParams.has("nosecret")
 const NO_FOOLS_MODE = urlParams.has("nofools")
 const UNLOCK_MODE = urlParams.has("unlock")
 const DPR = urlParams.get("dpr") ?? devicePixelRatio
+print('DPR:', DPR)
 if (NO_SECRET_MODE) {
 	localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
 }
@@ -436,7 +437,7 @@ on.load(() => {
 
 	
 	// Setup Show
-	const show = Show.start({paused: false})
+	const show = Show.start({paused: false, scale: DPR})
 	const {context, canvas} = show
 	canvas.style["position"] = "absolute"
 	
@@ -815,11 +816,14 @@ on.load(() => {
 	}
 
 	const getCursorView = (x, y) => {
-		x -= state.camera.x * state.camera.scale
-		y -= state.camera.y * state.camera.scale
+		x -= state.camera.x * state.camera.scale / DPR
+		y -= state.camera.y * state.camera.scale / DPR
 
 		x /= state.image.size
 		y /= state.image.size
+
+		x *= DPR
+		y *= DPR
 
 		return [x, y]
 	}
@@ -1107,7 +1111,7 @@ on.load(() => {
 		state.camera.dyTarget -= state.camera.dsControl
 	}
 	KEYDOWN.a = () => state.camera.dxTarget += state.camera.dsControl
-	KEYDOWN.d = () => state.camera.dxTarget -= state.camera.dsControl
+	KEYDOWN['d'] = () => state.camera.dxTarget -= state.camera.dsControl
 
 	KEYDOWN[0] = () => setWorldSize(0)
 	KEYDOWN[1] = () => setWorldSize(1)
@@ -3220,8 +3224,8 @@ registerRule(
 				else changeHandState(HAND.FREE)
 				return
 			}
-			const mx = e.clientX
-			const my = e.clientY
+			const mx = e.clientX * DPR
+			const my = e.clientY * DPR
 			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				return
 			}
@@ -3250,8 +3254,8 @@ registerRule(
 	HAND.BRUSHING = {
 		cursor: "crosshair",
 		mousemove: (e) => {
-			const x = e.clientX
-			const y = e.clientY
+			const x = e.clientX * DPR
+			const y = e.clientY * DPR
 			if (x >= state.view.left && x <= state.view.right && y >= state.view.top && y <= state.view.bottom) {
 				return
 			}
@@ -3468,8 +3472,8 @@ registerRule(
 				else changeHandState(HAND.FREE)
 				return
 			}
-			const mx = e.clientX
-			const my = e.clientY
+			const mx = e.clientX * DPR
+			const my = e.clientY * DPR
 			if (mx >= state.view.left && mx <= state.view.right && my >= state.view.top && my <= state.view.bottom) {
 				changeHandState(HAND.BRUSH)
 				return

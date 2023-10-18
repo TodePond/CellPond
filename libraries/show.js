@@ -24,14 +24,14 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 
 		canvas.width = innerWidth * show.scale
 		canvas.height = innerHeight * show.scale
-		canvas.style["width"] = canvas.width
-		canvas.style["height"] = canvas.height
+		canvas.style["width"] = innerWidth
+		canvas.style["height"] = innerHeight
 		
-		const margin = (100 - show.scale*100)/2
-		canvas.style["margin-top"] = `${margin}vh`
-		canvas.style["margin-bottom"] = `${margin}vh`
-		canvas.style["margin-left"] = `${margin}vw`
-		canvas.style["margin-right"] = `${margin}vw`
+		// const margin = (100 - show.scale*100)/2
+		// canvas.style["margin-top"] = `${margin}vh`
+		// canvas.style["margin-bottom"] = `${margin}vh`
+		// canvas.style["margin-left"] = `${margin}vw`
+		// canvas.style["margin-right"] = `${margin}vw`
 		
 		show.resize()
 		
