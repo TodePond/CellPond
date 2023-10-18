@@ -5344,13 +5344,14 @@ registerRule(
 
 			let size = atom.size
 			if (atom.isTool) size -= BORDER_THICKNESS*2.5
+			if (!atom.isTool) size -= 2 
 
 			const height = size
 			const width = size * Math.sqrt(3)/2
-			
+
 			const left = x
 			const right = left + width
-			let top = y
+			let top = y + 1
 			if (atom.isTool) top += BORDER_THICKNESS*1.25
 			const bottom = top + height
 			const middleY = top + height/2
@@ -5422,10 +5423,11 @@ registerRule(
 
 			const width = atom.size
 			const height = atom.size * Math.sqrt(3)/2
-			
+			const diff = atom.size - height
+
 			const left = x
 			const right = left + width
-			const top = y
+			const top = y + diff/2
 			const bottom = top + height
 			const middleX = left + width/2
 
@@ -5491,10 +5493,11 @@ registerRule(
 
 			const width = atom.size
 			const height = atom.size * Math.sqrt(3)/2
-			
+			const diff = atom.size - height
+
 			const left = x
 			const right = left + width
-			const top = y
+			const top = y + diff/2
 			const bottom = top + height
 			const middleX = left + width/2
 
@@ -5562,13 +5565,14 @@ registerRule(
 
 			let size = atom.size
 			if (atom.isTool) size -= BORDER_THICKNESS*2.5
+			if (!atom.isTool) size -= 2 
 
 			const height = size
 			const width = size * Math.sqrt(3)/2
 			
 			const left = x
 			const right = left + width
-			let top = y
+			let top = y + 1
 			if (atom.isTool) top += BORDER_THICKNESS*1.25
 			const bottom = top + height
 			const middleY = top + height/2
