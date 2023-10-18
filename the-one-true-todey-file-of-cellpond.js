@@ -9095,6 +9095,21 @@ registerRule(
 				if (channel === undefined) continue
 				if (channel.variable === undefined) continue
 				
+				const triangle = makeAtom(COLOURTODE_TRIANGLE)
+				newAtom.variableAtoms[i] = triangle
+				triangle.highlightedSlot = CHANNEL_NAMES[i]
+				triangle.channelId = i
+				
+				const leftVariable = i - 1 < 0? CHANNEL_NAMES[2] : CHANNEL_NAMES[i-1]
+				const rightVariable = i + 1 > 2? CHANNEL_NAMES[0] : CHANNEL_NAMES[i+1]
+
+				if (channel.subtract) triangle.direction = "down"
+				else if (channel.add) triangle.direction = "up"
+				else if (channel.variable === leftVariable) triangle.direction = "left"
+				else if (channel.variable === rightVariable) triangle.direction = "right"
+				print(channel)
+				triangle.updateValue(triangle)
+
 				// const hexagon = makeAtom(COLOURTODE_HEXAGON)
 				// newAtom.variableAtoms[i] = hexagon
 				// hexagon.variable = channel.variable
