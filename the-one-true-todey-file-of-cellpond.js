@@ -1568,32 +1568,15 @@ on.load(() => {
 		return clone
 	}
 
-	const DRAGON_NUMBER_OPERATOR = {
-		ADD: (left, right) => Math.min(left + right, 9),
-		SUBTRACT: (left, right) => Math.max(left - right, 0),
-		MULTIPLY: (left, right) => Math.min(left * right, 9),
-		DIVIDE: (left, right) => right === 0? 9 : Math.round(left / right),
-	}
-
-	const makeOperation = (operator, number) => {
-		return {operator, number}
-	}
-
-	const getFirstAllowedValue = (number) => {
-		for (let i = 0; i < 10; i++) {
-			const value = number.values[i]
-			if (value) return i
-		}
-	}
-
-	const getNumbersFromDragonValues = (values) => {
-		return values.map((v, i) => v? i : v).filter(v => v !== false)
-	}
-
 	const makeValuesFromInt = (int) => {
 		const values = [false, false, false, false, false, false, false, false, false, false]
 		values[int] = true
 		return values
+	}
+
+	const makeNumberFromInt = (int) => {
+		const values = makeValuesFromInt(int)
+		return makeNumber({values})
 	}
 	
 	const VARIABLE_EVALUATOR = {}
@@ -3681,7 +3664,7 @@ registerRule(
 			overlaps = () => false,
 			grab = (a) => a, // Fires when you start a clock on the atom - returns atom that gets dragged
 			touch = (a) => a, // Fires when you start a click on the atom - returns atom that handles the click
-			highlighter = false, // If true, enables the hover and place events
+			highlighter = false, // If true, enables the hover and place events // I dont think its needed lollll, i think it does it either way>???
 			hover = () => {}, // Fires whenever you are dragging the atom - returns what atom should get highlighted (if any) (the returned atom gets auto-highlighted unless you manually set the 'highlight' property in this function)
 			place = () => {}, // Fires whenever you drop the atom onto a highlighted atom
 			x = 0,
@@ -4184,7 +4167,9 @@ registerRule(
 					if (atom.blueExpanded) atom.blue.click(atom.blue)
 					atom.blue.attached = true
 				} else {
+					// alert('no')
 					const hexagon = atom.variableAtoms[2]
+					hexagon.behindOtherChildren = false
 					registerAtom(hexagon)
 					giveChild(atom, hexagon)
 					hexagon.variable = "blue"
@@ -4209,7 +4194,9 @@ registerRule(
 					if (atom.greenExpanded) atom.green.click(atom.green)
 					atom.green.attached = true
 				} else {
+					// alert('noo')
 					const hexagon = atom.variableAtoms[1]
+					hexagon.behindOtherChildren = false
 					registerAtom(hexagon)
 					giveChild(atom, hexagon)
 					hexagon.variable = "green"
@@ -4234,15 +4221,15 @@ registerRule(
 					if (atom.redExpanded) atom.red.click(atom.red)
 					atom.red.attached = true
 				} else {
-					const hexagon = atom.variableAtoms[0]
-					registerAtom(hexagon)
-					giveChild(atom, hexagon)
-					hexagon.variable = "red"
-					hexagon.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - hexagon.width/3
-					hexagon.y = atom.height/2 - hexagon.height/2
-					hexagon.attached = true
+					const triangle = atom.variableAtoms[0]
+					triangle.behindOtherChildren = false
+					registerAtom(triangle)
+					giveChild(atom, triangle)
+					triangle.x = (COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size) + (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)/2 - triangle.width/3
+					triangle.y = atom.height/2 - triangle.height/2
+					triangle.attached = true
 
-					atom.red = hexagon
+					atom.red = triangle
 				}
 			}
 		},
@@ -5705,7 +5692,9 @@ registerRule(
 		// Returns what atom to highlight when being hovered over stuff
 		hover: (atom) => {
 
+			atom.highlightedSlot = undefined
 
+			// FIND A PADDLE!???
 			if (atom.direction === "right") {
 
 				// Get my bounds
@@ -5740,6 +5729,7 @@ registerRule(
 				}
 			}
 
+			// FIND A SQUARE TO STAMP????
 			if (true) {
 				
 				const {x, y} = getAtomPosition(atom)
@@ -5766,13 +5756,98 @@ registerRule(
 					return other
 				}
 
+				// FIND A CHANNEL????
+				let winningDistance = Infinity
+				let winningSquare = undefined
+				let winningSlot = undefined
+
+				const atoms = getAllBaseAtoms()
+				for (const other of atoms) {
+					if (other === atom) continue
+					if (!other.isSquare) continue
+					if (!other.expanded) continue
+
+					const {x: px, y: py} = getAtomPosition(other.pickerPad)
+					const pleft = px
+					const pright = px + other.pickerPad.width
+					const ptop = py
+					const pbottom = py + other.pickerPad.height
+
+					if (left > pright) continue
+					if (right < pleft) continue
+					if (bottom < ptop) continue
+					if (top > pbottom) continue
+
+					const slots = ["red", "green", "blue"].filter(slot => other[slot] === undefined)
+					if (slots.length === 0) continue
+					const {x: ax, y: ay} = getAtomPosition(other)
+
+					for (const slot of slots) {
+						const slotId = CHANNEL_IDS[slot]
+						const sx = ax + other.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+						const sy = ay + OPTION_MARGIN
+						const distance = Math.hypot(x - sx, y - sy)
+						if (distance < winningDistance) {
+							winningDistance = distance
+							winningSlot = slot
+							winningSquare = other
+						}
+					}
+
+					if (winningSquare !== undefined) {
+
+						const {x: ax, y: ay} = getAtomPosition(winningSquare)
+						const slotId = CHANNEL_IDS[winningSlot]
+
+						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+						atom.highlight.hasBorder = true
+						atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
+						atom.highlight.y = ay
+						atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
+						atom.highlightedAtom = winningSquare
+						atom.highlightedSlot = winningSlot
+					}
+				}
+
+				return winningSquare
+
 				// return
 			}
 
 			return undefined
 		},
 
+		updateValue: (atom) => {
+			if (atom.direction === "up" || atom.direction === "down") {
+				atom.variable = atom.highlightedSlot
+			} else if (atom.direction === "left") {
+				if (atom.channelId === "red") atom.variable = "green"
+				else if (atom.highlightedSlot === "green") atom.variable = "red"
+				else if (atom.highlightedSlot === "blue") atom.variable = "red"
+			} else if (atom.direction === "right") {
+				if (atom.highlightedSlot === "red") atom.variable = "blue"
+				else if (atom.highlightedSlot === "green") atom.variable = "blue"
+				else if (atom.highlightedSlot === "blue") atom.variable = "green"
+			}
+			const add = atom.direction === "up" ? makeNumberFromInt(1) : undefined
+			const subtract = atom.direction === "down" ? makeNumberFromInt(1) : undefined
+			const value = makeNumber({channel: atom.channelId, variable: atom.variable, add, subtract})
+			atom.value = value
+		},
+
 		place: (atom, receiver) => {
+
+			if (receiver.isSquare && atom.highlightedSlot !== undefined) {
+				atom.channelId = CHANNEL_IDS[atom.highlightedSlot]
+				atom.updateValue(atom)
+
+				const square = receiver
+				square.receiveNumber(square, atom.value, atom.channelId, {expanded: atom.expanded, numberAtom: atom})
+				deleteAtom(atom)
+				atom.dx = 0
+				atom.dy = 0
+				return
+			}
 
 			if (receiver.isSquare) {
 				const square = receiver
@@ -5848,19 +5923,29 @@ registerRule(
 		},
 
 		drag: (atom) => {
+
+			if (atom.parent.isSquare) {
+				const square = atom.parent
+				atom.attached = false
+				square[atom.highlightedSlot] = undefined
+				freeChild(square, atom)
+				square.receiveNumber(square, undefined, atom.channelId)
+				return atom
+			}
+
 			if (!atom.parent.isPaddle) return atom
 			const paddle = atom.parent
-			if (false && paddle.pinhole.locked) {
-				const clone = makeAtom(COLOURTODE_TRIANGLE)
-				clone.direction = atom.direction
-				const {x, y} = getAtomPosition(atom)
-				hand.offset.x -= atom.x - x
-				hand.offset.y -= atom.y - y
-				clone.x = x
-				clone.y = y
-				registerAtom(clone)
-				return clone
-			}
+			// if (false && paddle.pinhole.locked) {
+			// 	const clone = makeAtom(COLOURTODE_TRIANGLE)
+			// 	clone.direction = atom.direction
+			// 	const {x, y} = getAtomPosition(atom)
+			// 	hand.offset.x -= atom.x - x
+			// 	hand.offset.y -= atom.y - y
+			// 	clone.x = x
+			// 	clone.y = y
+			// 	registerAtom(clone)
+			// 	return clone
+			// }
 
 			atom.attached = false
 			freeChild(paddle, atom)
@@ -8760,6 +8845,7 @@ registerRule(
 	}
 
 	const rotateTriangleRotation = (rotation, clockwise) => {
+		clockwise = !clockwise
 		switch (rotation) {
 			case "right": return clockwise ? "down" : "up"
 			case "down": return clockwise ? "left" : "right"
@@ -8794,6 +8880,11 @@ registerRule(
 			triangle.direction = rotateTriangleRotation(triangle.direction, true)
 			atom.value = true
 
+			triangle.updateValue(triangle)
+			const parent = triangle.parent
+			if (parent.isSquare) {
+				parent.receiveNumber(parent, triangle.value, triangle.channelId, {expanded: triangle.expanded, numberAtom: triangle})
+			}
 		},
 		offscreen: TRIANGLE_UP.offscreen,
 		overlaps: TRIANGLE_UP.overlaps,
@@ -8803,34 +8894,6 @@ registerRule(
 		grab: (atom) => atom.parent,
 		x: TRIANGLE_PAD.x + TRIANGLE_PAD.width/2 - (COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5)/2,
 		y: TRIANGLE_PAD.y + OPTION_MARGIN*1.5/2,
-	}
-
-	const TRIANGLE_PICK_RIGHT = {
-		hasBorder: true,
-		borderColour: Colour.Black,
-		draw: (atom) => {
-			atom.colour = atom.value? Colour.Silver : Colour.Black
-			TRIANGLE_RIGHT.draw(atom)
-		},
-		offscreen: TRIANGLE_RIGHT.offscreen,
-		overlaps: TRIANGLE_RIGHT.overlaps,
-		
-		value: false,
-		size: COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5,
-		grab: (atom) => atom.parent,
-		click: (atom) => {
-			
-			const triangle = atom.parent
-			triangle.upPick.value = false
-			// triangle.rightPick.value = false
-			triangle.downPick.value = false
-			
-			triangle.direction = "right"
-			atom.value = true
-
-		},
-		x: TRIANGLE_PAD.x + TRIANGLE_PAD.width/2 - ((COLOURTODE_SQUARE.size - OPTION_MARGIN*1.5) * Math.sqrt(3)/2)/2,
-		y: OPTION_MARGIN*1.5/2,
 	}
 
 	const TRIANGLE_PICK_DOWN = {
@@ -8856,6 +8919,13 @@ registerRule(
 			
 			triangle.direction = rotateTriangleRotation(triangle.direction, false)
 			atom.value = true
+
+
+			triangle.updateValue(triangle)
+			const parent = triangle.parent
+			if (parent.isSquare) {
+				parent.receiveNumber(parent, triangle.value, triangle.channelId, {expanded: triangle.expanded, numberAtom: triangle})
+			}
 
 		},
 		offscreen: TRIANGLE_DOWN.offscreen,
@@ -9023,12 +9093,13 @@ registerRule(
 				const channel = newAtom.value.channels[i]
 				if (channel === undefined) continue
 				if (channel.variable === undefined) continue
-				const hexagon = makeAtom(COLOURTODE_HEXAGON)
-				newAtom.variableAtoms[i] = hexagon
-				hexagon.variable = channel.variable
-				const {add, subtract} = channel
-				hexagon.ons = [add.values[2], add.values[1], subtract.values[1], subtract.values[2], subtract.values[3], add.values[3]]
-				hexagon.updateValue(hexagon)
+				
+				// const hexagon = makeAtom(COLOURTODE_HEXAGON)
+				// newAtom.variableAtoms[i] = hexagon
+				// hexagon.variable = channel.variable
+				// const {add, subtract} = channel
+				// hexagon.ons = [add.values[2], add.values[1], subtract.values[1], subtract.values[2], subtract.values[3], add.values[3]]
+				// hexagon.updateValue(hexagon)
 			}
 
 		}
