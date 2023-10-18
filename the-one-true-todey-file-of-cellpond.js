@@ -4129,8 +4129,9 @@ registerRule(
 			atom.expanded = true
 			atom.createPicker(atom)
 			if (atom.value.channels.some(v => v === undefined)) {
-				unlockMenuTool("hexagon")
+				// unlockMenuTool("hexagon")
 				// unlockMenuTool("wide_rectangle")
+				unlockMenuTool("triangle")
 			}
 		},
 
@@ -5545,6 +5546,86 @@ registerRule(
 		},
 	}
 
+
+	const TRIANGLE_LEFT = {
+		size: COLOURTODE_SQUARE.size,
+		width: COLOURTODE_SQUARE.size * Math.sqrt(3)/2, //the only reason width is set is for the menu spacing
+		draw: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
+			let size = atom.size
+			if (atom.isTool) size -= BORDER_THICKNESS*2.5
+
+			const height = size
+			const width = size * Math.sqrt(3)/2
+			
+			const left = x
+			const right = left + width
+			let top = y
+			if (atom.isTool) top += BORDER_THICKNESS*1.25
+			const bottom = top + height
+			const middleY = top + height/2
+
+			colourTodeContext.fillStyle = atom.colour
+			const path = new Path2D()
+
+			path.moveTo(right, top)
+			path.lineTo(left, middleY)
+			path.lineTo(right, bottom)
+			path.closePath()
+			colourTodeContext.fillStyle = atom.colour
+			colourTodeContext.fill(path)
+			if (atom.hasBorder) {
+				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5
+				colourTodeContext.strokeStyle = atom.borderColour
+
+				if (atom.isTool) {
+					//colourTodeContext.lineWidth = BORDER_THICKNESS*1.0
+					colourTodeContext.strokeStyle = toolBorderColours[atom.colour.splash]
+				}
+				colourTodeContext.stroke(path)
+			}
+		},
+		overlaps: (atom, x, y) => {
+			
+			const {x: ax, y: ay} = getAtomPosition(atom)
+
+			const height = atom.size
+			const width = atom.size * Math.sqrt(3)/2
+			
+			const left = ax
+			const right = left + width
+			const top = ay
+			const bottom = top + height
+
+			if (x < left) return false
+			if (y < top) return false
+			if (x > right) return false
+			if (y > bottom) return false
+
+			return true
+		},
+		offscreen: (atom) => {
+
+			const {x, y} = getAtomPosition(atom)
+
+			const height = atom.size
+			const width = atom.size * Math.sqrt(3)/2
+			
+			const left = x
+			const right = left + width
+			const top = y
+			const bottom = top + height
+
+			if (right < 0) return true
+			if (bottom < 0) return true
+			if (left > canvas.width) return true
+			if (top > canvas.height) return true
+			return false
+		},
+	}
+
 	// Ctrl+F: trdef
 	const COLOURTODE_TRIANGLE = {
 		behindOtherChildren: true,
@@ -5553,6 +5634,7 @@ registerRule(
 			if (atom.direction === "right") TRIANGLE_RIGHT.draw(atom)
 			else if (atom.direction === "down") TRIANGLE_DOWN.draw(atom)
 			else if (atom.direction === "up") TRIANGLE_UP.draw(atom)
+			else if (atom.direction === "left") TRIANGLE_LEFT.draw(atom)
 			else TRIANGLE_RIGHT.draw(atom)
 		},
 		colour: Colour.splash(999),
@@ -5583,7 +5665,6 @@ registerRule(
 			atom.expanded = true
 
 			atom.upPick = createChild(atom, TRIANGLE_PICK_UP)
-			atom.rightPick = createChild(atom, TRIANGLE_PICK_RIGHT)
 			atom.downPick = createChild(atom, TRIANGLE_PICK_DOWN)
 			
 			if (atom.direction === "up") atom.upPick.value = true
@@ -6242,8 +6323,9 @@ registerRule(
 				atom.dy = 0
 			}
 			
-			unlockMenuTool("hexagon")
+			// unlockMenuTool("hexagon")
 			//unlockMenuTool("tall_rectangle")
+			unlockMenuTool("triangle")
 		},
 
 		click: (atom) => {
@@ -8609,7 +8691,7 @@ registerRule(
 		dragOnly: true,
 		width: SYMMETRY_CIRCLE.size,
 		x: SYMMETRY_CIRCLE.size*Math.sqrt(3)/2 + OPTION_MARGIN,
-		height: (SYMMETRY_CIRCLE.size * 3) - OPTION_MARGIN,
+		height: (SYMMETRY_CIRCLE.size * 2) - OPTION_MARGIN,
 		y: -(SYMMETRY_CIRCLE.size * 3)/3 + OPTION_MARGIN/2,
 		colour: Colour.Grey,
 		grab: (atom) => atom.parent,
