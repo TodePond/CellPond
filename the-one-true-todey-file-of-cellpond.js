@@ -1017,7 +1017,7 @@ on.load(() => {
 
 		e.preventDefault()
 
-		const dy = e.deltaY / 100
+		let dy = e.deltaY / 100
 
 		if (e.altKey) {
 			PADDLE.scroll -= 50 * dy
@@ -1033,8 +1033,9 @@ on.load(() => {
 			squareTool.toolbarNeedsColourUpdate = true
 		}
 		
-		else if (Keyboard.Shift) {
-			state.brush.size -= dy
+		else if (e.shiftKey) {
+			if (dy === 0) dy = e.deltaX / 100
+			state.brush.size -= Math.sign(dy)
 			if (state.brush.size < 0) state.brush.size = 0
 		}
 
