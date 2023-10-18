@@ -5691,7 +5691,42 @@ registerRule(
 		// Returns what atom to highlight when being hovered over stuff
 		hover: (atom) => {
 
-			if (atom.direction === "up") {
+
+			if (atom.direction === "right") {
+
+				// Get my bounds
+				const {x, y} = getAtomPosition(atom)
+				const left = x
+				const top = y
+				const right = x + atom.width
+				const bottom = y + atom.height
+
+				for (const paddle of paddles) {
+
+					// Don't pick hidden or filled paddles
+					if (!paddle.expanded) continue
+					if (paddle.pinhole.locked) continue
+					if (paddle.rightTriangle !== undefined) continue
+
+					// Get paddle bounds
+					const {x: px, y: py} = getAtomPosition(paddle)
+					const pleft = px
+					const pright = px + paddle.width
+					const ptop = py
+					const pbottom = py + paddle.height
+
+					// Check if I am hovering over the paddle
+					if (left > pright) continue
+					if (right < pleft) continue
+					if (top > pbottom) continue
+					if (bottom < ptop) continue
+
+					// Return the highlight and the highlighted atom (the paddle)
+					return paddle
+				}
+			}
+
+			if (true) {
 				
 				const {x, y} = getAtomPosition(atom)
 				const left = x
@@ -5711,55 +5746,22 @@ registerRule(
 					
 					if (left > pright) continue
 					if (right < pleft) continue
-					if (bottom-5 > pbottom) continue
+					if (top > pbottom) continue
 					if (bottom < ptop) continue
 
 					return other
 				}
 
-				return
-			}
-
-			if (atom.direction !== "right") return undefined
-
-			// Get my bounds
-			const {x, y} = getAtomPosition(atom)
-			const left = x
-			const top = y
-			const right = x + atom.width
-			const bottom = y + atom.height
-
-			for (const paddle of paddles) {
-
-				// Don't pick hidden or filled paddles
-				if (!paddle.expanded) continue
-				if (paddle.pinhole.locked) continue
-				if (paddle.rightTriangle !== undefined) continue
-
-				// Get paddle bounds
-				const {x: px, y: py} = getAtomPosition(paddle)
-				const pleft = px
-				const pright = px + paddle.width
-				const ptop = py
-				const pbottom = py + paddle.height
-
-				// Check if I am hovering over the paddle
-				if (left > pright) continue
-				if (right < pleft) continue
-				if (top > pbottom) continue
-				if (bottom < ptop) continue
-
-				// Return the highlight and the highlighted atom (the paddle)
-				return paddle
+				// return
 			}
 
 			return undefined
 		},
 
-		place: (atom, paddle) => {
+		place: (atom, receiver) => {
 
-			if (atom.direction === "up") {
-				const square = paddle
+			if (receiver.isSquare) {
+				const square = receiver
 
 				if (square.stamp === undefined) {
 					square.stamp = "circle"
@@ -5786,34 +5788,35 @@ registerRule(
 				return
 			}
 			
-			if (atom.direction !== "right") return undefined
-			
-			giveChild(paddle, atom)
-			paddle.rightTriangle = atom
-			atom.x = PADDLE.width/2 - atom.width/2
-			atom.y = PADDLE.height/2 - atom.height/2
-			atom.dx = 0
-			atom.dy = 0
+			if (receiver.isPaddle) {
+				const paddle = receiver
+				giveChild(paddle, atom)
+				paddle.rightTriangle = atom
+				atom.x = PADDLE.width/2 - atom.width/2
+				atom.y = PADDLE.height/2 - atom.height/2
+				atom.dx = 0
+				atom.dy = 0
 
-			atom.hasBorder = false
-			paddle.pinhole.locked = atom.colour === Colour.splash(999)
+				atom.hasBorder = false
+				paddle.pinhole.locked = atom.colour === Colour.splash(999)
 
-			for (const cellAtom of paddle.cellAtoms) {
-				if (cellAtom.slotted !== undefined) {
-					registerAtom(cellAtom.slotted)
-					giveChild(paddle, cellAtom.slotted)
+				for (const cellAtom of paddle.cellAtoms) {
+					if (cellAtom.slotted !== undefined) {
+						registerAtom(cellAtom.slotted)
+						giveChild(paddle, cellAtom.slotted)
+					}
 				}
+
+				updatePaddleSize(paddle)
+
+				if (atom.expanded) {
+					atom.unexpand(atom)
+				}
+
+				atom.attached = true
+
+				unlockMenuTool("circle")
 			}
-
-			updatePaddleSize(paddle)
-
-			if (atom.expanded) {
-				atom.unexpand(atom)
-			}
-
-			atom.attached = true
-
-			unlockMenuTool("circle")
 
 		},
 
