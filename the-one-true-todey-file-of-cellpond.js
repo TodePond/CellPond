@@ -3515,8 +3515,8 @@ registerRule(
 			hand.clickContent = undefined
 
 			if (hand.content.attached) {
-				hand.content.x = hand.pityStartX / CT_SCALE + hand.offset.x
-				hand.content.y = hand.pityStartY / CT_SCALE + hand.offset.y
+				hand.content.x = hand.pityStartX / CT_SCALE * DPR + hand.offset.x
+				hand.content.y = hand.pityStartY / CT_SCALE * DPR + hand.offset.y
 			}
 
 			hand.content.dx = 0
@@ -8742,21 +8742,39 @@ registerRule(
 		grab: (atom) => atom.parent,
 	}
 
+	const rotateTriangleRotation = (rotation, clockwise) => {
+		switch (rotation) {
+			case "right": return clockwise ? "down" : "up"
+			case "down": return clockwise ? "left" : "right"
+			case "left": return clockwise ? "up" : "down"
+			case "up": return clockwise ? "right" : "left"
+		}
+
+		throw new Error("Invalid rotation or clockwiseness")
+	}
+
 	const TRIANGLE_PICK_UP = {
 		hasBorder: true,
+		colour: Colour.Black,
 		borderColour: Colour.Black,
 		draw: (atom) => {
-			atom.colour = atom.value? Colour.Silver : Colour.Black
+			// atom.colour = atom.value? Colour.Silver : Colour.Black
+			// atom.colour = Colour.Black
 			TRIANGLE_UP.draw(atom)
+		},
+		touch: (atom) => {
+			atom.colour = Colour.Silver
+			return atom
 		},
 		click: (atom) => {
 			
 			const triangle = atom.parent
-			triangle.upPick.value = false
+			// triangle.upPick.value = false
 			// triangle.rightPick.value = false
-			triangle.downPick.value = false
+			// triangle.downPick.value = false
+			atom.colour = Colour.Black
 			
-			triangle.direction = "up"
+			triangle.direction = rotateTriangleRotation(triangle.direction, true)
 			atom.value = true
 
 		},
@@ -8800,19 +8818,26 @@ registerRule(
 
 	const TRIANGLE_PICK_DOWN = {
 		hasBorder: true,
+		colour: Colour.Black,
 		borderColour: Colour.Black,
 		draw: (atom) => {
-			atom.colour = atom.value? Colour.Silver : Colour.Black
+			// atom.colour = atom.value? Colour.Silver : Colour.Black
+			// atom.colour = Colour.Black
 			TRIANGLE_DOWN.draw(atom)
+		},
+		touch: (atom) => {
+			atom.colour = Colour.Silver
+			return atom
 		},
 		click: (atom) => {
 			
 			const triangle = atom.parent
-			triangle.upPick.value = false
+			// triangle.upPick.value = false
 			// triangle.rightPick.value = false
-			triangle.downPick.value = false
+			// triangle.downPick.value = false
+			atom.colour = Colour.Black
 			
-			triangle.direction = "down"
+			triangle.direction = rotateTriangleRotation(triangle.direction, false)
 			atom.value = true
 
 		},
