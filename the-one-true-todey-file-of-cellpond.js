@@ -5821,7 +5821,7 @@ registerRule(
 			if (atom.direction === "up" || atom.direction === "down") {
 				atom.variable = atom.highlightedSlot
 			} else if (atom.direction === "left") {
-				if (atom.channelId === "red") atom.variable = "blue"
+				if (atom.highlightedSlot === "red") atom.variable = "blue"
 				else if (atom.highlightedSlot === "green") atom.variable = "red"
 				else if (atom.highlightedSlot === "blue") atom.variable = "green"
 			} else if (atom.direction === "right") {
