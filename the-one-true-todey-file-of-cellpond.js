@@ -9116,7 +9116,7 @@ registerRule(
 				else if (channel.add) triangle.direction = "up"
 				else if (channel.variable === leftVariable) triangle.direction = "left"
 				else if (channel.variable === rightVariable) triangle.direction = "right"
-				print(channel)
+	
 				triangle.updateValue(triangle)
 
 				// const hexagon = makeAtom(COLOURTODE_HEXAGON)
