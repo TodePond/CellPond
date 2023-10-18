@@ -66,6 +66,7 @@ const urlParams = new URLSearchParams(window.location.search)
 const NO_SECRET_MODE = urlParams.has("nosecret")
 const NO_FOOLS_MODE = urlParams.has("nofools")
 const UNLOCK_MODE = urlParams.has("unlock")
+const DPR = urlParams.get("dpr") ?? devicePixelRatio
 if (NO_SECRET_MODE) {
 	localStorage.setItem("secretHasAlreadyBeenRevealed", "true")
 }
@@ -1006,7 +1007,7 @@ on.load(() => {
 	}
 
 	const ZOOM = 0.05
-	CT_SCALE = 1.0
+	let CT_SCALE = DPR
 	on.wheel((e) => {
 
 		e.preventDefault()
@@ -2968,8 +2969,8 @@ registerRule(
 	document.body.append(colourTodeCanvas)
 
 	on.resize(() => {
-		colourTodeCanvas.width = innerWidth
-		colourTodeCanvas.height = innerHeight
+		colourTodeCanvas.width = innerWidth * DPR
+		colourTodeCanvas.height = innerHeight * DPR
 		colourTodeCanvas.style["width"] = innerWidth
 		colourTodeCanvas.style["height"] = innerHeight
 	})
@@ -2993,8 +2994,8 @@ registerRule(
 
 		if (Mouse.position !== undefined && Mouse.position[0] !== undefined && hand.previous.x !== undefined) {
 			const [x, y] = Mouse.position.map(n => n / CT_SCALE)
-			const dx = x - hand.previous.x
-			const dy = y - hand.previous.y
+			const dx = (x - hand.previous.x) * DPR
+			const dy = (y - hand.previous.y) * DPR
 			const velocity = {x: dx, y: dy}
 			hand.velocityHistory.push(velocity)
 			const sum = hand.velocityHistory.reduce((a, b) => ({x: a.x+b.x, y: a.y+b.y}), {x:0, y:0})
@@ -3395,8 +3396,8 @@ registerRule(
 			const dx = e.clientX - hand.pityStartX
 			const dy = e.clientY - hand.pityStartY
 			
-			if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, hand.content.attached && !hand.content.noDampen)) / CT_SCALE + hand.offset.x
-			if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, hand.content.attached && !hand.content.noDampen)) / CT_SCALE + hand.offset.y
+			if (!hand.content.dragLockX) hand.content.x = (hand.pityStartX + dampen(dx, hand.content.attached && !hand.content.noDampen)) / CT_SCALE * DPR + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = (hand.pityStartY + dampen(dy, hand.content.attached && !hand.content.noDampen)) / CT_SCALE * DPR + hand.offset.y
 
 			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
 			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
@@ -3411,8 +3412,8 @@ registerRule(
 				if (handSpeed <= DRAG_UNPITY_SPEED) return
 			}
 
-			if (!hand.content.dragLockX) hand.content.x = hand.pityStartX / CT_SCALE + hand.offset.x
-			if (!hand.content.dragLockY) hand.content.y = hand.pityStartY / CT_SCALE + hand.offset.y
+			if (!hand.content.dragLockX) hand.content.x = hand.pityStartX / CT_SCALE * DPR + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = hand.pityStartY / CT_SCALE * DPR + hand.offset.y
 
 			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
 			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
@@ -3483,8 +3484,8 @@ registerRule(
 			hand.clickContent = undefined
 
 			if (hand.content.attached) {
-				hand.content.x = hand.pityStartX / CT_SCALE + hand.offset.x
-				hand.content.y = hand.pityStartY / CT_SCALE + hand.offset.y
+				hand.content.x = hand.pityStartX / CT_SCALE * DPR + hand.offset.x
+				hand.content.y = hand.pityStartY / CT_SCALE * DPR + hand.offset.y
 			}
 
 			hand.content.dx = 0
@@ -3534,14 +3535,14 @@ registerRule(
 		mousemove: (e) => {
 			if (!hand.hasStartedDragging) {
 				hand.hasStartedDragging = true
-				hand.content = hand.content.drag(hand.content, e.clientX / CT_SCALE, e.clientY / CT_SCALE)
+				hand.content = hand.content.drag(hand.content, e.clientX / CT_SCALE * DPR, e.clientY / CT_SCALE * DPR)
 			}
 
 			const oldX = hand.content.x
 			const oldY = hand.content.y
 
-			if (!hand.content.dragLockX) hand.content.x = e.clientX / CT_SCALE + hand.offset.x
-			if (!hand.content.dragLockY) hand.content.y = e.clientY / CT_SCALE + hand.offset.y
+			if (!hand.content.dragLockX) hand.content.x = e.clientX / CT_SCALE * DPR + hand.offset.x
+			if (!hand.content.dragLockY) hand.content.y = e.clientY / CT_SCALE * DPR + hand.offset.y
 
 			hand.content.x = clamp(hand.content.x, hand.content.minX, hand.content.maxX)
 			hand.content.y = clamp(hand.content.y, hand.content.minY, hand.content.maxY)
@@ -3688,6 +3689,8 @@ registerRule(
 	}
 
 	const getAtom = (x, y) => {
+		x *= DPR
+		y *= DPR
 		for (let i = state.colourTode.atoms.length-1; i >= 0; i--) {
 			const atom = state.colourTode.atoms[i]
 			if (atom.justVisual) continue
@@ -3769,8 +3772,9 @@ registerRule(
 		}
 
 		hand.content = grabbed
-		hand.offset.x = grabbed.x - x
-		hand.offset.y = grabbed.y - y
+		const {x: grabbedX, y: grabbedY} = getAtomPosition(grabbed, {forceAbsolute: true})
+		hand.offset.x = grabbedX - x * DPR
+		hand.offset.y = grabbedY - y * DPR
 		grabbed.dx = 0
 		grabbed.dy = 0
 
@@ -3810,8 +3814,9 @@ registerRule(
 		}
 	}
 
-	getAtomPosition = (atom) => {
+	const getAtomPosition = (atom, {forceAbsolute = false} = {}) => {
 		const {x, y} = atom
+		if (forceAbsolute) return {x, y}
 		if (atom.parent === undefined) return {x, y}
 		if (atom.hasAbsolutePosition) return {x, y}
 		const {x: px, y: py} = getAtomPosition(atom.parent)
