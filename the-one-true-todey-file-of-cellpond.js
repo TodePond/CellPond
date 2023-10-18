@@ -5799,6 +5799,11 @@ registerRule(
 						const {x: ax, y: ay} = getAtomPosition(winningSquare)
 						const slotId = CHANNEL_IDS[winningSlot]
 
+						if (atom.highlight !== undefined) {
+							deleteChild(atom, atom.highlight)
+							atom.highlight = undefined
+						}
+
 						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
 						atom.highlight.hasBorder = true
 						atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
