@@ -5681,7 +5681,7 @@ registerRule(
 			deleteChild(atom, atom.pad)
 			deleteChild(atom, atom.handle)
 			deleteChild(atom, atom.upPick)
-			deleteChild(atom, atom.rightPick)
+			// deleteChild(atom, atom.rightPick)
 			deleteChild(atom, atom.downPick)
 			atom.expanded = false
 		},
@@ -8697,7 +8697,7 @@ registerRule(
 		width: SYMMETRY_CIRCLE.size,
 		x: SYMMETRY_CIRCLE.size*Math.sqrt(3)/2 + OPTION_MARGIN,
 		height: (SYMMETRY_CIRCLE.size * 2) - OPTION_MARGIN,
-		y: -(SYMMETRY_CIRCLE.size * 3)/3 + OPTION_MARGIN/2,
+		y: -SYMMETRY_CIRCLE.size/2 + OPTION_MARGIN/2,
 		colour: Colour.Grey,
 		grab: (atom) => atom.parent,
 	}
