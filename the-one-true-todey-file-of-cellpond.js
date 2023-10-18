@@ -5821,13 +5821,13 @@ registerRule(
 			if (atom.direction === "up" || atom.direction === "down") {
 				atom.variable = atom.highlightedSlot
 			} else if (atom.direction === "left") {
-				if (atom.channelId === "red") atom.variable = "green"
+				if (atom.channelId === "red") atom.variable = "blue"
 				else if (atom.highlightedSlot === "green") atom.variable = "red"
-				else if (atom.highlightedSlot === "blue") atom.variable = "red"
-			} else if (atom.direction === "right") {
-				if (atom.highlightedSlot === "red") atom.variable = "blue"
-				else if (atom.highlightedSlot === "green") atom.variable = "blue"
 				else if (atom.highlightedSlot === "blue") atom.variable = "green"
+			} else if (atom.direction === "right") {
+				if (atom.highlightedSlot === "red") atom.variable = "green"
+				else if (atom.highlightedSlot === "green") atom.variable = "blue"
+				else if (atom.highlightedSlot === "blue") atom.variable = "red"
 			}
 			const add = atom.direction === "up" ? makeNumberFromInt(1) : undefined
 			const subtract = atom.direction === "down" ? makeNumberFromInt(1) : undefined
@@ -6831,59 +6831,59 @@ registerRule(
 				}
 			}
 			
-			let winningDistance = Infinity
-			let winningSquare = undefined
-			let winningSlot = undefined
+			// let winningDistance = Infinity
+			// let winningSquare = undefined
+			// let winningSlot = undefined
 
-			const atoms = getAllBaseAtoms()
-			for (const other of atoms) {
-				if (other === atom) continue
-				if (!other.isSquare) continue
-				if (!other.expanded) continue
+			// const atoms = getAllBaseAtoms()
+			// for (const other of atoms) {
+			// 	if (other === atom) continue
+			// 	if (!other.isSquare) continue
+			// 	if (!other.expanded) continue
 
-				const {x: px, y: py} = getAtomPosition(other.pickerPad)
-				const pleft = px
-				const pright = px + other.pickerPad.width
-				const ptop = py
-				const pbottom = py + other.pickerPad.height
+			// 	const {x: px, y: py} = getAtomPosition(other.pickerPad)
+			// 	const pleft = px
+			// 	const pright = px + other.pickerPad.width
+			// 	const ptop = py
+			// 	const pbottom = py + other.pickerPad.height
 
-				if (left > pright) continue
-				if (right < pleft) continue
-				if (bottom < ptop) continue
-				if (top > pbottom) continue
+			// 	if (left > pright) continue
+			// 	if (right < pleft) continue
+			// 	if (bottom < ptop) continue
+			// 	if (top > pbottom) continue
 
-				const slots = ["red", "green", "blue"].filter(slot => other[slot] === undefined)
-				if (slots.length === 0) continue
-				const {x: ax, y: ay} = getAtomPosition(other)
+			// 	const slots = ["red", "green", "blue"].filter(slot => other[slot] === undefined)
+			// 	if (slots.length === 0) continue
+			// 	const {x: ax, y: ay} = getAtomPosition(other)
 
-				for (const slot of slots) {
-					const slotId = CHANNEL_IDS[slot]
-					const sx = ax + other.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
-					const sy = ay + OPTION_MARGIN
-					const distance = Math.hypot(x - sx, y - sy)
-					if (distance < winningDistance) {
-						winningDistance = distance
-						winningSlot = slot
-						winningSquare = other
-					}
-				}
+			// 	for (const slot of slots) {
+			// 		const slotId = CHANNEL_IDS[slot]
+			// 		const sx = ax + other.size + OPTION_MARGIN*2 + slotId*(COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN)
+			// 		const sy = ay + OPTION_MARGIN
+			// 		const distance = Math.hypot(x - sx, y - sy)
+			// 		if (distance < winningDistance) {
+			// 			winningDistance = distance
+			// 			winningSlot = slot
+			// 			winningSquare = other
+			// 		}
+			// 	}
 
-				if (winningSquare !== undefined) {
+			// 	if (winningSquare !== undefined) {
 
-					const {x: ax, y: ay} = getAtomPosition(winningSquare)
-					const slotId = CHANNEL_IDS[winningSlot]
+			// 		const {x: ax, y: ay} = getAtomPosition(winningSquare)
+			// 		const slotId = CHANNEL_IDS[winningSlot]
 
-					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
-					atom.highlight.hasBorder = true
-					atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
-					atom.highlight.y = ay
-					atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
-					atom.highlightedAtom = winningSquare
-					atom.highlightedSlot = winningSlot
-				}
-			}
+			// 		atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true})
+			// 		atom.highlight.hasBorder = true
+			// 		atom.highlight.x = ax + winningSquare.size + OPTION_MARGIN + slotId*(OPTION_MARGIN+winningSquare.size)
+			// 		atom.highlight.y = ay
+			// 		atom.highlight.width = OPTION_MARGIN*2+winningSquare.size
+			// 		atom.highlightedAtom = winningSquare
+			// 		atom.highlightedSlot = winningSlot
+			// 	}
+			// }
 
-			return winningSquare
+			// return winningSquare
 		},
 		place: (atom, paddle) => {
 			if (paddle.isPaddle) {
@@ -6895,16 +6895,17 @@ registerRule(
 				
 				atom.dx = 0
 				atom.dy = 0
-			} else if (paddle.isSquare) {
-				const square = paddle
-				atom.variable = atom.highlightedSlot
-				atom.updateValue(atom)
-				const slotId = CHANNEL_IDS[atom.highlightedSlot]
-				square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded, numberAtom: atom})
-				deleteAtom(atom)
-				atom.dx = 0
-				atom.dy = 0
-			}
+			} 
+			// else if (paddle.isSquare) {
+			// 	const square = paddle
+			// 	atom.variable = atom.highlightedSlot
+			// 	atom.updateValue(atom)
+			// 	const slotId = CHANNEL_IDS[atom.highlightedSlot]
+			// 	square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded, numberAtom: atom})
+			// 	deleteAtom(atom)
+			// 	atom.dx = 0
+			// 	atom.dy = 0
+			// }
 		},
 		drag: (atom) => {
 			if (atom.parent.isPaddle) {
