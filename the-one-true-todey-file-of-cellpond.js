@@ -1137,6 +1137,8 @@ on.load(() => {
 
 	KEYDOWN["="] = () => edgeMode = 1
 	KEYDOWN["-"] = () => edgeMode = 0
+	KEYDOWN["o"] = () => edgeMode = !edgeMode
+	KEYDOWN["e"] = () => edgeMode = !edgeMode
 
 	gridMode = true
 	KEYDOWN["g"] = () => {
