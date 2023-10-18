@@ -66,6 +66,7 @@ const urlParams = new URLSearchParams(window.location.search)
 const NO_SECRET_MODE = urlParams.has("nosecret")
 const NO_FOOLS_MODE = urlParams.has("nofools")
 const UNLOCK_MODE = urlParams.has("unlock")
+const SCALE = urlParams.get("scale") ?? 1
 const DPR = urlParams.get("dpr") ?? devicePixelRatio
 print('DPR:', DPR)
 if (NO_SECRET_MODE) {
@@ -1011,7 +1012,7 @@ on.load(() => {
 	}
 
 	const ZOOM = 0.05
-	let CT_SCALE = DPR
+	let CT_SCALE = DPR * SCALE
 	on.wheel((e) => {
 
 		e.preventDefault()
@@ -5672,7 +5673,7 @@ registerRule(
 			atom.downPick = createChild(atom, TRIANGLE_PICK_DOWN)
 			
 			if (atom.direction === "up") atom.upPick.value = true
-			if (atom.direction === "right") atom.rightPick.value = true
+			// if (atom.direction === "right") atom.rightPick.value = true
 			if (atom.direction === "down") atom.downPick.value = true
 		},
 
@@ -8752,7 +8753,7 @@ registerRule(
 			
 			const triangle = atom.parent
 			triangle.upPick.value = false
-			triangle.rightPick.value = false
+			// triangle.rightPick.value = false
 			triangle.downPick.value = false
 			
 			triangle.direction = "up"
@@ -8786,7 +8787,7 @@ registerRule(
 			
 			const triangle = atom.parent
 			triangle.upPick.value = false
-			triangle.rightPick.value = false
+			// triangle.rightPick.value = false
 			triangle.downPick.value = false
 			
 			triangle.direction = "right"
@@ -8808,7 +8809,7 @@ registerRule(
 			
 			const triangle = atom.parent
 			triangle.upPick.value = false
-			triangle.rightPick.value = false
+			// triangle.rightPick.value = false
 			triangle.downPick.value = false
 			
 			triangle.direction = "down"
