@@ -3190,7 +3190,7 @@ registerRule(
 				brush(0.5, 0.5)
 			} else {
 				const oldBrushColour = state.brush.colour
-				state.brush.colour = 666
+				state.brush.colour = oldWorldSize * 111
 				brush(0.5, 0.5)
 				state.brush.colour = oldBrushColour
 				state.worldBuilt = false
