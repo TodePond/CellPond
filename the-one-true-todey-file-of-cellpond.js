@@ -9559,7 +9559,7 @@ registerRule(
 			}
 		} else {
 			// Fallback to the Blob and link method
-			const blob = new Blob([JSON.stringify(pack)], {type: 'application/json'});
+			const blob = new Blob([pack], {type: 'application/json'});
 			const url = URL.createObjectURL(blob);
 
 			const link = document.createElement('a');
