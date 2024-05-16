@@ -64,7 +64,7 @@ document.addEventListener('mousedown', function(event) {
 
 const urlParams = new URLSearchParams(window.location.search);
 const NO_SECRET_MODE = urlParams.has("nosecret");
-
+const NO_FOOLS_MODE = urlParams.has("nofools");
 const UNLOCK_MODE = urlParams.has("unlock");
 const SCALE = urlParams.get("scale") ?? 1;
 const DPR = urlParams.get("dpr") ?? devicePixelRatio;
@@ -73,7 +73,7 @@ if (NO_SECRET_MODE) {
 	localStorage.setItem("secretHasAlreadyBeenRevealed", "true");
 }
 
-
+const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenRevealed");
 
 
 //========//;
@@ -96,7 +96,7 @@ const TODEPOND_COLOURS = [
 	Colour.White.splash,
 ];
 
-
+const TODEPOND_RAINBOW_COLOURS = TODEPOND_COLOURS.slice(0, -4);
 
 const getRGB = (splash) => {
 	const gb = splash % 100;
@@ -2121,6 +2121,7 @@ on.load(() => {
 
 		const behaveFunction = (origin, redraw) => {
 
+			let count = 1;
 			for (const stepFunction of stepFunctions) {
 				const drawn = stepFunction(origin, redraw);
 				if (drawn !== undefined) return drawn;
@@ -2518,8 +2519,8 @@ on.load(() => {
 	const BLUE = makeArrayFromSplash(Colour.Blue.splash);
 	const YELLOW = makeArrayFromSplash(Colour.Yellow.splash);
 	const PURPLE = makeArrayFromSplash(Colour.Cyan.splash - 111);
-
-	let [RED_R, RED_G] = getRGB(Colour.Red.splash);
+	const RED = makeArrayFromSplash(Colour.Red.splash);
+	let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash);
 	RED_R /= 100;
 	RED_G /= 10;
 	/*BLACK.channels[0].values[RED_R] = true;
@@ -7955,10 +7956,10 @@ registerRule(;
 
 			const [x, y] = getAtomPosition(atom);
 
-
-
-
-
+			const left = x;
+			const right = x + atom.width;
+			const top = y;
+			const bottom = y + atom.height;
 
 			/*const swidth = atom.width/10;
 			const sheight = atom.height/10;
