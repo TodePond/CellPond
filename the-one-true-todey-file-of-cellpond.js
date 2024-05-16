@@ -64,7 +64,7 @@ document.addEventListener('mousedown', function(event) {
 
 const urlParams = new URLSearchParams(window.location.search);
 const NO_SECRET_MODE = urlParams.has("nosecret");
-const NO_FOOLS_MODE = urlParams.has("nofools");
+
 const UNLOCK_MODE = urlParams.has("unlock");
 const SCALE = urlParams.get("scale") ?? 1;
 const DPR = urlParams.get("dpr") ?? devicePixelRatio;
@@ -73,7 +73,7 @@ if (NO_SECRET_MODE) {
 	localStorage.setItem("secretHasAlreadyBeenRevealed", "true");
 }
 
-const secretHasAlreadyBeenRevealed = localStorage.getItem("secretHasAlreadyBeenRevealed");
+
 
 
 //========//;
@@ -96,7 +96,7 @@ const TODEPOND_COLOURS = [
 	Colour.White.splash,
 ];
 
-const TODEPOND_RAINBOW_COLOURS = TODEPOND_COLOURS.slice(0, -4);
+
 
 const getRGB = (splash) => {
 	const gb = splash % 100;
@@ -2121,7 +2121,6 @@ on.load(() => {
 
 		const behaveFunction = (origin, redraw) => {
 
-			let count = 1;
 			for (const stepFunction of stepFunctions) {
 				const drawn = stepFunction(origin, redraw);
 				if (drawn !== undefined) return drawn;
@@ -2519,8 +2518,8 @@ on.load(() => {
 	const BLUE = makeArrayFromSplash(Colour.Blue.splash);
 	const YELLOW = makeArrayFromSplash(Colour.Yellow.splash);
 	const PURPLE = makeArrayFromSplash(Colour.Cyan.splash - 111);
-	const RED = makeArrayFromSplash(Colour.Red.splash);
-	let [RED_R, RED_G, RED_B] = getRGB(Colour.Red.splash);
+
+	let [RED_R, RED_G] = getRGB(Colour.Red.splash);
 	RED_R /= 100;
 	RED_G /= 10;
 	/*BLACK.channels[0].values[RED_R] = true;
@@ -3955,28 +3954,28 @@ registerRule(;
 						}
 						colourTodeContext.fill("evenodd");
 					}
-				};
+				}
 
 				else {
 					if (atom.borderColour === undefined) {
 						colourTodeContext.strokeStyle = borderColours[atom.colour.splash];
-					};
+					}
 					else {
 						colourTodeContext.strokeStyle = atom.borderColour;
-					};
+					}
 
 					X = Math.round(x + 0.5) - 0.5;
 					Y = Math.round(y + 0.5) - 0.5;
 
 					colourTodeContext.lineWidth = BORDER_THICKNESS;
 					colourTodeContext.strokeRect(X, Y, W, H);
-				};
-			};
+				}
+			}
 
 			else {
 				colourTodeContext.fillStyle = atom.colour;
 				colourTodeContext.fillRect(X, Y, W, H);
-			};
+			}
 
 		},
 		offscreen: (atom) => {
@@ -3996,7 +3995,7 @@ registerRule(;
 			let border = BORDER_THICKNESS;
 			if (atom.isTool || atom.isSquare || atom.isTallRectangle) {
 				border *= 1.5;
-			};
+			}
 			const left = x;
 			const right = x + atom.width;
 			const top = y;
@@ -4022,14 +4021,14 @@ registerRule(;
 			if (atom.hasBorder) {
 				if (atom.isTool) {
 					atom.borderColour = toolBorderColours[atom.colour.splash];
-				};
+				}
 				colourTodeContext.fillStyle = atom.borderColour !== undefined? atom.borderColour : Colour.Void;
 				colourTodeContext.beginPath();
 				colourTodeContext.arc(X, Y, R, 0, 2*Math.PI);
 				colourTodeContext.fill();
 				let borderScale = atom.borderScale !== undefined? atom.borderScale : 1.0;
 				R = (atom.width/2 - BORDER_THICKNESS*1.5 * borderScale);
-			};
+			}
 
 			colourTodeContext.fillStyle = atom.colour;
 			colourTodeContext.beginPath();
@@ -4049,8 +4048,8 @@ registerRule(;
 			if (x === sx && y === sy) {
 				//if (cellAtom.isLeftSlot) continue;
 				return true;
-			};
-		};
+			}
+		}
 		return false;
 	};
 
@@ -4060,8 +4059,8 @@ registerRule(;
 			const {x, y} = getAtomPosition(cellAtom);
 			if (x === sx && y === sy) {
 				if (cellAtom.isLeftSlot || cellAtom.isSlot) return true;
-			};
-		};
+			}
+		}
 		return false;
 	};
 
@@ -4075,7 +4074,7 @@ registerRule(;
 			state.brush.colour = makeDiagram({left: [diagramCell]});
 			squareTool.value = diagramCell.content;
 			squareTool.toolbarNeedsColourUpdate = true;
-		};
+		}
 	};
 
 	// Ctrl+F: sqdef;
@@ -4100,24 +4099,24 @@ registerRule(;
 						atom.joinUnepxand(atom);
 					} else {
 						atom.joinExpand(atom);
-					};
-				};
-			};
+					}
+				}
+			}
 
 			else if (atom.value.isDiagram) {
 
-			};
+			}
 
 			else if (!atom.expanded) {
 
 				if (atom.parent === COLOURTODE_BASE_PARENT || !atom.parent.isPaddle) {
 					atom.expand(atom);
-				};
+				}
 
-			};
+			}
 			else {
 				atom.unexpand(atom);
-			};
+      }
 
 			setBrushColour(atom.value);
 		},
@@ -4129,7 +4128,7 @@ registerRule(;
 				// unlockMenuTool("hexagon");
 				// unlockMenuTool("wide_rectangle");
 				unlockMenuTool("triangle");
-			};
+			}
 		},
 
 		unexpand: (atom) => {
@@ -4152,7 +4151,7 @@ registerRule(;
 			if (atom.value.channels[2] !== undefined) {
 				if (atom.value.channels[2].variable === undefined) {
 					const blue = createChild(atom, COLOURTODE_PICKER_CHANNEL);
-					blue.channelSlot = "blue" //note: a colour doesn't necessarily have to be in its own channel slot;
+					blue.channelSlot = "blue"; //note: a colour doesn't necessarily have to be in its own channel slot;
 					blue.x += COLOURTODE_PICKER_PAD_MARGIN + 3 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN);
 					blue.value = atom.value.channels[2];
 					blue.needsColoursUpdate = true;
@@ -4173,13 +4172,13 @@ registerRule(;
 					hexagon.attached = true;
 
 					atom.blue = hexagon;
-				};
-			};
+				}
+			}
 
 			if (atom.value.channels[1] !== undefined) {
 				if (atom.value.channels[1].variable === undefined) {
 					const green = createChild(atom, COLOURTODE_PICKER_CHANNEL);
-					green.channelSlot = "green" //note: a colour doesn't necessarily have to be in its own channel slot;
+					green.channelSlot = "green"; //note: a colour doesn't necessarily have to be in its own channel slot;
 					green.x += COLOURTODE_PICKER_PAD_MARGIN + 2 * (COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN);
 					green.value = atom.value.channels[1];
 					green.needsColoursUpdate = true;
@@ -4200,13 +4199,13 @@ registerRule(;
 					hexagon.attached = true;
 
 					atom.green = hexagon;
-				};
-			};
+				}
+			}
 
 			if (atom.value.channels[0] !== undefined) {
 				if (atom.value.channels[0].variable === undefined) {
 					const red = createChild(atom, COLOURTODE_PICKER_CHANNEL);
-					red.channelSlot = "red" //note: a colour doesn't necessarily have to be in its own channel slot;
+					red.channelSlot = "red"; //note: a colour doesn't necessarily have to be in its own channel slot;
 					red.x += COLOURTODE_PICKER_PAD_MARGIN + COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN;
 					red.value = atom.value.channels[0];
 					red.needsColoursUpdate = true;
@@ -4225,8 +4224,8 @@ registerRule(;
 					triangle.attached = true;
 
 					atom.red = triangle;
-				};
-			};
+				}
+			}
 		},
 
 		deletePicker: (atom) => {
@@ -4235,15 +4234,15 @@ registerRule(;
 			if (atom.red) {
 				atom.deletedRedOptions = atom.red.options;
 				deleteChild(atom, atom.red);
-			};
+			}
 			if (atom.green) {
 				atom.deletedGreenOptions = atom.green.options;
 				deleteChild(atom, atom.green);
-			};
+			}
 			if (atom.blue) {
 				atom.deletedBlueOptions = atom.blue.options;
 				deleteChild(atom, atom.blue);
-			};
+			}
 		},
 
 		receiveNumber: (atom, number, channel = number.channel, {expanded, numberAtom} = {}) => {
@@ -4254,18 +4253,18 @@ registerRule(;
 
 			if (atom.variableAtoms === undefined) {
 				atom.variableAtoms = [undefined, undefined, undefined];
-			};
+			}
 
 			if (number !== undefined && number.variable !== undefined) {
 				atom.variableAtoms[channel] = numberAtom;
 			} else {
 				atom.variableAtoms[channel] = undefined;
-			};
+			}
 
 			if (expanded !== undefined) {
 				const channelName = CHANNEL_NAMES[channel];
 				atom[`${channelName}Expanded`] = expanded;
-			};
+			}
 
 			atom.value.channels[channel] = number;
 
@@ -4275,12 +4274,12 @@ registerRule(;
 			atom.colourTicker = Infinity;
 
 			/*const diagramCell = makeDiagramCell({content: atom.value});
-			state.brush.colour = makeDiagram({left: [diagramCell]})*/;
+			state.brush.colour = makeDiagram({left: [diagramCell]})*/
 
 			if (atom.parent !== COLOURTODE_BASE_PARENT) {
 				const paddle = atom.parent;
 				updatePaddleRule(paddle);
-			};
+			}
 
 			const brushDiagramCell = makeDiagramCell({content: atom.value});
 			state.brush.colour = makeDiagram({left: [brushDiagramCell]});
@@ -4297,10 +4296,10 @@ registerRule(;
 			atom.needsColoursUpdate = true;
 			/*const r = Random.Uint8 % 10;
 			const g = Random.Uint8 % 10;
-			const b = Random.Uint8 % 10*/;
+			const b = Random.Uint8 % 10*/
 			/*const r = Random.Uint8 % 10;
 			const g = Random.Uint8 % 10;
-			const b = Random.Uint8 % 10*/;
+			const b = Random.Uint8 % 10*/
 			//atom.value = makeArrayFromSplash(r*100 + g*10 + b);
 			//atom.value = makeArrayFromSplash(555);
 			//const splash = TODEPOND_COLOURS[Random.Uint8 % TODEPOND_COLOURS.length];
@@ -4308,7 +4307,7 @@ registerRule(;
 				atom.value = makeArrayFromSplash(state.brush.colour);
 			} else {
 				atom.value = cloneDragonArray(state.brush.colour.left[0].content);
-			};
+			}
 
 			atom.colourId = 0;
 			atom.dcolourId = 1;
@@ -4335,7 +4334,7 @@ registerRule(;
 				for (const join of atom.joins) {
 					join.updateGradient(join);
 					joinGradients.push(join.gradient);
-				};
+				}
 				atom.headGradient = getGradientImageFromColours({
 					colours: atom.colours,
 					width: atom.width * CT_SCALE,
@@ -4348,7 +4347,7 @@ registerRule(;
 				atom.gradient = getMergedGradient({
 					gradients,
 					width: atom.width * CT_SCALE,
-					height: atom.height * CT_SCALE,
+          height: atom.height * CT_SCALE,
 					stamp: atom.value.stamp,
 					mergedGradient: atom.gradient,
 				});
@@ -4361,7 +4360,7 @@ registerRule(;
 					gradient: atom.gradient,
 					stamp: atom.value.stamp,
 				});
-			};
+			}
 		},
 
 		// Ctrl+F: sqwww;
@@ -4382,16 +4381,16 @@ registerRule(;
 						multiAtom.height = diagramCell.height * cellAtomHeight;
 						multiAtom.value = diagramCell.content;
 						atom.multiAtoms.push(multiAtom);
-					};
-				};
+					}
+				}
 
 			} else {
 
 				if (atom.needsColoursUpdate) {
 					atom.updateGradient(atom);
 					atom.needsColoursUpdate = false;
-				};
-			};
+				}
+			}
 
 			const {x, y} = getAtomPosition(atom);
 
@@ -4407,7 +4406,7 @@ registerRule(;
 				if (atom.highlight !== undefined) {
 					deleteChild(atom, atom.highlight);
 					atom.highlight = undefined;
-				};
+				}
 
 				if (atom.highlightedAtom === undefined) {
 					const atoms = getAllBaseAtoms();
@@ -4416,7 +4415,7 @@ registerRule(;
 						if (!other.isSquare) continue;
 						if (other.joins.length > 0 && other.joinExpanded) {
 							other = other.pickerPad;
-						};
+						}
 
 						const {x: ox, y: oy} = getAtomPosition(other);
 						const oleft = ox;
@@ -4434,7 +4433,7 @@ registerRule(;
 						} else {
 							if (other.parent !== COLOURTODE_BASE_PARENT) continue;
 							atom.highlightedAtom = other;
-						};
+						}
 
 						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true});
 						atom.highlight.hasBorder = true;
@@ -4446,8 +4445,8 @@ registerRule(;
 
 						break;
 
-					};
-				};
+					}
+				}
 
 				if (atom.highlightedAtom === undefined) for (const paddle of paddles) {
 
@@ -4500,16 +4499,16 @@ registerRule(;
 							atom.highlight.height = paddle.dummyLeft.height;
 							atom.highlightedSide = "left";
 							atom.highlightedAtom = paddle;
-						};
+						}
 						break;
 
-					};
+					}
 
 					else if (paddle.rightTriangle !== undefined && left > pleft + paddle.rightTriangle.x) {
 
 						let winningDistance = Infinity;
-						let winningSide = undefined;
-						let winningCellAtom = undefined;
+						let winningSide;
+						let winningCellAtom;
 
 						for (const catom of paddle.cellAtoms) {
 							const cellAtom = catom.slot;
@@ -4530,36 +4529,36 @@ registerRule(;
 								winningDistance = dspotCenter;
 								winningCellAtom = cellAtom;
 								winningSide = "slot";
-							};
+							}
 
 							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1]);
 							if (!isCellAtomSpotFilled(paddle, spotLeft, true) && dspotLeft < winningDistance) {
 								winningDistance = dspotLeft;
 								winningCellAtom = cellAtom;
 								winningSide = "left";
-							};
+							}
 
 							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1]);
 							if (!isCellAtomSpotFilled(paddle, spotAbove, true) && dspotAbove < winningDistance) {
 								winningDistance = dspotAbove;
 								winningCellAtom = cellAtom;
 								winningSide = "above";
-							};
+							}
 
 							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1]);
 							if (!isCellAtomSpotFilled(paddle, spotRight, true) && dspotRight < winningDistance) {
 								winningDistance = dspotRight;
 								winningCellAtom = cellAtom;
 								winningSide = "right";
-							};
+							}
 
 							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1]);
 							if (!isCellAtomSpotFilled(paddle, spotBelow, true) && dspotBelow < winningDistance) {
 								winningDistance = dspotBelow;
 								winningCellAtom = cellAtom;
 								winningSide = "below";
-							};
-						};
+							}
+						}
 
 						const {x: cx, y: cy} = getAtomPosition(winningCellAtom);
 
@@ -4567,28 +4566,28 @@ registerRule(;
 						if (winningSide === "left" || winningSide === "right") {
 							atom.highlight.width = HIGHLIGHT_THICKNESS;
 							atom.highlight.height = winningCellAtom.height;
-						};
+						}
 						else if (winningSide === "above" || winningSide === "below") {
 							atom.highlight.width = winningCellAtom.width;
 							atom.highlight.height = HIGHLIGHT_THICKNESS;
-						};
+						}
 
 						if (winningSide === "left") {
 							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2;
 							atom.highlight.y = cy;
-						};
+						}
 						else if (winningSide === "right") {
 							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2 + winningCellAtom.width;
 							atom.highlight.y = cy;
-						};
+						}
 						else if (winningSide === "above") {
 							atom.highlight.x = cx;
 							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2;
-						};
+						}
 						else if (winningSide === "below") {
 							atom.highlight.x = cx;
 							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2 + winningCellAtom.height;
-						};
+						}
 
 						if (winningSide === "slot") {
 							atom.highlight.width = COLOURTODE_SQUARE.size;
@@ -4598,14 +4597,14 @@ registerRule(;
 							atom.highlight.y = cy;
 							atom.highlight.hasBorder = true;
 							atom.highlight.colour = Colour.Grey;
-						};
+						}
 
 						atom.highlightedAtom = winningCellAtom;
 						atom.highlightedSide = winningSide;
 
 						break;
 
-					};
+					}
 
 					/*;
 					else if (paddle.rightTriangle !== undefined && left > pleft + paddle.rightTriangle.x) {
@@ -4635,12 +4634,12 @@ registerRule(;
 
 						break;
 					};
-					*/;
+					*/
 
 					else {
 						let winningDistance = Infinity;
-						let winningSide = undefined;
-						let winningCellAtom = undefined;
+						let winningSide;
+						let winningCellAtom;
 
 						for (const cellAtom of paddle.cellAtoms) {
 							const {x: cx, y: cy} = getAtomPosition(cellAtom);
@@ -4660,36 +4659,36 @@ registerRule(;
 								winningDistance = dspotCenter;
 								winningCellAtom = cellAtom;
 								winningSide = "slot";
-							};
+							}
 
 							const dspotLeft = Math.hypot(x - spotLeft[0], y - spotLeft[1]);
 							if (!isCellAtomSpotFilled(paddle, spotLeft) && dspotLeft < winningDistance) {
 								winningDistance = dspotLeft;
 								winningCellAtom = cellAtom;
 								winningSide = "left";
-							};
+							}
 
 							const dspotAbove = Math.hypot(x - spotAbove[0], y - spotAbove[1]);
 							if (!isCellAtomSpotFilled(paddle, spotAbove) && dspotAbove < winningDistance) {
 								winningDistance = dspotAbove;
 								winningCellAtom = cellAtom;
 								winningSide = "above";
-							};
+							}
 
 							const dspotRight = Math.hypot(x - spotRight[0], y - spotRight[1]);
 							if (!isCellAtomSpotFilled(paddle, spotRight) && dspotRight < winningDistance) {
 								winningDistance = dspotRight;
 								winningCellAtom = cellAtom;
 								winningSide = "right";
-							};
+							}
 
 							const dspotBelow = Math.hypot(x - spotBelow[0], y - spotBelow[1]);
 							if (!isCellAtomSpotFilled(paddle, spotBelow) && dspotBelow < winningDistance) {
 								winningDistance = dspotBelow;
 								winningCellAtom = cellAtom;
 								winningSide = "below";
-							};
-						};
+							}
+						}
 
 						const {x: cx, y: cy} = getAtomPosition(winningCellAtom);
 
@@ -4697,28 +4696,28 @@ registerRule(;
 						if (winningSide === "left" || winningSide === "right") {
 							atom.highlight.width = HIGHLIGHT_THICKNESS;
 							atom.highlight.height = winningCellAtom.height;
-						};
+						}
 						else if (winningSide === "above" || winningSide === "below") {
 							atom.highlight.width = winningCellAtom.width;
 							atom.highlight.height = HIGHLIGHT_THICKNESS;
-						};
+						}
 
 						if (winningSide === "left") {
 							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2;
 							atom.highlight.y = cy;
-						};
+						}
 						else if (winningSide === "right") {
 							atom.highlight.x = cx - HIGHLIGHT_THICKNESS/2 + winningCellAtom.width;
 							atom.highlight.y = cy;
-						};
+						}
 						else if (winningSide === "above") {
 							atom.highlight.x = cx;
 							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2;
-						};
+						}
 						else if (winningSide === "below") {
 							atom.highlight.x = cx;
 							atom.highlight.y = cy - HIGHLIGHT_THICKNESS/2 + winningCellAtom.height;
-						};
+						}
 
 						if (winningSide === "slot") {
 							atom.highlight.width = COLOURTODE_SQUARE.size;
@@ -4728,24 +4727,24 @@ registerRule(;
 							atom.highlight.y = cy;
 							atom.highlight.hasBorder = true;
 							atom.highlight.colour = Colour.Grey;
-						};
+						}
 
 						atom.highlightedAtom = winningCellAtom;
 						atom.highlightedSide = winningSide;
 
 						break;
 
-					};
+					}
 
-				};
+				}
 
 
-			};
+			}
 
 			if (atom.highlightedAtom === undefined && atom.highlight !== undefined) {
 				deleteChild(atom, atom.highlight);
 				atom.highlight = undefined;
-			};
+			}
 
 		},
 
@@ -4779,10 +4778,10 @@ registerRule(;
 						atom.dx = 0;
 						atom.dy = 0;
 						giveChild(paddle, atom);
-					};
+					}
 
 					updatePaddleSize(paddle);
-				};
+				}
 				else if (atom.highlightedAtom.isSlot && atom.highlightedSide === "slot") {
 					const slot = atom.highlightedAtom;
 					const paddle = slot.parent;
@@ -4797,7 +4796,7 @@ registerRule(;
 					atom.slottee = true;
 
 					updatePaddleSize(slot.parent);
-				};
+				}
 				else if (atom.highlightedAtom.isLeftSlot && atom.highlightedSide === "slot") {
 					const slot = atom.highlightedAtom;
 					const paddle = slot.parent;
@@ -4812,12 +4811,12 @@ registerRule(;
 					atom.slot = slot.slot;
 					if (slot.slotted !== undefined) {
 						slot.slotted.cellAtom = atom;
-					};
+					}
 					giveChild(paddle, atom);
 					updatePaddleRule(paddle);
 					deleteChild(paddle, slot);
 
-				};
+				}
 				else if (atom.highlightedAtom.isSlot && atom.highlightedSide !== "slot") {
 					const slot = atom.highlightedAtom;
 					const paddle = slot.parent;
@@ -4836,7 +4835,7 @@ registerRule(;
 
 					if (atom.expanded) {
 						atom.unexpand(atom);
-					};
+					}
 
 					if (atom.highlightedSide === "left") {
 						atom.x = slot.x - atom.width;
@@ -4850,7 +4849,7 @@ registerRule(;
 					} else if (atom.highlightedSide === "below") {
 						atom.x = slot.x;
 						atom.y = slot.y + slot.height;
-					};
+					}
 
 					dummy.x = atom.x - paddle.offset;
 					dummy.y = atom.y;
@@ -4860,7 +4859,7 @@ registerRule(;
 					atom.dx = 0;
 					atom.dy = 0;
 					updatePaddleSize(paddle);
-				};
+				}
 				else if ((atom.highlightedAtom.isLeftSlot || atom.highlightedAtom.isSquare) && atom.highlightedAtom.parent.isPaddle) {
 					const square = atom.highlightedAtom;
 					const paddle = square.parent;
@@ -4869,7 +4868,7 @@ registerRule(;
 					paddle.cellAtoms.push(atom);
 					if (atom.expanded) {
 						atom.unexpand(atom);
-					};
+					}
 
 					if (atom.highlightedSide === "left") {
 						atom.x = square.x - atom.width;
@@ -4883,33 +4882,33 @@ registerRule(;
 					} else if (atom.highlightedSide === "below") {
 						atom.x = square.x;
 						atom.y = square.y + square.height;
-					};
+					}
 
 					if (paddle.rightTriangle !== undefined && atom.slotted !== undefined) {
 						registerAtom(atom.slotted);
 						giveChild(paddle, atom.slotted);
-					};
+					}
 
 					atom.dx = 0;
 					atom.dy = 0;
 					updatePaddleSize(paddle);
 
-				};
+				}
 				else {
 					const joinee = atom.highlightedAtom;
 					const joiner = atom;
 
 					if (joinee.expanded) {
 						joinee.unexpand(joinee);
-					};
+					}
 
 					if (joiner.expanded) {
 						joiner.unexpand(joiner);
-					};
+					}
 
 					if (joinee.joinExpanded) {
 						joinee.joinUnepxand(joinee);
-					};
+					}
 
 					joinee.joins.push(joiner);
 					deleteAtom(joiner);
@@ -4923,17 +4922,17 @@ registerRule(;
 
 					setBrushColour(joinee.value);
 
-				};
+				}
 
 				if (atom.expanded) {
 					atom.unexpand(atom);
-				};
+				}
 
 				if (atom.joinExpanded) {
 					atom.joinUnepxand(atom);
-				};
+				}
 
-			};
+			}
 		},
 
 		joinExpand: (atom) => {
@@ -4970,7 +4969,7 @@ registerRule(;
 				joiner.isJoiner = true;
 				joiner.touch = (atom) => atom.parent;
 				//joiner.grab = (atom) => atom.parent;
-			};
+			}
 
 			atom.needsColoursUpdate = true;
 			atom.colourTicker = Infinity;
@@ -4978,8 +4977,8 @@ registerRule(;
 			if (atom.multiAtoms !== undefined) {
 				for (const multiAtom of atom.multiAtoms) {
 					bringAtomToFront(multiAtom);
-				};
-			};
+				}
+			}
 
 			atom.attached = false;
 
@@ -4993,7 +4992,7 @@ registerRule(;
 			for (let i = 0; i < atom.joins.length; i++) {
 				const joiner = atom.joins[i];
 				deleteChild(atom, joiner);
-			};
+			}
 
 			atom.needsColoursUpdate = true;
 			atom.colourTicker = Infinity;
@@ -5029,7 +5028,7 @@ registerRule(;
 
 			if (atom.joins.length > 0 && atom.joinExpanded) {
 				return atom;
-			};
+			}
 
 			if (atom.isJoiner) {
 				const id = atom.parent.joins.indexOf(atom);
@@ -5038,11 +5037,11 @@ registerRule(;
 				atom.parent.joinUnepxand(atom.parent);
 				if (atom.parent.joins.length > 0) {
 					atom.parent.joinExpand(atom.parent);
-				};
+				}
 				freeChild(atom.parent, atom);
 				atom.isJoiner = false;
 				atom.touch = COLOURTODE_SQUARE.touch;
-			};
+			}
 
 			if (atom.attached) {
 
@@ -5058,11 +5057,11 @@ registerRule(;
 						deleteChild(paddle, atom.cellAtom);
 						const id = paddle.cellAtoms.indexOf(atom.cellAtom);
 						paddle.cellAtoms.splice(id, 1);
-					};
+					}
 					atom.cellAtom = undefined;
 					updatePaddleSize(paddle);
 					return atom;
-				};
+				}
 
 				const {x, y} = atom;
 				atom.attached = false;
@@ -5083,11 +5082,11 @@ registerRule(;
 					dummy.slotted = atom.slotted;
 					dummy.slotted.cellAtom = dummy;
 					atom.slotted = undefined;
-				};
+				}
 				//atom.slotted = undefined;
 				updatePaddleSize(paddle);
 
-			};
+			}
 
 			return atom;
 		},
@@ -5105,7 +5104,7 @@ registerRule(;
 		const max = Math.max(width, height);
 		const maxWidth = max / width;
 		const maxHeight = max / height;
-		*/;
+		*/
 
 		const midWidth = maxWidth/2;
 		const midHeight = maxHeight/2;
@@ -5125,7 +5124,7 @@ registerRule(;
 			const displacement = [px-x, py-y];
 			const distance = Math.hypot(...displacement);
 			distances.push(distance);
-		};
+		}
 		return distances;
 	};
 
@@ -5135,7 +5134,7 @@ registerRule(;
 			//if (distance === min) scores.push(distance**2);
 			//else scores.push(0.0);
 			scores.push(distance**2);
-		};
+		}
 		return scores;
 	};
 
@@ -5159,7 +5158,7 @@ registerRule(;
 		const newLength = width * height * 4;
 		if (mergedGradient.data.length !== newLength) {
 			mergedGradient = new ImageData(width, height);
-		};
+		}
 
 		const count = gradients.length;
 		const step = 2*Math.PI / count;
@@ -5168,7 +5167,7 @@ registerRule(;
 		const limits = gradients.map((gradient, i) => {
 			let angle = i*step+step;
 			/*while (angle < 0) angle += 2*Math.PI;
-			while (angle > 2*Math.PI) angle -= 2*Math.PI*/;
+			while (angle > 2*Math.PI) angle -= 2*Math.PI*/
 			return angle;
 		});
 
@@ -5189,15 +5188,15 @@ registerRule(;
 					if (id >= gradients.length) {
 						id = 0;
 						break;
-					};
-				};
+					}
+				}
 
 				const diff = limits[id] - angle ;
 				const prevId = (id-1 < 0)? limits.length-1 : id-1;
 				const prevLimit = limits[prevId];
 				const prefDiff = prevLimit - angle;
 				const nextId = (id+1 >= limits.length)? 0 : id+1;
-				let blendId = undefined;
+				let blendId;
 
 				const pity = 0.05;
 				if (Math.abs(prefDiff) < pity) {
@@ -5212,7 +5211,7 @@ registerRule(;
 					blend = true;
 					blendScore = angle / pity / 2 + 0.5;
 					blendId = prevId;
-				};
+				}
 				if (blend) {
 					mergedGradient.data[i] = (gradients[id].data[i]*(blendScore) + gradients[blendId].data[i]*((1-blendScore)));
 					mergedGradient.data[i+1] = (gradients[id].data[i+1]*(blendScore) + gradients[blendId].data[i+1]*((1-blendScore)));
@@ -5223,11 +5222,11 @@ registerRule(;
 					mergedGradient.data[i+1] = gradients[id].data[i+1];
 					mergedGradient.data[i+2] = gradients[id].data[i+2];
 					mergedGradient.data[i+3] = gradients[id].data[i+3];
-				};
+				}
 
 				i += 4;
-			};
-		};
+			}
+		}
 
 		return mergedGradient;
 	};
@@ -5240,7 +5239,7 @@ registerRule(;
 		const newLength = width * height * 4;
 		if (gradient.data.length !== newLength) {
 			gradient = new ImageData(width, height);
-		};
+		}
 		let minRed = Infinity;
 		let maxRed = -Infinity;
 		let minGreen = Infinity;
@@ -5256,7 +5255,7 @@ registerRule(;
 			if (g > maxGreen) maxGreen = g;
 			if (b < minBlue) minBlue = b;
 			if (b > maxBlue) maxBlue = b;
-		};
+		}
 
 
 		const makeGradientColour = (red, green, blue) => {
@@ -5278,7 +5277,7 @@ registerRule(;
 			makeGradientColour(0, 1, 0),
 			makeGradientColour(1, 0, 0),
 
-			/*;
+			/*
 			makeGradientColour(0, 1, 0),
 			makeGradientColour(0, 1, 1),
 			makeGradientColour(0, 0, 1),
@@ -5290,7 +5289,7 @@ registerRule(;
 			makeGradientColour(1, 0, 0),
 			makeGradientColour(0, 0, 0),
 			makeGradientColour(0, 0, 1),
-			*/;
+			*/
 
 		];
 
@@ -5307,26 +5306,26 @@ registerRule(;
 					const score = scores[j];
 					const colour = gradientColours[j];
 [0, 1, 2].forEach(channel => sumValues[channel] += score * colour[channel]);
-				};
+				}
 				const values = sumValues.map(value => value / sumScore);
 				if (stamp === "circle" && x >= width/4 && x < width*3/4 && y >= height/4 && y < height*3/4) {
 					/*;
 					gradient.data[i] = values[0] / 3*2;
 					gradient.data[i+1] = values[1] / 3*2;
 					gradient.data[i+2] = values[2] / 3*2;
-					*/;
+					*/
 					gradient.data[i+3] = 0;
 				} else {
 					gradient.data[i] = values[0];
 					gradient.data[i+1] = values[1];
 					gradient.data[i+2] = values[2];
 					gradient.data[i+3] = 255;
-				};
+				}
 
 				i += 4;
 				if (i >= gradient.data.length) break;
-			};
-		};
+			}
+		}
 		return gradient;
 	};
 
@@ -5367,9 +5366,9 @@ registerRule(;
 				if (atom.isTool) {
 					//colourTodeContext.lineWidth = BORDER_THICKNESS*1.0;
 					colourTodeContext.strokeStyle = toolBorderColours[atom.colour.splash];
-				};
+				}
 				colourTodeContext.stroke(path);
-			};
+			}
 		},
 		overlaps: (atom, x, y) => {
 
@@ -5439,7 +5438,7 @@ registerRule(;
 				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5;
 				colourTodeContext.strokeStyle = atom.borderColour;
 				colourTodeContext.stroke(path);
-			};
+			}
 		},
 		overlaps: (atom, x, y) => {
 
@@ -5509,7 +5508,7 @@ registerRule(;
 				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5;
 				colourTodeContext.strokeStyle = atom.borderColour;
 				colourTodeContext.stroke(path);
-			};
+			}
 		},
 		overlaps: (atom, x, y) => {
 
@@ -5588,9 +5587,9 @@ registerRule(;
 				if (atom.isTool) {
 					//colourTodeContext.lineWidth = BORDER_THICKNESS*1.0;
 					colourTodeContext.strokeStyle = toolBorderColours[atom.colour.splash];
-				};
+				}
 				colourTodeContext.stroke(path);
-			};
+			}
 		},
 		overlaps: (atom, x, y) => {
 
@@ -5654,14 +5653,14 @@ registerRule(;
 				atom.parent.pinhole.locked = !atom.parent.pinhole.locked;
 				updatePaddleRule(atom.parent);
 				return;
-			};
+			}
 
 			if (atom.expanded) {
 				atom.unexpand(atom);
-			};
+			}
 			else {
 				atom.expand(atom);
-			};
+			}
 		},
 
 		expand: (atom) => {
@@ -5725,8 +5724,8 @@ registerRule(;
 
 					// Return the highlight and the highlighted atom (the paddle);
 					return paddle;
-				};
-			};
+				}
+			}
 
 			// FIND A SQUARE TO STAMP????;
 			if (true) {
@@ -5753,12 +5752,12 @@ registerRule(;
 					if (bottom < ptop) continue;
 
 					return other;
-				};
+				}
 
 				// FIND A CHANNEL????;
 				let winningDistance = Infinity;
-				let winningSquare = undefined;
-				let winningSlot = undefined;
+				let winningSquare;
+				let winningSlot;
 
 				const atoms = getAllBaseAtoms();
 				for (const other of atoms) {
@@ -5790,8 +5789,8 @@ registerRule(;
 							winningDistance = distance;
 							winningSlot = slot;
 							winningSquare = other;
-						};
-					};
+						}
+					}
 
 					if (winningSquare !== undefined) {
 
@@ -5801,7 +5800,7 @@ registerRule(;
 						if (atom.highlight !== undefined) {
 							deleteChild(atom, atom.highlight);
 							atom.highlight = undefined;
-						};
+						}
 
 						atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true});
 						atom.highlight.hasBorder = true;
@@ -5810,13 +5809,13 @@ registerRule(;
 						atom.highlight.width = OPTION_MARGIN*2+winningSquare.size;
 						atom.highlightedAtom = winningSquare;
 						atom.highlightedSlot = winningSlot;
-					};
-				};
+					}
+				}
 
 				return winningSquare;
 
 				// return;
-			};
+			}
 
 			return undefined;
 		},
@@ -5832,7 +5831,7 @@ registerRule(;
 				if (atom.highlightedSlot === "red") atom.variable = "green";
 				else if (atom.highlightedSlot === "green") atom.variable = "blue";
 				else if (atom.highlightedSlot === "blue") atom.variable = "red";
-			};
+			}
 			const add = atom.direction === "up" ? makeNumberFromInt(1) : undefined;
 			const subtract = atom.direction === "down" ? makeNumberFromInt(1) : undefined;
 			const value = makeNumber({channel: atom.channelId, variable: atom.variable, add, subtract});
@@ -5851,7 +5850,7 @@ registerRule(;
 				atom.dx = 0;
 				atom.dy = 0;
 				return;
-			};
+			}
 
 			if (receiver.isSquare) {
 				const square = receiver;
@@ -5864,7 +5863,7 @@ registerRule(;
 					square.stamp = undefined;
 					square.value.stamp = undefined;
 					square.needsColoursUpdate = true;
-				};
+				}
 
 				const diagramCell = makeDiagramCell({content: square.value});
 				state.brush.colour = makeDiagram({left: [diagramCell]});
@@ -5877,9 +5876,9 @@ registerRule(;
 
 				if (square.parent.isPaddle) {
 					updatePaddleRule(square.parent);
-				};
+				}
 				return;
-			};
+			}
 
 			if (receiver.isPaddle) {
 				const paddle = receiver;
@@ -5897,19 +5896,19 @@ registerRule(;
 					if (cellAtom.slotted !== undefined) {
 						registerAtom(cellAtom.slotted);
 						giveChild(paddle, cellAtom.slotted);
-					};
-				};
+					}
+				}
 
 				updatePaddleSize(paddle);
 
 				if (atom.expanded) {
 					atom.unexpand(atom);
-				};
+				}
 
 				atom.attached = true;
 
 				unlockMenuTool("circle");
-			};
+			}
 
 		},
 
@@ -5935,7 +5934,7 @@ registerRule(;
 				freeChild(square, atom);
 				square.receiveNumber(square, undefined, atom.channelId);
 				return atom;
-			};
+			}
 
 			if (!atom.parent.isPaddle) return atom;
 			const paddle = atom.parent;
@@ -5966,13 +5965,13 @@ registerRule(;
 					cellAtom.slotted.slottee = false;
 					//deleteAtom(cellAtom.slotted);
 					cellAtom.slotted = undefined;
-				};
-			};
+				}
+			}
 
 			if (atom.colour !== Colour.splash(999)) {
 				atom.hasBorder = true;
 				atom.borderColour = Colour.Grey;
-			};
+			}
 
 			paddle.pinhole.locked = false;
 
@@ -6041,7 +6040,7 @@ registerRule(;
 			if (atom.expanded) {
 				clone.createOptions(clone);
 				clone.expanded = true;
-			};
+			}
 			return clone;
 		},
 
@@ -6060,7 +6059,7 @@ registerRule(;
 				atom.colourTicker = Infinity;
 
 				// unlockMenuTool("wide_rectangle");
-			};
+			}
 
 			else if (atom.parent.isTallRectangle) {
 				const diamond = atom.parent;
@@ -6078,15 +6077,15 @@ registerRule(;
 					deleteChild(diamond, diamond[atom.highlightedSlot], {quiet: true});
 					diamond.expand(diamond);
 					diamond.unexpand(diamond);
-				};
-			};
+				}
+			}
 
 			else if (atom.parent.isPaddle) {
 				const paddle = atom.parent;
 				paddle.chance = undefined;
 				freeChild(paddle, atom);
 				updatePaddleSize(paddle);
-			};
+			}
 
 			return atom;
 		},
@@ -6125,7 +6124,7 @@ registerRule(;
 				atom.selectionBottom.y = atom.height;
 				//atom.selectionBottom.x = -atom.selectionBottom.height;
 
-			};
+			}
 
 			else {
 				//const optionSpacing = (atom.height + (COLOURTODE_SQUARE.size - CHANNEL_HEIGHT)/2);
@@ -6139,7 +6138,7 @@ registerRule(;
 
 				atom.selectionBottom.minY = atom.selectionTop.y + optionSpacing;
 				atom.selectionBottom.maxY = bottom - atom.selectionBottom.height + optionSpacing;
-			};
+			}
 
 			atom.positionSelectionBack(atom);
 
@@ -6155,7 +6154,7 @@ registerRule(;
 			if (atom.parent.isTallRectangle) {
 				const operationName = atom.highlightedSlot === "padTop"? "add" : "subtract";
 				atom.parent.value[operationName] = atom.value;
-			};
+			}
 
 		},
 
@@ -6176,11 +6175,11 @@ registerRule(;
 						colours: atom.colours,
 						width: atom.width * CT_SCALE,
 						height: atom.height * CT_SCALE,
-						gradient: atom.gradient;
+						gradient: atom.gradient
 					});
 					atom.updateColours(atom);
-				};
-			};
+				}
+			}
 
 			if (!atom.expanded && atom.needsColoursUpdate) {
 				atom.needsColoursUpdate = false;
@@ -6192,20 +6191,20 @@ registerRule(;
 					for (let i = 0; i < 3; i++) {
 						if (i === atom.value.channel) {
 							channels[i] = atom.value;
-						};
+						}
 						else {
 							const values = [true, false, false, false, false, false, false, false, false, false];
 							channels[i] = makeNumber({values, channel: i});
-						};
-					};
+						}
+					}
 
 					const array = makeArray({channels});
 					atom.colours = getSplashesArrayFromArray(array);
 
-				};
+				}
 				else {
 
-					let array = undefined;
+					let array;
 
 					for (let i = 0; i < 10; i++) {
 						const v = atom.value.values[i];
@@ -6215,20 +6214,20 @@ registerRule(;
 							array = join;
 						} else {
 							array.joins.push(join);
-						};
-					};
+						}
+					}
 
 					atom.colours = getSplashesArrayFromArray(array);
-				};
+				}
 
 				atom.isGradient = true;
 				atom.gradient = getGradientImageFromColours({
 					colours: atom.colours,
 					width: atom.width * CT_SCALE,
 					height: atom.height * CT_SCALE,
-					gradient: atom.gradient;
+					gradient: atom.gradient
 				});
-			};
+			}
 
 			atom.highlightedAtom = undefined;
 			if (hand.content === atom && hand.state === HAND.DRAGGING) {
@@ -6242,11 +6241,11 @@ registerRule(;
 				if (atom.highlight !== undefined) {
 					deleteChild(atom, atom.highlight);
 					atom.highlight = undefined;
-				};
+				}
 
 				let winningDistance = Infinity;
-				let winningSquare = undefined;
-				let winningSlot = undefined;
+				let winningSquare;
+				let winningSlot;
 
 				const atoms = getAllBaseAtoms();
 				for (const square of atoms) {
@@ -6261,7 +6260,7 @@ registerRule(;
 
 							while (endAtom.isTallRectangle && endAtom.operationAtoms[slotName] !== undefined) {
 								endAtom = endAtom.operationAtoms[slotName];
-							};
+							}
 
 							if (!endAtom.isTallRectangle) continue;
 							if (!endAtom.expanded) continue;
@@ -6282,7 +6281,7 @@ registerRule(;
 							atom.highlightedAtom = slot;
 							break;
 
-						};
+						}
 					} else {
 
 						if (!square.isSquare) continue;
@@ -6314,11 +6313,11 @@ registerRule(;
 								winningDistance = distance;
 								winningSquare = square;
 								winningSlot = slot;
-							};
-						};
-					};
+							}
+						}
+					}
 
-				};
+				}
 
 				if (winningSquare !== undefined) {
 
@@ -6369,15 +6368,15 @@ registerRule(;
 							return;
 						};
 					};
-					*/;
-				};
+					*/
+				}
 
-			};
+			}
 
 			if (atom.highlightedAtom === undefined && atom.highlight !== undefined) {
 				deleteChild(atom, atom.highlight);
 				atom.highlight = undefined;
-			};
+			}
 
 			/*;
 			if (atom.highlightPaddle !== undefined) {
@@ -6385,7 +6384,7 @@ registerRule(;
 				atom.highlightPaddle = undefined;
 				atom.highlightedPaddle = undefined;
 			};
-			*/;
+			*/
 
 		},
 
@@ -6401,7 +6400,7 @@ registerRule(;
 					atom.dy = 0;
 					square[atom.highlightedSlot] = atom;
 					atom.y = OPTION_MARGIN;
-					atom.x = square.size + OPTION_MARGIN*2 + slotId*(OPTION_MARGIN*square.size)*/;
+					atom.x = square.size + OPTION_MARGIN*2 + slotId*(OPTION_MARGIN*square.size)*/
 					square.receiveNumber(square, atom.value, slotId, {expanded: atom.expanded});
 					deleteAtom(atom);
 				} else {
@@ -6420,7 +6419,7 @@ registerRule(;
 
 					atom.attached = true;
 
-				};
+				}
 			} else if (atom.highlightPaddle !== undefined) {
 				const paddle = atom.highlightedPaddle;
 				atom.attached = true;
@@ -6431,7 +6430,7 @@ registerRule(;
 
 				atom.dx = 0;
 				atom.dy = 0;
-			};
+			}
 
 			// unlockMenuTool("hexagon");
 			//unlockMenuTool("tall_rectangle");
@@ -6445,32 +6444,32 @@ registerRule(;
 				atom.colourTicker = Infinity;
 				atom.needsColoursUpdate = true;
 				atom.createOptions(atom);
-			};
+			}
 			else {
 				atom.expanded = false;
 				atom.deleteOptions(atom);
 				atom.needsColoursUpdate = true;
-			};
+			}
 		},
 
 		deleteOptions: (atom) => {
 
 			if (atom.options !== undefined) {
 				atom.deletedOptions = atom.options;
-			};
+			}
 
 			for (const option of atom.options) {
 				if (atom !== option) deleteChild(atom, option);
-			};
+			}
 			atom.needsColoursUpdate = true;
 			atom.colourTicker = Infinity;
 			atom.positionSelection(atom);
 		},
 
 		updateColours: (atom) => {
-			let parentR = undefined;
-			let parentG = undefined;
-			let parentB = undefined;
+			let parentR;
+			let parentG;
+			let parentB;
 
 			if (atom.parent.isSquare) {
 
@@ -6485,13 +6484,13 @@ registerRule(;
 				parentR = makeNumber({values: [...redNumber.values], channel: redNumber.channel});
 				parentG = makeNumber({values: [...greenNumber.values], channel: greenNumber.channel});
 				parentB = makeNumber({values: [...blueNumber.values], channel: blueNumber.channel});
-			};
+			}
 			else {
 				const values = [false, false, false, false, false, false, false, false, false, false];
 				parentR = makeNumber({values: [...values], channel: 0});
 				parentG = makeNumber({values: [...values], channel: 1});
 				parentB = makeNumber({values: [...values], channel: 2});
-			};
+			}
 
 			const parentChannels = [parentR, parentG, parentB];
 			const mainParentChannel = parentChannels[CHANNEL_IDS[atom.channelSlot]];
@@ -6509,8 +6508,8 @@ registerRule(;
 						for (const c of parentChannels) {
 							c.values[9-i] = true;
 							if (i > 0) c.values[9-i+1] = false;
-						};
-					};
+						}
+					}
 
 					const baseArray = makeArray({channels: parentChannels});
 
@@ -6523,36 +6522,36 @@ registerRule(;
 						option.needsColoursUpdate = false;
 						//option.needsColoursUpdate = true;
 						//option.updateColours(option);
-					};
-				};
-			};
+					}
+				}
+			}
 		},
 
 		getCenterId: (atom) => {
-			let startId = undefined;
-			let endId = undefined;
+			let startId;
+			let endId;
 
 			for (let i = 0; i < atom.value.values.length; i++) {
 				const value = atom.value.values[i];
 				if (value) {
 					if (startId === undefined) startId = i;
 					endId = i;
-				};
-			};
+				}
+			}
 			return Math.round((endId + startId) / 2);
 		},
 
 		getStartAndEndId: (atom) => {
-			let startId = undefined;
-			let endId = undefined;
+			let startId;
+			let endId;
 
 			for (let i = 0; i < atom.value.values.length; i++) {
 				const value = atom.value.values[i];
 				if (value) {
 					if (startId === undefined) startId = i;
 					endId = i;
-				};
-			};
+				}
+			}
 			return [startId, endId];
 		},
 
@@ -6561,16 +6560,16 @@ registerRule(;
 			const oldOptions = atom.parent.isSquare ? atom.deletedOptions : undefined;
 			atom.options = [];
 
-			let startId = undefined;
-			let endId = undefined;
+			let startId;
+			let endId;
 
 			for (let i = 0; i < atom.value.values.length; i++) {
 				const value = atom.value.values[i];
 				if (value) {
 					if (startId === undefined) startId = i;
 					endId = i;
-				};
-			};
+				}
+			}
 
 			if (startId === undefined) throw new Error("[ColourTode] Number cannot be NOTHING. Please let @TodePond know if you see this error!");
 			//const centerOptionId = 9 - Math.floor((endId + startId) / 2);
@@ -6589,10 +6588,10 @@ registerRule(;
 					if (oldOptions !== undefined) {
 						//atom.isGradient = true;
 						//atom.gradient = oldOptions[i].gradient;
-					};
+					}
 					atom.options.push(atom);
 					continue;
-				};
+				}
 
 				const pityTop = i !== 9 - endId + 1;
 				const pityBottom = i !== 9 - startId - 1;
@@ -6601,7 +6600,7 @@ registerRule(;
 				if (oldOptions !== undefined) {
 					option.isGradient = true;
 					option.gradient = oldOptions[i].gradient;
-				};
+				}
 
 				option.y = top + i * optionSpacing;
 				option.value = 9 - i;
@@ -6611,13 +6610,13 @@ registerRule(;
 				option.needsColoursUpdate = true;
 				//option.updateColours(option);
 				atom.options.push(option);
-			};
+			}
 
 
 			atom.positionSelection(atom, start, end, top, bottom);
 
 			atom.updateColours(atom);
-		};
+		}
 	};
 
 	// Ctrl+F: exdef;
@@ -6652,7 +6651,7 @@ registerRule(;
 				const next = points[nextId];
 				const mid = [0, 1].map(axis => (point[axis] + next[axis])/2);
 				extraSegmentCorners.push(mid);
-			};
+			}
 
 			const center = [x+width/2, y+height/2];
 			const segmentPoints = points.map((p, i) => {
@@ -6671,7 +6670,7 @@ registerRule(;
 			path.moveTo(...head);
 			for (const point of tail) {
 				path.lineTo(...point);
-			};
+			}
 			path.closePath();
 
 			colourTodeContext.fillStyle = atom.colour;
@@ -6685,15 +6684,15 @@ registerRule(;
 					spath.moveTo(...shead);
 					for (const point of stail) {
 						spath.lineTo(...point);
-					};
+					}
 					spath.closePath();
 					colourTodeContext.fillStyle = Colour.Silver;
 					colourTodeContext.fill(spath);
 					colourTodeContext.lineWidth = 1 / CT_SCALE;
 					colourTodeContext.strokeStyle = Colour.Silver;
 					colourTodeContext.stroke(spath);
-				};
-			};
+				}
+			}
 
 			if (atom.hasBorder) {
 				colourTodeContext.lineWidth = BORDER_THICKNESS*1.5;
@@ -6702,14 +6701,14 @@ registerRule(;
 
 				if (atom.parent.isSquare) {
 					SYMMETRY_TOGGLE_Y.drawY(atom, atom.size - 8, 4);
-				};
-			};
+				}
+			}
 		},
 		getValue: (atom) => {
 			let score = 0;
 			for (const on of atom.ons) {
 				if (on) score++;
-			};
+			}
 			return score;
 		},
 		click: (atom) => {
@@ -6717,16 +6716,16 @@ registerRule(;
 				atom.unexpand(atom);
 			} else {
 				atom.expand(atom);
-			};
+			}
 		},
 		unexpand: (atom) => {
 			atom.expanded = false;
 			for (const thing of atom.handles) {
 				deleteChild(atom, thing);
-			};
+			}
 			for (const thing of atom.buttons) {
 				deleteChild(atom, thing);
-			};
+			}
 
 			atom.handles = [];
 			atom.buttons = [];
@@ -6765,7 +6764,7 @@ registerRule(;
 [sx, sy] = [tx * 2.2, ty * 2.2];
 				} else {
 [sx, sy] = [tx * 2, ty * 2];
-				};
+				}
 				return [sx + atom.width/2, sy + atom.height/2];
 			});
 
@@ -6785,9 +6784,9 @@ registerRule(;
 				if (atom.ons[i]) {
 					button.inner.selected = true;
 					button.inner.colour = Colour.Silver;
-				};
+				}
 
-			};
+			}
 		},
 		construct: (atom) => {
 			atom.ons = [false, false, false, false, false, false];
@@ -6822,7 +6821,7 @@ registerRule(;
 				if (paddle.chance === undefined && paddle.expanded && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
 						deleteChild(atom, atom.highlightPaddle);
-					};
+					}
 
 					atom.highlight = createChild(atom, HIGHLIGHT, {bottom: true});
 					atom.highlight.width = HIGHLIGHT_THICKNESS;
@@ -6830,8 +6829,8 @@ registerRule(;
 					atom.highlight.y = ptop;
 					atom.highlight.x = pright - HIGHLIGHT_THICKNESS/2;
 					return paddle;
-				};
-			};
+				}
+			}
 
 			// let winningDistance = Infinity;
 			// let winningSquare = undefined;
@@ -6897,7 +6896,7 @@ registerRule(;
 
 				atom.dx = 0;
 				atom.dy = 0;
-			} ;
+			} 
 			// else if (paddle.isSquare) {
 			// 	const square = paddle;
 			// 	atom.variable = atom.highlightedSlot;
@@ -6922,7 +6921,7 @@ registerRule(;
 				square.receiveNumber(square, undefined, channelId);
 				freeChild(square, atom);
 				atom.attached = false;
-			};
+			}
 
 			return atom;
 		},
@@ -6938,15 +6937,15 @@ registerRule(;
 			const clone = makeAtom(COLOURTODE_HEXAGON);
 			for (let i = 0; i < 6; i++) {
 				clone.ons[i] = atom.ons[i];
-			};
+			}
 			if (atom.expanded) {
 				clone.expand(clone);
-			};
+			}
 			const {x, y} = getAtomPosition(atom);
 			clone.x = x;
 			clone.y = y;
 			return clone;
-		};
+		}
 	};
 
 	const rotate = ([x, y], [ox, oy], radians) => {
@@ -6982,7 +6981,7 @@ registerRule(;
 			} else {
 				atom.inner.selected = true;
 				atom.inner.colour = Colour.Silver;
-			};
+			}
 
 			const hexagon = atom.parent;
 			hexagon.ons[atom.id] = atom.inner.selected;
@@ -6995,10 +6994,10 @@ registerRule(;
 				hexagon.updateValue(hexagon);
 				const slotId = CHANNEL_IDS[hexagon.variable];
 				square.receiveNumber(square, hexagon.value, slotId, {expanded: hexagon.expanded, numberAtom: hexagon});
-			};
+			}
 
 			bringAtomToFront(atom.parent);
-		};
+		}
 	};
 
 	const HEXAGON_BUTTON_INNER = {
@@ -7045,18 +7044,18 @@ registerRule(;
 
 			if (atom.rotation > 0) {
 				points = points.map(point => rotate(point, [x+width/2, y+height/2], atom.rotation * Math.PI/3));
-			};
+			}
 
 			const [head, ...tail] = points;
 
 			path.moveTo(...head);
 			for (const point of tail) {
 				path.lineTo(...point);
-			};
+			}
 
 			colourTodeContext.fillStyle = atom.colour;
 			colourTodeContext.fill(path);
-		};
+		}
 	};
 
 	const COLOURTODE_CHANNEL_SELECTION_END = {
@@ -7069,7 +7068,7 @@ registerRule(;
 					const colours = getSplashesArrayFromArray(atom.parent.parent.value);
 					colour = colours[Random.Uint32 % colours.length];
 				};
-			}*/;
+			}*/
 
 			/*colourTodeContext.fillStyle = "#000000";
 			colourTodeContext.globalCompositeOperation = "lighten";
@@ -7084,7 +7083,7 @@ registerRule(;
 			const H = Math.round(atom.height);
 
 			colourTodeContext.drawImage(colourTodeCanvas, X, Y, W, H, X, Y, W, H);
-			colourTodeContext.filter = "none"*/;
+			colourTodeContext.filter = "none"*/
 
 			const X = Math.round(x);
 			const Y = Math.round(y);
@@ -7120,15 +7119,15 @@ registerRule(;
 
 			if (atom.isTop) {
 				endId = centerId - distanceFromMiddle;
-			};
+			}
 			if (!atom.isTop) {
 				startId = centerId - (distanceFromMiddle-1);
-			};
+			}
 
 			const values = [false, false, false, false, false, false, false, false, false, false];
 			for (let i = startId; i <= endId; i++) {
 				values[i] = true;
-			};
+			}
 
 			const number = makeNumber({channel: oldNumber.channel, values});
 			atom.parent.value = number;
@@ -7142,12 +7141,12 @@ registerRule(;
 				const square = atom.parent.parent;
 				const channel = CHANNEL_IDS[atom.parent.channelSlot];
 				square.receiveNumber(square, number, channel);
-			};
+			}
 
 			if (atom.parent.parent.isPaddle) {
 				const paddle = atom.parent.parent;
 				updatePaddleSize(paddle);
-			};
+			}
 
 		},
 		dragLockX: true,
@@ -7185,17 +7184,17 @@ registerRule(;
 				atom.needsColoursUpdateCountdown--;
 				if (atom.needsColoursUpdateCountdown < 0) {
 					atom.needsColoursUpdate = true;
-				};
-			};
+				}
+			}
 
 			if (atom.needsColoursUpdate) {
 				atom.updateColours(atom);
 				atom.needsColoursUpdateCountdown = -1;
 				atom.needsColoursUpdate = false;
-			};
+			}
 		},
 
-		getId: (atom) => {			;
+		getId: (atom) => {			
 			const parent = atom.parent;
 			const centerId = parent.getCenterId(parent);
 			const offset = atom.y / OPTION_SPACING;
@@ -7208,7 +7207,7 @@ registerRule(;
 				colours: atom.colours,
 				width: atom.width * CT_SCALE,
 				height: atom.height * CT_SCALE,
-				gradient: atom.gradient;
+				gradient: atom.gradient
 			});
 		},
 
@@ -7233,12 +7232,12 @@ registerRule(;
 				const square = parent.parent;
 				const channel = CHANNEL_IDS[parent.channelSlot];
 				square.receiveNumber(square, number, channel);
-			};
+			}
 
 			if (parent.parent.isPaddle) {
 				const paddle = parent.parent;
 				updatePaddleSize(paddle);
-			};
+			}
 		},
 
 		construct: (atom) => {
@@ -7246,15 +7245,15 @@ registerRule(;
 			if (atom.pityTop) {
 				const topPity = createChild(atom, COLOURTODE_OPTION_PADDING);
 				topPity.y = -topPity.height;
-			};
+			}
 
 			if (atom.pityBottom) {
 				const bottomPity = createChild(atom, COLOURTODE_OPTION_PADDING);
 				bottomPity.y = atom.height;
-			};
+			}
 
 			//TODO: add cursor pity on the sides too;
-		};
+		}
 	};
 
 	const CHANNEL_VARIABLES = [
@@ -7278,7 +7277,7 @@ registerRule(;
 			clone.variable = atom.variable;
 			if (atom.expanded) {
 				clone.expand(clone);
-			};
+			}
 			clone.updateAppearance(clone);
 			return clone;
 		},
@@ -7300,7 +7299,7 @@ registerRule(;
 				if (atom.expanded) {
 					atom.unexpand(atom);
 					atom.expand(atom);
-				};
+				}
 				atom.attached = false;
 				if (diamond.expanded) {
 					diamond.unexpand(diamond);
@@ -7311,8 +7310,8 @@ registerRule(;
 					deleteChild(diamond, diamond[atom.highlightedSlot], {quiet: true});
 					diamond.expand(diamond);
 					diamond.unexpand(diamond);
-				};
-			};
+				}
+			}
 			return atom;
 		},
 		hover: (atom) => {
@@ -7324,8 +7323,8 @@ registerRule(;
 			const bottom = y + atom.height;
 
 			let winningDistance = Infinity;
-			let winningSquare = undefined;
-			let winningSlot = undefined;
+			let winningSquare;
+			let winningSlot;
 
 			const atoms = getAllBaseAtoms();
 			for (const other of atoms) {
@@ -7340,7 +7339,7 @@ registerRule(;
 
 						while (endAtom.isTallRectangle && endAtom.operationAtoms[slotName] !== undefined) {
 							endAtom = endAtom.operationAtoms[slotName];
-						};
+						}
 
 						if (!endAtom.isTallRectangle) continue;
 						if (!endAtom.expanded) continue;
@@ -7360,9 +7359,9 @@ registerRule(;
 						atom.highlightedSlot = slotName;
 						return slot;
 
-					};
+					}
 					continue;
-				};
+				}
 
 				if (!other.isSquare) continue;
 				if (!other.expanded) continue;
@@ -7391,8 +7390,8 @@ registerRule(;
 						winningDistance = distance;
 						winningSlot = slot;
 						winningSquare = other;
-					};
-				};
+					}
+				}
 
 				if (winningSquare !== undefined) {
 
@@ -7406,10 +7405,10 @@ registerRule(;
 					atom.highlight.width = OPTION_MARGIN*2+winningSquare.size;
 					atom.highlightedAtom = winningSquare;
 					atom.highlightedSlot = winningSlot;
-				};
+				}
 
 				return;
-			};
+			}
 		},
 		place: (atom, highlightedAtom) => {
 
@@ -7432,10 +7431,10 @@ registerRule(;
 				if (atom.expanded) {
 					atom.unexpand(atom);
 					atom.expand(atom);
-				};
+				}
 
 				return;
-			};
+			}
 
 			const square = atom.highlightedAtom;
 			const slotId = CHANNEL_IDS[atom.highlightedSlot];
@@ -7477,9 +7476,9 @@ registerRule(;
 				if (atom.isTool) {
 					colourTodeContext.lineWidth = BORDER_THICKNESS*1.5;
 					colourTodeContext.strokeStyle = toolBorderColours[atom.colour.splash];
-				};
+				}
 				colourTodeContext.stroke(path);
-			};
+			}
 		},
 		offscreen: COLOURTODE_RECTANGLE.offscreen,
 		overlaps: COLOURTODE_RECTANGLE.overlaps,
@@ -7496,7 +7495,7 @@ registerRule(;
 				atom.width += BORDER_THICKNESS/2;
 				atom.height += BORDER_THICKNESS/2;
 				atom.size += BORDER_THICKNESS/2;
-			};
+			}
 			atom.operationAtoms = {padTop: undefined, padBottom: undefined};
 
 		},
@@ -7521,9 +7520,9 @@ registerRule(;
 						operationAtom.y = atom.padTop.y + atom.padTop.height/2 - operationAtom.height/2;
 						operationAtom.updateAppearance(operationAtom);
 						atom.operationAtoms.padTop = operationAtom;
-					};
-				};
-			};
+					}
+				}
+			}
 
 			if (atom.value.subtract !== undefined) {
 
@@ -7537,9 +7536,9 @@ registerRule(;
 						operationAtom.highlightedSlot = "padBottom";
 					} else {
 
-					};
-				};
-			};
+					}
+				}
+			}
 		},
 		updateAppearance: (atom) => {
 			if (atom.variable === "red") {
@@ -7548,7 +7547,7 @@ registerRule(;
 				atom.colour = Colour.Green;
 			} else if (atom.variable === "blue") {
 				atom.colour = Colour.Blue;
-			};
+			}
 
 			atom.borderColour = borderColours[atom.colour.splash];
 		},
@@ -7558,7 +7557,7 @@ registerRule(;
 				atom.expand(atom);
 			} else {
 				atom.unexpand(atom);
-			};
+			}
 		},
 		expand: (atom) => {
 			atom.expanded = true;
@@ -7577,8 +7576,8 @@ registerRule(;
 					atom.padTop.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2;
 					atom.padTop.x = atom.width/2 - atom.padTop.width/2;
 					atom.padTop.y = -atom.padTop.height - OPTION_MARGIN;
-				};
-			};
+				}
+			}
 
 			if (atom.value.subtract === undefined) {
 				if (atom.y > 0 || !(atom.parent.isTallRectangle && atom.parent.operationAtoms.padTop === atom)) {
@@ -7594,8 +7593,8 @@ registerRule(;
 					atom.padBottom.width = COLOURTODE_SQUARE.size + COLOURTODE_PICKER_PAD_MARGIN*2;
 					atom.padBottom.x = atom.width/2 - atom.padBottom.width/2;
 					atom.padBottom.y = atom.height + OPTION_MARGIN;
-				};
-			};
+				}
+			}
 
 			atom.handleRight = createChild(atom, SYMMETRY_HANDLE);
 			atom.handleRight.y = atom.height/2 - atom.handleRight.height/2;
@@ -7618,7 +7617,7 @@ registerRule(;
 			atom.padLeft.height = COLOURTODE_PICKER_PAD.height;
 			atom.padLeft.width = OPTION_MARGIN + (atom.width+OPTION_MARGIN/1.5)*3;
 			atom.padLeft.y = atom.height/2 - atom.padRight.height/2;
-			atom.padLeft.x = -atom.padLeft.width - OPTION_MARGIN*/;
+			atom.padLeft.x = -atom.padLeft.width - OPTION_MARGIN*/
 
 			atom.red = createChild(atom, DIAMOND_CHOICE);
 			atom.red.x = atom.padRight.x + OPTION_MARGIN/Math.SQRT2;
@@ -7649,15 +7648,15 @@ registerRule(;
 				if (operationAtom === undefined) continue;
 				registerAtom(operationAtom);
 				giveChild(atom, operationAtom);
-			};
+			}
 
 			for (const child of atom.children) {
 				if (!child.isTallRectangle) continue;
 				if (child.expanded) {
 					child.unexpand(child);
 					child.expand(child);
-				};
-			};
+				}
+			}
 
 		},
 		unexpand: (atom) => {
@@ -7674,24 +7673,24 @@ registerRule(;
 			if (atom.value.add === undefined) {
 				deleteChild(atom, atom.padTop, {quiet: true});
 				deleteChild(atom, atom.handleTop, {quiet: true});
-			};
+			}
 
 			if (atom.value.subtract === undefined) {
 				deleteChild(atom, atom.padBottom, {quiet: true});
 				deleteChild(atom, atom.handleBottom, {quiet: true});
-			};
+			}
 
 			/*deleteChild(atom, atom.padLeft);
-			deleteChild(atom, atom.handleLeft)*/;
+			deleteChild(atom, atom.handleLeft)*/
 
 			/*for (const opera;
 				tion of ["padTop", "padBottom"]) {
 				const operationAtom = atom.operationAtoms[operation];
 				if (operationAtom === undefined) continue;
 				deleteChild(atom, operationAtom);
-			}*/;
+			}*/
 
-		};
+		}
 	};
 
 	const DIAMOND_CHOICE = {
@@ -7724,7 +7723,7 @@ registerRule(;
 				if (top === COLOURTODE_BASE_PARENT) return;
 				topDiamond = top;
 				top = top.parent;
-			};
+			}
 
 			let channelNumber = 0;
 			if (topDiamond.channelSlot === "green") channelNumber = 1;
@@ -7733,7 +7732,7 @@ registerRule(;
 			const topChannel = top.variableAtoms[channelNumber];
 			top.receiveNumber(top, topChannel.value, channelNumber, {expanded: topChannel.expanded, numberAtom: topChannel});
 
-		};
+		}
 	};
 
 	const DIAMOND_PIN = {
@@ -7827,7 +7826,7 @@ registerRule(;
 
 				if (paddles.last === paddle) {
 					createPaddle();
-				};
+				}
 
 			} else {
 				paddle.x = paddle.minX;
@@ -7836,8 +7835,8 @@ registerRule(;
 
 				if (paddles.last !== paddle) {
 					deletePaddle(paddle);
-				};
-			};
+				}
+			}
 			paddle.dx = 0;
 		},
 
@@ -7861,7 +7860,7 @@ registerRule(;
 				state.brush.colour = makeDiagram({left: [makeDiagramCell({content: diagram})]});
 				square.update(square);
 				return square;
-			};
+			}
 			return paddle;
 		},
 
@@ -7879,7 +7878,7 @@ registerRule(;
 			} else if (cellAtoms.length === 1) {
 				const leftClone = cloneDragonArray(cellAtoms[0].value);
 				return leftClone;
-			};
+			}
 			const cells = makeDiagramCellsFromCellAtoms(cellAtoms);
 			const diagram = makeDiagram({left: cells});
 			normaliseDiagram(diagram);
@@ -7912,7 +7911,7 @@ registerRule(;
 				square.value = leftClone;
 				square.update(square);
 				return square;
-			};
+			}
 			const square = makeAtom(COLOURTODE_SQUARE);
 			hand.offset.x = -square.width/2;
 			hand.offset.y = -square.height/2;
@@ -7935,7 +7934,7 @@ registerRule(;
 		path.moveTo(...head.map(n => Math.round(n)));
 		for (const point of tail) {
 			path.lineTo(...point.map(n => Math.round(n)));
-		};
+		}
 		path.closePath();
 
 		colourTodeContext.fillStyle = colour;
@@ -7956,10 +7955,10 @@ registerRule(;
 
 			const [x, y] = getAtomPosition(atom);
 
-			const left = x;
-			const right = x + atom.width;
-			const top = y;
-			const bottom = y + atom.height;
+
+
+
+
 
 			/*const swidth = atom.width/10;
 			const sheight = atom.height/10;
@@ -7999,12 +7998,12 @@ registerRule(;
 
 			for (const stripe of stripes) {
 				fillPoints(Colour.Black, stripe);
-			}*/;
+			}*/
 
 			colourTodeContext.fillStyle = atom.colour;
 			/*colourTodeContext.beginPath();
 			colourTodeContext.arc(x + atom.width/2, y+atom.height/2, atom.width / 5, 0, 2*Math.PI);
-			colourTodeContext.fill()*/;
+			colourTodeContext.fill()*/
 
 			const w = atom.width/3;
 			const h = atom.width/3;
@@ -8046,7 +8045,7 @@ registerRule(;
 				if (cright > right) right = cright;
 				if (ctop < top) top = ctop;
 				if (cbottom > bottom) bottom = cbottom;
-			};
+			}
 
 			let topOffset = 0;
 			let leftOffset = 0;
@@ -8060,16 +8059,16 @@ registerRule(;
 			if (top !== desiredTop) {
 				topOffset = desiredTop - top;
 				bottom += topOffset;
-			};
+			}
 			if (left !== desiredLeft) {
 				leftOffset = desiredLeft - left;
 				right += leftOffset;
-			};
+			}
 
 			for (const cellAtom of paddle.cellAtoms) {
 				cellAtom.y += topOffset;
 				cellAtom.x += leftOffset;
-			};
+			}
 
 			const desiredWidth = right + xPadding;
 			const desiredHeight = bottom + yPadding;
@@ -8077,17 +8076,17 @@ registerRule(;
 			width = desiredWidth;
 			height = desiredHeight;
 
-		};
+		}
 
 		if (paddle.rightTriangle !== undefined) {
 			paddle.rightTriangle.x = width;
 			paddle.rightTriangle.y = height/2 - paddle.rightTriangle.height/2;
 			width = width+width + paddle.rightTriangle.width;
-		};
+		}
 
 		if (paddle.hasSymmetry || paddle.chance !== undefined) {
 			width += SYMMETRY_CIRCLE.size/3;
-		};
+		}
 
 		paddle.width = width;
 		paddle.height = height;
@@ -8098,7 +8097,7 @@ registerRule(;
 		//=============================//;
 		for (const slot of paddle.slots) {
 			deleteChild(paddle, slot);
-		};
+		}
 		paddle.slots = [];
 
 		if (paddle.rightTriangle !== undefined) {
@@ -8115,10 +8114,10 @@ registerRule(;
 					cellAtom.slotted.x = cellAtom.x + paddle.rightTriangle.x + paddle.rightTriangle.width;
 					cellAtom.slotted.y = cellAtom.y;
 					slot.colour = Colour.Grey;
-				};
+				}
 
-			};
-		};
+			}
+		}
 
 
 		if (paddle.rightTriangle !== undefined) {
@@ -8126,18 +8125,18 @@ registerRule(;
 				paddle.offset = paddle.cellAtoms[0].slot.x - paddle.cellAtoms[0].x;
 			} else {
 				paddle.offset = 0;
-			};
-		};
+			}
+		}
 
 		if (paddle.symmetryCircle !== undefined) {
 			paddle.symmetryCircle.x = paddle.width - paddle.symmetryCircle.width/2;
 			paddle.symmetryCircle.y = paddle.height/2 - paddle.symmetryCircle.height/2;
-		};
+		}
 
 		if (paddle.chance !== undefined) {
 			paddle.chance.x = paddle.width - paddle.chance.width/2;
 			paddle.chance.y = paddle.height/2 - paddle.chance.height/2;
-		};
+		}
 
 		if (paddle.chance !== undefined && paddle.symmetryCircle !== undefined) {
 			paddle.symmetryCircle.y -= paddle.symmetryCircle.height/2;
@@ -8145,8 +8144,8 @@ registerRule(;
 			if (paddle.height > 100) {
 				paddle.symmetryCircle.y -= OPTION_MARGIN/2;
 				paddle.chance.y += OPTION_MARGIN/2;
-			};
-		};
+			}
+		}
 
 		paddle.handle.y = paddle.height/2 - paddle.handle.height/2;
 
@@ -8156,7 +8155,7 @@ registerRule(;
 
 			paddle.dummyRight.x = paddle.width - PADDLE_MARGIN - paddle.dummyLeft.width;
 			paddle.dummyRight.y = paddle.height/2 - paddle.dummyRight.height/2;
-		};
+		}
 
 		updatePaddleRule(paddle);
 		positionPaddles();
@@ -8176,7 +8175,7 @@ registerRule(;
 			if (achannel !== undefined && bchannel === undefined) return false;
 			if (achannel === undefined && bchannel === undefined) continue;
 			if (achannel.variable !== bchannel.variable) return false;
-		};
+		}
 
 		const asplashes = getSplashesArrayFromArray(a);
 		const bsplashes = getSplashesArrayFromArray(b);
@@ -8185,7 +8184,7 @@ registerRule(;
 			const id = bsplashes.indexOf(asplash);
 			if (id === -1) return false;
 			bsplashes.splice(id, 1);
-		};
+		}
 
 		if (bsplashes.length > 0) return false;
 
@@ -8194,29 +8193,29 @@ registerRule(;
 	};
 
 	const applyRangeStamp = (stampeds, value) => {
-		if (value.stamp) return //already got a manual stamp;
+		if (value.stamp) return; //already got a manual stamp;
 		const isSingle = isDragonArraySingleColour(value);
 		if (!isSingle) {
-			let newStamp = undefined;
+			let newStamp;
 			for (let i = 0; i < stampeds.length; i++) {
 				const stamped = stampeds[i];
 				if (isDragonArrayEqual(stamped, value)) {
 					newStamp = i;
 					break;
-				};
-			};
+				}
+			}
 			if (newStamp === undefined) {
 				newStamp = stampeds.length;
 				stampeds.push(value);
-			};
+			}
 			value.stamp = newStamp.toString();
-		};
+		}
 	};
 
 	const getTopLeftOfCellAtoms = (cellAtoms) => {
 		let smallestX = Infinity;
 		let smallestY = Infinity;
-		let leader = undefined;
+		let leader;
 
 		for (const cellAtom of cellAtoms) {
 			if (cellAtom.x <= smallestX) {
@@ -8224,9 +8223,9 @@ registerRule(;
 					leader = cellAtom;
 					smallestX = cellAtom.x;
 					smallestY = cellAtom.y;
-				};
-			};
-		};
+				}
+			}
+		}
 
 		return leader;
 	};
@@ -8252,11 +8251,11 @@ registerRule(;
 			const x = (cellAtom.x - origin.x) / cellAtom.width;
 			const y = (cellAtom.y - origin.y) / cellAtom.height;
 
-			const leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis;
+			const leftClone = cloneDragonArray(cellAtom.value); //TODO: should act different for multis
 			const diagramCell = makeDiagramCell({x, y, content: leftClone});
 			diagramCells.push(diagramCell);
 
-		};
+		}
 
 		return diagramCells;
 
@@ -8271,8 +8270,8 @@ registerRule(;
 				paddle.rightTriangle.colour = Colour.splash(999);
 			} else {
 				paddle.rightTriangle.colour = Colour.splash(0);
-			};
-		};
+			}
+		}
 
 		let transformations = DRAGON_TRANSFORMATIONS.NONE;
 		if (paddle.hasSymmetry) {
@@ -8287,7 +8286,7 @@ registerRule(;
 			else if (key === "XR" || key === "YR") key = "XYR";
 
 			transformations = DRAGON_TRANSFORMATIONS[key];
-		};
+		}
 
 		const orderedCellAtoms = getOrderedCellAtoms(paddle.cellAtoms);
 		const origin = orderedCellAtoms[0];
@@ -8328,7 +8327,7 @@ registerRule(;
 						content: miniClone,
 					});
 					left.push(diagramCell);
-				};
+				}
 
 			} else {
 
@@ -8337,7 +8336,7 @@ registerRule(;
 				applyRangeStamp(stampeds, leftClone);
 				const diagramCell = makeDiagramCell({x, y, content: leftClone});
 				left.push(diagramCell);
-			};
+			}
 
 			//=======//;
 			// RIGHT //;
@@ -8357,7 +8356,7 @@ registerRule(;
 				});
 
 				right.push(mergeCell);
-			};
+			}
 
 			const rightContent = cellAtom.slotted === undefined? undefined : cellAtom.slotted.value;
 
@@ -8402,7 +8401,7 @@ registerRule(;
 						instruction: DRAGON_INSTRUCTION.recolour,
 					});
 					right.push(diagramCell);
-				};
+				}
 
 			} else {
 
@@ -8411,8 +8410,8 @@ registerRule(;
 				applyRangeStamp(stampeds, rightClone);
 				const rightDiagramCell = makeDiagramCell({x, y, content: rightClone});
 				right.push(rightDiagramCell);
-			};
-		};
+			}
+		}
 
 		const diagram = makeMaximisedDiagram(makeDiagram({left, right}));
 
@@ -8422,19 +8421,19 @@ registerRule(;
 		paddle.rule = rule;
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry);
-		};
+		}
 		if (locked && paddle.rightTriangle !== undefined) {
 			//debugRule(rule);
 			paddle.registry = registerRule(rule);
 			//debugRegistry(paddle.registry, {redundants: false});
-		};
+		}
 	};
 
 	const getAllAtoms = (pool = state.colourTode.atoms) => {
 		const atoms = [...pool];
 		for (const atom of atoms) {
 			atoms.push(...getAllAtoms(atom.children));
-		};
+		}
 		return atoms;
 	};
 
@@ -8445,11 +8444,11 @@ registerRule(;
 				if (child.isPinhole) continue;
 				if (child.isPaddleHandle) continue;
 				atoms.push(child);
-			};
-		};
+			}
+		}
 		for (const atom of atoms) {
 			if (atom.isSquare && atom.expanded) atoms.push(...atom.children);
-		};
+		}
 		return atoms;
 	};
 
@@ -8457,39 +8456,39 @@ registerRule(;
 
 		if (paddles.length > 1) {
 			unlockMenuTool("triangle");
-		};
+		}
 
 		if (paddles.length > 2) {
 			let ruleCount = 0;
 			for (const paddle of paddles) {
 				if (paddle.rightTriangle !== undefined) {
 					ruleCount++;
-				};
-			};
+				}
+			}
 			if (ruleCount >= 2) {
 				unlockMenuTool("hexagon");
-			};
-		};
+			}
+		}
 
-		let previous = undefined;
+		let previous;
 		for (const paddle of paddles) {
 			if (previous === undefined) {
 				paddle.y = PADDLE.y + PADDLE.scroll;
 				previous = paddle;
 				continue;
-			};
+			}
 
 			paddle.y = previous.y + previous.height + PADDLE_MARGIN;
 			previous = paddle;
 			//bringAtomToBack(paddle) //causes bug where circle tool disappears but really shouldn't :(;
-		};
+		}
 	};
 
 	const deletePaddle = (paddle, id = paddles.indexOf(paddle)) => {
 		paddles.splice(id, 1);
 		if (paddle.registry !== undefined) {
 			unregisterRegistry(paddle.registry);
-		};
+		}
 		deleteAtom(paddle);
 		positionPaddles();
 	};
@@ -8527,16 +8526,16 @@ registerRule(;
 		borderScale: 1/2,
 		borderColour: Colour.Black,
 		draw: (atom) => {
-			return;
 			if (atom.locked) {
 				atom.hasBorder = true;
-				atom.colour = Colour.Grey				;
-			};
+				atom.colour = Colour.Grey;
+			}
 			else {
 				atom.hasBorder = false;
 				atom.colour = Colour.Black;
-			};
+			}
 			CIRCLE.draw(atom);
+			return;
 		},
 		overlaps: CIRCLE.overlaps,
 		offscreen: CIRCLE.offscreen,
@@ -8545,7 +8544,6 @@ registerRule(;
 		y: OPTION_MARGIN/2/2,
 		x: OPTION_MARGIN/2/2,
 		click: (atom) => {
-			return;
 			const handle = atom.parent;
 			const paddle = handle.parent;
 			if (atom.locked) {
@@ -8557,7 +8555,7 @@ registerRule(;
 				atom.draggable = true;
 				//paddle.dragOnly = true;
 				updatePaddleRule(paddle);
-			} ;
+			}
 
 			else {
 				atom.locked = true;
@@ -8570,34 +8568,35 @@ registerRule(;
 				for (const cellAtom of paddle.cellAtoms) {
 					if (cellAtom.expanded) {
 						cellAtom.unexpand(cellAtom);
-					};
+					}
 					if (cellAtom.slotted !== undefined) {
 						const slotted = cellAtom.slotted;
 						if (slotted.expanded) {
 							slotted.unexpand(slotted);
-						};
-					};
+						}
+					}
 					if (cellAtom.joins.length > 0 && cellAtom.joinExpanded) {
 						cellAtom.joinUnepxand(cellAtom);
-					};
-				};
+					}
+				}
 
 				/*if (paddle.hasSymmetry) {
 					if (paddle.symmetryCircle.expanded) {
 						paddle.symmetryCircle.unexpand(paddle.symmetryCircle);
 					};
-				}*/;
+				}*/
 
 				if (paddle.cellAtoms.length === 0) {
 					paddle.grabbable = false;
 					paddle.draggable = false;
-				};
+				}
 				//paddle.dragOnly = false;
 				updatePaddleRule(paddle);
-			};
+      }
+			return;
 		},
 		grab: (atom) => atom.parent.parent,
-
+		
 	};
 
 	const SYMMETRY_TOGGLINGS = new Map();
@@ -8634,12 +8633,12 @@ registerRule(;
 
 			if (atom.expanded) {
 				atom.unexpand(atom);
-			};
+			}
 
 			else {
 
 				atom.expand(atom);
-			};
+			}
 		},
 
 		expand: (atom) => {
@@ -8690,7 +8689,7 @@ registerRule(;
 				if (!paddle.hasSymmetry && paddle.expanded && id > pid && left <= pright && right >= pright && ((top < pbottom && top > ptop) || (bottom > ptop && bottom < pbottom))) {
 					if (atom.highlightPaddle !== undefined) {
 						deleteChild(atom, atom.highlightPaddle);
-					};
+					}
 
 					atom.highlightPaddle = createChild(atom, HIGHLIGHT, {bottom: true});
 					atom.highlightPaddle.width = HIGHLIGHT_THICKNESS;
@@ -8699,15 +8698,15 @@ registerRule(;
 					atom.highlightPaddle.x = pright - HIGHLIGHT_THICKNESS/2;
 					atom.highlightedPaddle = paddle;
 					return;
-				};
+				}
 
-			};
+			}
 
 			if (atom.highlightPaddle !== undefined) {
 				deleteChild(atom, atom.highlightPaddle);
 				atom.highlightPaddle = undefined;
 				atom.highlightedPaddle = undefined;
-			};
+			}
 		},
 		drop: (atom) => {
 
@@ -8725,14 +8724,14 @@ registerRule(;
 					atom.dy = 0;
 
 					/*atom.x = paddle.width -atom.width/2;
-					atom.y = paddle.height/2 - atom.height/2*/;
+					atom.y = paddle.height/2 - atom.height/2*/
 
 					/*if (paddle.pinhole.locked && atom.expanded) {
 						atom.unexpand(atom);
-					}*/;
+					}*/
 
-				};
-			};
+				}
+			}
 
 		},
 
@@ -8751,14 +8750,14 @@ registerRule(;
 					clone.y = y;
 					registerAtom(clone);
 					return clone;
-				}*/;
+				}*/
 
 				atom.attached = false;
 				freeChild(paddle, atom);
 				paddle.hasSymmetry = false;
 				paddle.symmetryCircle = undefined;
 				updatePaddleSize(paddle);
-			};
+			}
 
 			return atom;
 		},
@@ -8852,7 +8851,7 @@ registerRule(;
 			case "down": return clockwise ? "left" : "right";
 			case "left": return clockwise ? "up" : "down";
 			case "up": return clockwise ? "right" : "left";
-		};
+		}
 
 		throw new Error("Invalid rotation or clockwiseness");
 	};
@@ -8885,7 +8884,7 @@ registerRule(;
 			const parent = triangle.parent;
 			if (parent.isSquare) {
 				parent.receiveNumber(parent, triangle.value, triangle.channelId, {expanded: triangle.expanded, numberAtom: triangle});
-			};
+			}
 		},
 		offscreen: TRIANGLE_UP.offscreen,
 		overlaps: TRIANGLE_UP.overlaps,
@@ -8926,7 +8925,7 @@ registerRule(;
 			const parent = triangle.parent;
 			if (parent.isSquare) {
 				parent.receiveNumber(parent, triangle.value, triangle.channelId, {expanded: triangle.expanded, numberAtom: triangle});
-			};
+			}
 
 		},
 		offscreen: TRIANGLE_DOWN.offscreen,
@@ -8971,7 +8970,7 @@ registerRule(;
 			if (circle.parent !== COLOURTODE_BASE_PARENT) {
 				const paddle = circle.parent;
 				updatePaddleRule(paddle);
-			};
+			}
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -9012,7 +9011,7 @@ registerRule(;
 			if (circle.parent !== COLOURTODE_BASE_PARENT) {
 				const paddle = circle.parent;
 				updatePaddleRule(paddle);
-			};
+			}
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -9060,7 +9059,7 @@ registerRule(;
 			if (circle.parent !== COLOURTODE_BASE_PARENT) {
 				const paddle = circle.parent;
 				updatePaddleRule(paddle);
-			};
+			}
 		},
 		value: false,
 		size: COLOURTODE_SQUARE.size - OPTION_MARGIN,
@@ -9082,11 +9081,11 @@ registerRule(;
 				for (const j of newAtom.value.joins) {
 					const joinAtom = makeSquareFromValue(j);
 					newAtom.joins.push(joinAtom);
-				};
-			};
+				}
+			}
 			newAtom.stamp = newAtom.value.stamp;
 
-		};
+		}
 
 		if (!newAtom.value.isDiagram) {
 
@@ -9116,13 +9115,13 @@ registerRule(;
 				// const {add, subtract} = channel;
 				// hexagon.ons = [add.values[2], add.values[1], subtract.values[1], subtract.values[2], subtract.values[3], add.values[3]];
 				// hexagon.updateValue(hexagon);
-			};
+			}
 
-		};
+		}
 
 		if (newAtom.value !== undefined && newAtom.value.isDiagram) {
 			newAtom.update(newAtom);
-		};
+		}
 
 		return newAtom;
 	};
@@ -9134,10 +9133,10 @@ registerRule(;
 		draw: (atom) => {
 			if ((atom.previousBrushColour !== state.brush.colour) || atom.toolbarNeedsColourUpdate) {
 				atom.update(atom);
-			};
+			}
 			if (atom.unlocked) {
 				atom.element.draw(atom);
-			};
+			}
 		},
 		overlaps: (atom, x, y) => atom.element.overlaps(atom, x, y),
 		grab: (atom, x, y) => {
@@ -9149,7 +9148,7 @@ registerRule(;
 				const newAtom = makeSquareFromValue(atom.value);
 				registerAtom(newAtom);
 				return newAtom;
-			};
+			}
 
 			const newAtom = makeAtom({...atom.element, x: atom.x, y: atom.y});
 			registerAtom(newAtom);
@@ -9163,8 +9162,8 @@ registerRule(;
 						newAtom.joins.push(joinAtom);
 					};
 				};
-				*/;
-			};
+				*/
+			}
 
 			return newAtom;
 		},
@@ -9178,7 +9177,7 @@ registerRule(;
 		let y = COLOURTODE_PICKER_PAD_MARGIN;
 		if (height < COLOURTODE_SQUARE.size) {
 			y += (COLOURTODE_SQUARE.size - height)/2;
-		};
+		}
 		y += BORDER_THICKNESS;
 
 		const atom = makeAtom({...COLOURTODE_TOOL, width, height, size, x: Math.round(menuRight), y, element});
@@ -9203,7 +9202,7 @@ registerRule(;
 			atom.grabbable = false;
 			unlocks[unlockName] = atom;
 			if (UNLOCK_MODE) unlockMenuTool(unlockName);
-		};
+		}
 
 		return atom;
 	};
@@ -9217,7 +9216,7 @@ registerRule(;
 
 		/*registerAtom(unlock);
 		menuRight += unlock.width;
-		menuRight += OPTION_MARGIN*/;
+		menuRight += OPTION_MARGIN*/
 
 	};
 
@@ -9231,7 +9230,7 @@ registerRule(;
 	const hexagonTool = addMenuTool(COLOURTODE_HEXAGON, "hexagon");
 	// const wideRectangleTool = addMenuTool(COLOURTODE_PICKER_CHANNEL, "wide_rectangle");
 	//menuRight += BORDER_THICKNESS;
-	const tallRectangleTool = {} //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle");
+	const tallRectangleTool = {}; //addMenuTool(COLOURTODE_TALL_RECTANGLE, "tall_rectangle");
 	createPaddle();
 
 	squareTool.value = makeArrayFromSplash(state.brush.colour);
@@ -9243,7 +9242,7 @@ registerRule(;
 		if (atom.joinDrawId === undefined) {
 			atom.joinDrawId = -1;
 			atom.joinDrawTimer = 0;
-		};
+		}
 
 		/*;
 		if (typeof state.brush.colour === "number") {
@@ -9254,7 +9253,7 @@ registerRule(;
 			if (atom === squareTool) {
 				atom.stamp = atom.value.stamp;
 			};
-		}*/;
+		}*/
 
 		if (atom.value !== undefined && atom === squareTool) {
 
@@ -9262,10 +9261,10 @@ registerRule(;
 				atom.previousBrushColour = state.brush.colour;
 				if (atom.multiAtoms === undefined) {
 					atom.multiAtoms = [];
-				};
+				}
 				for (const multiAtom of atom.multiAtoms) {
 					deleteChild(atom, multiAtom);
-				};
+				}
 
 				atom.multiAtoms = [];
 
@@ -9283,17 +9282,17 @@ registerRule(;
 						multiAtom.value = diagramCell.content;
 						multiAtom.update(multiAtom);
 						atom.multiAtoms.push(multiAtom);
-					};
-				};
-			};
-		};
+					}
+				}
+			}
+		}
 
 		const valueClone = cloneDragonArray(atom.value);
 		atom.colours = getSplashesArrayFromArray(valueClone);
 
 		if (atom.colourId >= atom.colours.length) {
 			atom.colourId = 0;
-		};
+		}
 		//atom.colour = Colour.splash(atom.colours[atom.colourId]);
 		if (atom.toolbarNeedsColourUpdate && atom === squareTool) {
 			atom.toolbarNeedsColourUpdate = false;
@@ -9302,12 +9301,12 @@ registerRule(;
 			for (const joinValue of atom.value.joins) {
 				const joinSquare = makeSquareFromValue(joinValue);
 				atom.joins.push(joinSquare);
-			};
+			}
 			COLOURTODE_SQUARE.updateGradient(atom);
 		} else {
 			atom.colour = Colour.splash(999);
 			atom.borderColour = Colour.splash(999);
-		};
+		}
 	};
 
 	triangleTool.update = squareTool.update;
@@ -9329,7 +9328,7 @@ registerRule(;
 		} else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
 			e.preventDefault();
 			copyPaddles();
-		};
+		}
 	}, {passive: false});
 
 	on.paste(async e => {
@@ -9337,7 +9336,7 @@ registerRule(;
 		if (pack !== "") {
 			unpackPaddles(pack);
 			return;
-		};
+		}
 
 		const item = e.clipboardData.items[0];
 		const file = item.getAsFile();
@@ -9372,7 +9371,7 @@ registerRule(;
 				y: atom.y,
 				slotted: atom.slotted ? atom.slotted.value : undefined,
 			});
-		};
+		}
 		return cellAtoms;
 	};
 
@@ -9383,9 +9382,9 @@ registerRule(;
 			if (!loadedColour) {
 				if (!v.isLeftSlot) {
 					setBrushColour(v.value);
-				};
+				}
 				loadedColour = true;
-			};
+			}
 			const square = v.isLeftSlot ? makeAtom(SLOT) : makeSquareFromValue(v.value);
 			square.isLeftSlot = v.isLeftSlot;
 			registerAtom(square);
@@ -9405,8 +9404,8 @@ registerRule(;
 				slotted.highlightedSide = "slot";
 				slotted.slottee = true;
 				square.slotted = slotted;
-			};
-		};
+			}
+		}
 		return atoms;
 	};
 
@@ -9476,10 +9475,10 @@ registerRule(;
 				const v = packer(paddle, paddle[key]);
 				if (v !== undefined) {
 					packedPaddle[key] = v;
-				};
-			};
+				}
+			}
 			packedPaddles.push(packedPaddle);
-		};
+		}
 		return JSON.stringify(packedPaddles)		;
 	};
 
@@ -9487,7 +9486,7 @@ registerRule(;
 	    	if (middleClicked) {
 	        	middleClicked = false;
 	        	return;
-	    	};
+	    	}
 
 		loadedColour = false;
 		unlockMenuTool("triangle");
@@ -9497,7 +9496,7 @@ registerRule(;
 		try {
 			while (paddles.length > 0) {
 				deletePaddle(paddles[paddles.length-1]);
-			};
+			}
 			for (const packed of JSON.parse(pack)) {
 				const paddle = createPaddle();
 				for (const key in packed) {
@@ -9506,16 +9505,16 @@ registerRule(;
 					const v = unpacker(paddle, packed[key]);
 					if (v !== undefined) {
 						paddle[key] = v;
-					};
-				};
+					}
+				}
 				updatePaddleSize(paddle);
 				updatePaddleRule(paddle);
-			};
+			}
 			positionPaddles();
 		} catch(e) {
 			console.error(e);
 			alert("Error loading rules... Sorry! Please contact @todepond :)");
-		};
+		}
 	};
 
 	const download = (content, fileName, contentType) => {
@@ -9538,7 +9537,7 @@ registerRule(;
 					startIn: 'downloads',
 					types: [{
 						description: 'JSON',
-						accept: {'application/json': [".json"]};
+						accept: {'application/json': [".json"]}
 					}],
 				});
 				const writable = await result.createWritable();
@@ -9546,7 +9545,7 @@ registerRule(;
 				await writable.close();
 			} catch (err) {
 				console.error('Failed to save file:', err);
-			};
+			}
 		} else {
 			// Fallback to the Blob and link method;
 			const blob = new Blob([pack], {type: 'application/json'});
@@ -9557,7 +9556,7 @@ registerRule(;
 			link.download = 'spell.json';
 			link.click();
 			URL.revokeObjectURL(url);
-		};
+		}
 	};
 
 	const openPaddles = () => {
