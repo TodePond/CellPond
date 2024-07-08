@@ -2165,10 +2165,10 @@ on.load(() => {
 				const neighbour = pickCell(centerX, centerY)
 
 				if (neighbour === undefined) return [undefined, undefined]
-				if (neighbour.left !== x) return [undefined, undefined]
-				if (neighbour.top !== y) return [undefined, undefined]
-				if (neighbour.width !== width) return [undefined, undefined]
-				if (neighbour.height !== height) return [undefined, undefined]
+				if (neighbour.left+8 !== x+8) return [undefined, undefined]
+				if (neighbour.top+8 !== y+8) return [undefined, undefined]
+				if (neighbour.width+8 !== width+8) return [undefined, undefined]
+				if (neighbour.height+8 !== height+8) return [undefined, undefined]
 				if (!splashes.has(neighbour.colour)) return [undefined, undefined]
 				
 				return [neighbour, cell.content.stamp]
