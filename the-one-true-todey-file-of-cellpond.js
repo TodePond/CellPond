@@ -2257,8 +2257,8 @@ on.load(() => {
 				if (bonusTargets.length === 0) {
 					neighbourId++
 					if (skip > 0) {
-						neighbourId++
-						skip--
+						neighbourId+= skip
+						skip = 0
 					}
 				}
 			}
