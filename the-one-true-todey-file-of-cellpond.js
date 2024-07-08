@@ -8310,6 +8310,7 @@ registerRule(
 			//======//
 			// LEFT //
 			//======//
+			let miniCount = 0
 			if (cellAtom.isLeftSlot) {
 
 				const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
@@ -8337,6 +8338,7 @@ registerRule(
 						content: miniClone,
 					})
 					left.push(diagramCell)
+					miniCount++
 				}
 
 			} else {
@@ -8352,24 +8354,39 @@ registerRule(
 			//=======//
 			// RIGHT //
 			//=======//
+			const rightContent = cellAtom.slotted === undefined? undefined : cellAtom.slotted.value
 
 			// Merge!!!
 			if (!cellAtom.isLeftSlot && cellAtom.value.isDiagram) {
-				const maxiLeft = makeMaximisedDiagram(cellAtom.value)
-				const [maxiWidth, maxiHeight] = getDiagramDimensions(maxiLeft)
 				
-				const mergeCell = makeDiagramCell({
-					x,
-					y,
-					instruction: DRAGON_INSTRUCTION.merge,
-					splitX: maxiWidth,
-					splitY: maxiHeight,
-				})
+				if (rightContent === undefined) {
+					while(miniCount>1){
+						const nothingCell = makeDiagramCell({
+							x,
+							y,
+							instruction: DRAGON_INSTRUCTION.nothing,
+						})
 
-				right.push(mergeCell)
+						right.push(nothingCell)
+						miniCount--
+					}
+				}
+				else{
+					const maxiLeft = makeMaximisedDiagram(cellAtom.value)
+					const [maxiWidth, maxiHeight] = getDiagramDimensions(maxiLeft)
+					
+					const mergeCell = makeDiagramCell({
+						x,
+						y,
+						instruction: DRAGON_INSTRUCTION.merge,
+						splitX: maxiWidth,
+						splitY: maxiHeight,
+					})
+	
+					right.push(mergeCell)
+				}
 			}
 
-			const rightContent = cellAtom.slotted === undefined? undefined : cellAtom.slotted.value
 
 			if (rightContent === undefined) {
 				const nothingCell = makeDiagramCell({
