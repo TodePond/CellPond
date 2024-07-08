@@ -23,7 +23,7 @@ Or, you can [download the source code](https://github.com/TodePond/CellPond/arch
 It's a secret.
 
 ## How do I save my creations?
-You can press ctrl/cmd+s to save your paddles to a file, and ctrl/cmd+o to load from a file.
+You can use ctrl/cmd+s to save your paddles to a file, and ctrl/cmd+o to load from a file.
 
 You can also use ctrl/cmd+c and ctrl/cmd+v to save and load from your clipboard!
 
