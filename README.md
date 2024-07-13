@@ -22,6 +22,11 @@ Or, you can [download the source code](https://github.com/TodePond/CellPond/arch
 ## How does it work? What do all the shapes do?
 It's a secret.
 
+## How do I save my creations?
+You can use ctrl/cmd+s to save your paddles to a file, and ctrl/cmd+o to load from a file.
+
+You can also use ctrl/cmd+c and ctrl/cmd+v to save and load from your clipboard!
+
 ## Where's the diamond gone?
 
 There used to be a diamond shape! It let you add/subtract/swap channels. But I rewrote a lot of stuff for the [Spellular Automata](https://youtu.be/xvlsJ3FqNYU) video and it broke.
