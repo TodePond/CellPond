@@ -1391,7 +1391,8 @@ on.load(() => {
 	}
 	
 	const splitCellToDiagram = (cell, diagram) => {
-
+		if (diagram.left.length == 0) return [cell]
+		
 		const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
 		const widthScale = cell.width / diagramWidth
 		const heightScale = cell.height / diagramHeight
@@ -1407,12 +1408,9 @@ on.load(() => {
 		for (let x = 0; x < dimX; x++) {
 			for (let y = 0; y < dimY; y++) {
 				let diagramCell = diagramCells[i]
-				
+				//fill empty cells
 				if (diagramCell === undefined || (diagramCell.x+128 != x*diagramWidth/dimX+128) || (diagramCell.y+128 != y*diagramHeight/dimY+128)){
-					const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
-					const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
-					const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
-					const emptyCell = makeArray({channels: [red, green, blue]})
+					const emptyCell = makeArray({channels: [undefined, undefined, undefined]})
 					diagramCell = makeDiagramCell({
 						x: x*diagramWidth/dimX,
 						y: y*diagramHeight/dimY,
@@ -1424,7 +1422,7 @@ on.load(() => {
 					i++
 				}
 				
-				if (diagramCell.content.isDiagram){
+				if (diagramCell.content.isDiagram){//if diagram in diagram make new cell to split further
 					const cellToSplit = makeCell({
 						x: cell.x + diagramCell.x * widthScale,
 						y: cell.y + diagramCell.y * heightScale,
@@ -8280,10 +8278,10 @@ registerRule(
 
 	const getOrderedCellAtoms = (cellAtoms) => {
 		const orderedCellAtoms = [...cellAtoms].sort((a, b) => {
-			if (a.x < b.x) return -1
-			if (a.x > b.x) return 1
-			if (a.y < b.y) return -1
-			if (a.y > b.y) return 1
+			if (a.x + 128 < b.x + 128) return -1
+			if (a.x + 128 > b.x + 128) return 1
+			if (a.y + 128 < b.y + 128) return -1
+			if (a.y + 128 > b.y + 128) return 1
 			return 0
 		})
 		return orderedCellAtoms
@@ -8311,30 +8309,38 @@ registerRule(
 
 	}
 	
-	//adds diagram to list assuming every cell is the same size
-	const addDiagramCellsToRuleList = (diagramCells, list, stampeds, posX, posY, addSplit = false, sizeX=1, sizeY=1) => {
-		// Check for every mini-cell
-		let miniCount = 0
+	//adds diagram to left assuming every cell is the same size
+	const addDiagramCellsToLeftList = (diagramCells, list, stampeds, posX, posY, sizeX=1, sizeY=1) => {
+		//if empty list 
+		if (diagramCells.length == 0){
+			const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
+			const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
+			const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
+			const miniClone = makeArray({channels: [red, green, blue]})
+			applyRangeStamp(stampeds, miniClone)
+				const diagramCell = makeDiagramCell({
+					x: posX,
+					y: posY,
+					width: sizeX,
+					height: sizeY,
+					content: miniClone,
+					instruction: DRAGON_INSTRUCTION.recolour,
+				})
+			list.push(diagramCell)
+			return
+		}
+		
+		
 		let addCount = 0
 		const orderedMiniLeftCells = getOrderedCellAtoms(diagramCells)
+		// get diagram dimensions
+		const [diagramWidth, diagramHeight] = getDiagramDimensions(makeDiagram({left:diagramCells}))
+		const dimX = Math.round(diagramWidth/orderedMiniLeftCells[0].width)
+		const dimY = Math.round(diagramHeight/orderedMiniLeftCells[0].height)
 
-		const dimX = Math.round(1/orderedMiniLeftCells[0].width)
-		const dimY = Math.round(1/orderedMiniLeftCells[0].height)
 		
-		if(addSplit){
-			const splitCell = makeDiagramCell({
-				x: posX,
-				y: posY,
-				width: sizeX,
-				height: sizeY,
-				instruction: DRAGON_INSTRUCTION.split,
-				splitX: dimX,
-				splitY: dimY,
-			})
-
-			list.push(splitCell)
-		}
-				
+		let miniCounts = {X: dimX, Y: dimY, total: 0}
+		// check for every mini cell
 		for (let x = 0; x < dimX; x++) {
 			for (let y = 0; y < dimY; y++) {				
 				const miniDiagramCell = orderedMiniLeftCells[addCount]
@@ -8345,18 +8351,21 @@ registerRule(
 				const miniHeight = sizeY/dimY
 				
 				let miniClone
-				//pads not filled spaces
-				if (miniDiagramCell === undefined || (miniDiagramCell.x+128 != x/dimX+128) || (miniDiagramCell.y+128 != y/dimY+128)){
+				//fills in not filled spaces
+				if (miniDiagramCell === undefined || (miniDiagramCell.x/diagramWidth+128 != x/dimX+128) || (miniDiagramCell.y/diagramHeight+128 != y/dimY+128)){
 					const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
 					const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
 					const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
 					miniClone = makeArray({channels: [red, green, blue]})
 					
-					
-				} else {
+				} else { 
 					addCount++
-					if (miniDiagramCell.content.isDiagram){
-						miniCount+= addDiagramCellsToRuleList(miniDiagramCell.content.left, list, stampeds, miniX, miniY, addSplit, miniWidth, miniHeight)
+					if (miniDiagramCell.content.isDiagram){ //if mini-mini cells
+						const miniMiniCounts = addDiagramCellsToLeftList(miniDiagramCell.content.left, list, stampeds, miniX, miniY, miniWidth, miniHeight)
+						if (miniMiniCounts){
+							miniCounts[x*dimY + y] = miniMiniCounts
+							miniCounts.total += miniMiniCounts.total-1
+						}
 						continue
 					} else{
 						miniClone = cloneDragonArray(miniDiagramCell.content)
@@ -8375,8 +8384,106 @@ registerRule(
 				list.push(diagramCell)
 			}
 		}
-		miniCount+= dimX*dimY
-		return miniCount
+		miniCounts.total+= dimX*dimY
+		return miniCounts
+	}
+	
+	//adds diagram to right assuming every cell is the same size
+	const addDiagramCellsToRightList = (diagramCells, list, stampeds, posX, posY, miniCounts={X: 1, Y: 1, total: 1}, sizeX=1, sizeY=1) => {
+		
+		//if empty cell fill with nothing(s)
+		if (diagramCells === undefined || diagramCells.length==0) {
+			for (let i = 0; i < miniCounts.total;i++) {
+				const nothingCell = makeDiagramCell({
+					x: posX,
+					y: posY,
+					width: sizeX,
+					height: sizeY,
+					instruction: DRAGON_INSTRUCTION.nothing,
+				})
+				
+				list.push(nothingCell)
+			}
+			return
+		}
+		
+		const orderedMiniLeftCells = getOrderedCellAtoms(diagramCells)
+		// get diagram dimensions
+		const [diagramWidth, diagramHeight] = getDiagramDimensions(makeDiagram({left:diagramCells}))
+		const dimX = Math.round(diagramWidth/orderedMiniLeftCells[0].width)
+		const dimY = Math.round(diagramHeight/orderedMiniLeftCells[0].height)
+		
+		if(miniCounts.X != dimX || miniCounts.Y != dimY){ //left and right arent split the same
+			if (miniCounts.total > 1){ // merge if left is split
+				const mergeCell = makeDiagramCell({
+						x: posX,
+						y: posY,
+						width: sizeX,
+						height: sizeY,
+						instruction: DRAGON_INSTRUCTION.merge,
+						splitX: 1,
+						splitY: miniCounts.total,
+				})
+				
+				list.push(mergeCell)
+			}
+
+			if (dimX * dimY != 1) { // split if rigth is split
+				const splitCell = makeDiagramCell({
+					x: posX,
+					y: posY,
+					width: sizeX,
+					height: sizeY,
+					instruction: DRAGON_INSTRUCTION.split,
+					splitX: dimX,
+					splitY: dimY,
+				})
+
+				list.push(splitCell)
+			}
+			miniCounts={X: 1, Y: 1, total: 1} // after merge left is 1x1
+		}
+				
+		let addCount = 0
+		for (let x = 0; x < dimX; x++) {
+			for (let y = 0; y < dimY; y++) {				
+				const miniDiagramCell = orderedMiniLeftCells[addCount]
+				
+				const miniX = posX + x/dimX*sizeX
+				const miniY = posY + y/dimY*sizeY
+				const miniWidth = sizeX/dimX
+				const miniHeight = sizeY/dimY
+				
+				let miniClone
+				//fills in not filled spaces
+				if (miniDiagramCell === undefined || (dimX*dimY > 1) && ((miniDiagramCell.x/diagramWidth+128 != x/dimX+128) || (miniDiagramCell.y/diagramHeight+128 != y/dimY+128))){
+					addDiagramCellsToRightList(undefined, list, stampeds, miniX, miniY, miniCounts[x*dimY + y], miniWidth, miniHeight)
+					continue
+				} else if (miniDiagramCell.content.isDiagram) {//if mini-mini cells
+					addDiagramCellsToRightList(miniDiagramCell.content.left, list, stampeds, miniX, miniY, miniCounts[x*dimY + y], miniWidth, miniHeight)
+					
+				} else if (miniCounts[x*dimY + y] !== undefined && miniCounts[x*dimY + y].total > 1){ // cells of left diagram need to get merged
+					addDiagramCellsToRightList([miniDiagramCell], list, stampeds, miniX, miniY, miniCounts[x*dimY + y], miniWidth, miniHeight)
+					
+				} else { // left and right have same dimensions => recolour
+					miniClone = cloneDragonArray(miniDiagramCell.content)
+					applyRangeStamp(stampeds, miniClone)
+					const diagramCell = makeDiagramCell({
+						x: miniX,
+						y: miniY,
+						width: miniWidth,
+						height: miniHeight,
+						content: miniClone,
+						instruction: DRAGON_INSTRUCTION.recolour,
+					})
+					list.push(diagramCell)
+					
+				}
+				
+				addCount++
+				
+			}
+		}
 	}
 	
 
@@ -8419,7 +8526,7 @@ registerRule(
 			//======//
 			// LEFT //
 			//======//
-			let miniCount = 0
+			let miniCount
 			if (cellAtom.isLeftSlot) {
 
 				const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
@@ -8432,7 +8539,7 @@ registerRule(
 
 			} else if (cellAtom.value.isDiagram) {
 				// Check for every mini-cell	
-				miniCount+= addDiagramCellsToRuleList(cellAtom.value.left, left, stampeds, x, y)
+				miniCount = addDiagramCellsToLeftList(cellAtom.value.left, left, stampeds, x, y)
 
 			} else {
 				
@@ -8449,39 +8556,22 @@ registerRule(
 			//=======//
 			const rightContent = cellAtom.slotted === undefined? undefined : cellAtom.slotted.value
 
-			// Merge!!!
-			if (!cellAtom.isLeftSlot && cellAtom.value.isDiagram) {
+			
+			if (rightContent !== undefined && rightContent.isDiagram) {
+			
+				// Split the cell into mini-cells!
+				// Recolour every mini-cell!
+				addDiagramCellsToRightList(rightContent.left, right, stampeds, x, y, miniCount)
 				
-				if (rightContent === undefined) {
-					while(miniCount>1){
-						const nothingCell = makeDiagramCell({
-							x,
-							y,
-							instruction: DRAGON_INSTRUCTION.nothing,
-						})
-
-						right.push(nothingCell)
-						miniCount--
-					}
+			} else if (!cellAtom.isLeftSlot && cellAtom.value.isDiagram) {
+				if (rightContent === undefined){
+					addDiagramCellsToRightList(rightContent, right, stampeds, x, y, miniCount)
 				}
-				else{
-					const maxiLeft = makeMaximisedDiagram(cellAtom.value)
-					const [maxiWidth, maxiHeight] = getDiagramDimensions(maxiLeft)
-					
-					const mergeCell = makeDiagramCell({
-						x,
-						y,
-						instruction: DRAGON_INSTRUCTION.merge,
-						splitX: 1,
-						splitY: miniCount,
-					})
-	
-					right.push(mergeCell)
+				else {
+					const rightClone = cloneDragonArray(rightContent)
+					addDiagramCellsToRightList([makeDiagramCell({x, y, content: rightClone})], right, stampeds, x, y, miniCount)
 				}
-			}
-
-
-			if (rightContent === undefined) {
+			} else if (rightContent === undefined) {
 				const nothingCell = makeDiagramCell({
 					x,
 					y,
@@ -8490,12 +8580,6 @@ registerRule(
 
 				right.push(nothingCell)
 
-			} else if (rightContent.isDiagram) {
-			
-				// Split the cell into mini-cells!
-				// Recolour every mini-cell!
-				addDiagramCellsToRuleList(rightContent.left, right, stampeds, x, y, true)
-				
 			} else {
 
 				// Just recolour a single cell
@@ -8521,7 +8605,6 @@ registerRule(
 			//debugRegistry(paddle.registry, {redundants: false})
 		}
 	}
-
 	const getAllAtoms = (pool = state.colourTode.atoms) => {
 		const atoms = [...pool]
 		for (const atom of atoms) {
