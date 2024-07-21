@@ -1391,72 +1391,37 @@ on.load(() => {
 	}
 	
 	const splitCellToDiagram = (cell, diagram) => {
-		if (diagram.left.length == 0) return [cell]
+		const flatDiagram = flattenAndFillDiagramCells(diagram.left, makeArray({channels: [undefined, undefined, undefined]}))
 		
-		const [diagramWidth, diagramHeight] = getDiagramDimensions(diagram)
-		const widthScale = cell.width / diagramWidth
-		const heightScale = cell.height / diagramHeight
-		
-		const diagramCells = getOrderedCellAtoms(diagram.left)
-		const dimX = Math.round(diagramWidth/diagramCells[0].width)
-		const dimY = Math.round(diagramHeight/diagramCells[0].height)
+		const widthScale = cell.width
+		const heightScale = cell.height
 
 		const children = []
-		const addedChildren = []
-		
-		let i = 0
-		for (let x = 0; x < dimX; x++) {
-			for (let y = 0; y < dimY; y++) {
-				let diagramCell = diagramCells[i]
-				//fill empty cells
-				if (diagramCell === undefined || (diagramCell.x+128 != x*diagramWidth/dimX+128) || (diagramCell.y+128 != y*diagramHeight/dimY+128)){
-					const emptyCell = makeArray({channels: [undefined, undefined, undefined]})
-					diagramCell = makeDiagramCell({
-						x: x*diagramWidth/dimX,
-						y: y*diagramHeight/dimY,
-						width: diagramWidth/dimX,
-						height: diagramHeight/dimY,
-						content: emptyCell,
-					})
-				} else {
-					i++
-				}
-				
-				if (diagramCell.content.isDiagram){//if diagram in diagram make new cell to split further
-					const cellToSplit = makeCell({
-						x: cell.x + diagramCell.x * widthScale,
-						y: cell.y + diagramCell.y * heightScale,
-						width: diagramCell.width * widthScale,
-						height: diagramCell.height * heightScale,
-						colour: cell.colour,
-					})
-					addCell(cellToSplit)
-					addedChildren.push(...splitCellToDiagram(cellToSplit,diagramCell.content))
-				} else {
-					const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour})
-					const colour = colours[Random.Uint32 % colours.length]
+		for (const diagramCell of flatDiagram) {
 
-					const child = makeCell({
-						x: cell.x + diagramCell.x * widthScale,
-						y: cell.y + diagramCell.y * heightScale,
-						width: diagramCell.width * widthScale,
-						height: diagramCell.height * heightScale,
-						colour: colour,
-					})
+			const colours = getSplashesArrayFromArray(diagramCell.content, {source: cell.colour})
+			const colour = colours[Random.Uint32 % colours.length]
 
-					children.push(child)
-				}
-			}
+			const child = makeCell({
+				x: cell.x + diagramCell.x * widthScale,
+				y: cell.y + diagramCell.y * heightScale,
+				width: diagramCell.width * widthScale,
+				height: diagramCell.height * heightScale,
+				colour: colour,
+			})
+
+			children.push(child)
 		}
 
 		deleteCell(cell)
 		for (const child of children) {
 			addCell(child)
 		}
-		children.push(...addedChildren)
+
 		return children
 
 	}
+	
 
 	// Warning: bugs will happen if you try to merge cells that don't align or aren't next to each other
 	const mergeCells = (cells) => {
@@ -1923,6 +1888,7 @@ on.load(() => {
 
 		return [width, height]
 	}
+	
 
 	//===============//
 	// DRAGON - RULE //
@@ -8287,17 +8253,39 @@ registerRule(
 		return orderedCellAtoms
 	}
 
+	const getBounds = (cells) => {
 
+		let left = Infinity
+		let right = -Infinity
+		let top = Infinity
+		let bottom = -Infinity
+
+		for (const cell of cells) {
+
+			const cleft = cell.x
+			const cright = cell.x + cell.width
+			const ctop = cell.y
+			const cbottom = cell.y + cell.height
+
+			if (cleft < left) left = cleft
+			if (ctop < top) top = ctop
+			if (cright > right) right = cright
+			if (cbottom > bottom) bottom = cbottom
+		}
+
+
+		return [left, right, top, bottom]
+	}
 	
 	const makeDiagramCellsFromCellAtoms = (cellAtoms) => {
 
 		const orderedCellAtoms = getOrderedCellAtoms(cellAtoms)
-		const origin = orderedCellAtoms[0]
+		const [left, , top, ] = getBounds(cellAtoms)
 		const diagramCells = []
 
 		for (const cellAtom of cellAtoms) {
-			const x = (cellAtom.x - origin.x) / cellAtom.width
-			const y = (cellAtom.y - origin.y) / cellAtom.height
+			const x = (cellAtom.x - left) / cellAtom.width
+			const y = (cellAtom.y - top) / cellAtom.height
 
 			const leftClone = cloneDragonArray(cellAtom.value) //TODO: should act different for multis
 			const diagramCell = makeDiagramCell({x, y, content: leftClone})
@@ -8308,6 +8296,69 @@ registerRule(
 		return diagramCells
 
 	}
+
+
+	//this only works on nested diagrams where every cell is the same size
+	const flattenAndFillDiagramCells = (diagramCells, fillContent) => {
+		const orderedCells = getOrderedCellAtoms(diagramCells)
+		
+		const [diagramLeft, diagramRight, diagramTop, diagramBottom] = getBounds(diagramCells)
+		
+		const diagramWidth = diagramRight - diagramLeft
+		const diagramHeight = diagramBottom - diagramTop
+		const dimX = diagramCells.length == 0 ? 1 : Math.round(diagramWidth/orderedCells[0].width)
+		const dimY = diagramCells.length == 0 ? 1 : Math.round(diagramHeight/orderedCells[0].height)
+		const miniWidth = 1/dimX
+		const miniHeight = 1/dimY
+		
+		let addCount=0
+		const flatList = []
+		for (let x = 0; x < dimX; x++) {
+			for (let y = 0; y < dimY; y++) {				
+				const miniDiagramCell = orderedCells[addCount]
+				
+				let miniClone
+				
+				if (miniDiagramCell === undefined || ((miniDiagramCell.x-diagramLeft)/diagramWidth+128 != x/dimX+128) || ((miniDiagramCell.y-diagramTop)/diagramHeight+128 != y/dimY+128)){
+					if(fillContent){
+						miniClone = cloneDragonArray(fillContent)
+					} else {
+						continue
+					}
+				} else { 
+					addCount++
+					if (miniDiagramCell.content.isDiagram){ //if mini-mini cells
+						for (const miniMiniCell of flattenAndFillDiagramCells(miniDiagramCell.content.left,fillContent)) {
+							const diagramCell = makeDiagramCell({
+								x: (x + miniMiniCell.x)/dimX,
+								y: (y + miniMiniCell.y)/dimY,
+								width: miniWidth * miniMiniCell.width,
+								height: miniHeight * miniMiniCell.height,
+								content: miniMiniCell.content,
+							})
+							flatList.push(diagramCell)
+						}
+						continue
+					} else{
+						miniClone = cloneDragonArray(miniDiagramCell.content)
+					}
+				}
+				
+				const diagramCell = makeDiagramCell({
+					x: x/dimX,
+					y: y/dimY,
+					width: miniWidth,
+					height: miniHeight,
+					content: miniClone,
+				})
+				flatList.push(diagramCell)
+			}
+			
+		}
+		return flatList
+	}
+	
+	
 	
 	//adds diagram to left assuming every cell is the same size
 	const addDiagramCellsToLeftList = (diagramCells, list, stampeds, posX, posY, sizeX=1, sizeY=1) => {
@@ -8334,7 +8385,9 @@ registerRule(
 		let addCount = 0
 		const orderedMiniLeftCells = getOrderedCellAtoms(diagramCells)
 		// get diagram dimensions
-		const [diagramWidth, diagramHeight] = getDiagramDimensions(makeDiagram({left:diagramCells}))
+		const [diagramLeft, diagramRight, diagramTop, diagramBottom] = getBounds(diagramCells)
+		const diagramWidth = diagramRight - diagramLeft
+		const diagramHeight = diagramBottom - diagramTop
 		const dimX = Math.round(diagramWidth/orderedMiniLeftCells[0].width)
 		const dimY = Math.round(diagramHeight/orderedMiniLeftCells[0].height)
 
@@ -8352,7 +8405,7 @@ registerRule(
 				
 				let miniClone
 				//fills in not filled spaces
-				if (miniDiagramCell === undefined || (miniDiagramCell.x/diagramWidth+128 != x/dimX+128) || (miniDiagramCell.y/diagramHeight+128 != y/dimY+128)){
+				if (miniDiagramCell === undefined || ((miniDiagramCell.x-diagramLeft)/diagramWidth+128 != x/dimX+128) || ((miniDiagramCell.y-diagramTop)/diagramHeight+128 != y/dimY+128)){
 					const red = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 0})
 					const green = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 1})
 					const blue = makeNumber({values: [true, true, true, true, true, true, true, true, true, true], channel: 2})
@@ -8409,7 +8462,9 @@ registerRule(
 		
 		const orderedMiniLeftCells = getOrderedCellAtoms(diagramCells)
 		// get diagram dimensions
-		const [diagramWidth, diagramHeight] = getDiagramDimensions(makeDiagram({left:diagramCells}))
+		const [diagramLeft, diagramRight, diagramTop, diagramBottom] = getBounds(diagramCells)
+		const diagramWidth = diagramRight - diagramLeft
+		const diagramHeight = diagramBottom - diagramTop
 		const dimX = Math.round(diagramWidth/orderedMiniLeftCells[0].width)
 		const dimY = Math.round(diagramHeight/orderedMiniLeftCells[0].height)
 		
@@ -8422,7 +8477,7 @@ registerRule(
 						height: sizeY,
 						instruction: DRAGON_INSTRUCTION.merge,
 						splitX: 1,
-						splitY: miniCounts.total,
+						splitY: miniCounts.total,//workaround to merge not evenly split cells
 				})
 				
 				list.push(mergeCell)
@@ -8456,7 +8511,7 @@ registerRule(
 				
 				let miniClone
 				//fills in not filled spaces
-				if (miniDiagramCell === undefined || (dimX*dimY > 1) && ((miniDiagramCell.x/diagramWidth+128 != x/dimX+128) || (miniDiagramCell.y/diagramHeight+128 != y/dimY+128))){
+				if (miniDiagramCell === undefined || (dimX*dimY > 1) && (((miniDiagramCell.x-diagramLeft)/diagramWidth+128 != x/dimX+128) || ((miniDiagramCell.y-diagramTop)/diagramHeight+128 != y/dimY+128))){
 					addDiagramCellsToRightList(undefined, list, stampeds, miniX, miniY, miniCounts[x*dimY + y], miniWidth, miniHeight)
 					continue
 				} else if (miniDiagramCell.content.isDiagram) {//if mini-mini cells
@@ -8563,30 +8618,11 @@ registerRule(
 				// Recolour every mini-cell!
 				addDiagramCellsToRightList(rightContent.left, right, stampeds, x, y, miniCount)
 				
-			} else if (!cellAtom.isLeftSlot && cellAtom.value.isDiagram) {
-				if (rightContent === undefined){
-					addDiagramCellsToRightList(rightContent, right, stampeds, x, y, miniCount)
-				}
-				else {
-					const rightClone = cloneDragonArray(rightContent)
-					addDiagramCellsToRightList([makeDiagramCell({x, y, content: rightClone})], right, stampeds, x, y, miniCount)
-				}
-			} else if (rightContent === undefined) {
-				const nothingCell = makeDiagramCell({
-					x,
-					y,
-					instruction: DRAGON_INSTRUCTION.nothing,
-				})
-
-				right.push(nothingCell)
-
+			} else if (rightContent === undefined){
+				addDiagramCellsToRightList(rightContent, right, stampeds, x, y, miniCount)
 			} else {
-
-				// Just recolour a single cell
 				const rightClone = cloneDragonArray(rightContent)
-				applyRangeStamp(stampeds, rightClone)
-				const rightDiagramCell = makeDiagramCell({x, y, content: rightClone})
-				right.push(rightDiagramCell)
+				addDiagramCellsToRightList([makeDiagramCell({x, y, content: rightClone})], right, stampeds, x, y, miniCount)
 			}
 		}
 		
