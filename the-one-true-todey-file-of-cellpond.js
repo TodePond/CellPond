@@ -6607,7 +6607,7 @@ registerRule(
 				const option = createChild(atom, {...COLOURTODE_PICKER_CHANNEL_OPTION, pityTop, pityBottom})
 				
 				if (oldOptions !== undefined) {
-					option.isGradient = true
+					option.isGradient = oldOptions[i].isGradient
 					option.gradient = oldOptions[i].gradient
 				}
 
