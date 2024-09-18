@@ -1025,7 +1025,8 @@ on.load(() => {
 		}
 
 		else if (e.ctrlKey || e.metaKey) {
-			CT_SCALE -= dy * 0.1
+			if (CT_SCALE - dy * 0.1 > 0.05)
+				CT_SCALE -= dy * 0.1
 			const allAtoms = getAllAtoms()
 			for (const atom of allAtoms) {
 				atom.needsColoursUpdate = true
