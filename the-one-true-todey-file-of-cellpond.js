@@ -4762,6 +4762,9 @@ registerRule(
 					const paddle = atom.highlightedAtom
 					atom.attached = true
 
+					atom.dx = 0
+					atom.dy = 0
+
 					if (atom.highlightedSide === "right") {
 
 						const dummy = createChild(paddle, SLOT, {bottom: true})
@@ -4782,8 +4785,7 @@ registerRule(
 						paddle.cellAtoms.push(atom)
 						atom.x = atom.highlightedAtom.x
 						atom.y = atom.highlightedAtom.y
-						atom.dx = 0
-						atom.dy = 0
+						
 						giveChild(paddle, atom)
 					}
 
@@ -4811,6 +4813,8 @@ registerRule(
 					paddle.cellAtoms.splice(id, 1)
 					atom.x = slot.x
 					atom.y = slot.y
+					atom.dx = 0
+					atom.dy = 0
 
 					atom.attached = true
 					paddle.cellAtoms.push(atom)
