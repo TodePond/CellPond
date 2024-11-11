@@ -1025,7 +1025,8 @@ on.load(() => {
 		}
 
 		else if (e.ctrlKey || e.metaKey) {
-			CT_SCALE -= dy * 0.1
+			if (CT_SCALE - dy * 0.1 > 0.05)
+				CT_SCALE -= dy * 0.1
 			const allAtoms = getAllAtoms()
 			for (const atom of allAtoms) {
 				atom.needsColoursUpdate = true
@@ -4762,6 +4763,9 @@ registerRule(
 					const paddle = atom.highlightedAtom
 					atom.attached = true
 
+					atom.dx = 0
+					atom.dy = 0
+
 					if (atom.highlightedSide === "right") {
 
 						const dummy = createChild(paddle, SLOT, {bottom: true})
@@ -4782,8 +4786,7 @@ registerRule(
 						paddle.cellAtoms.push(atom)
 						atom.x = atom.highlightedAtom.x
 						atom.y = atom.highlightedAtom.y
-						atom.dx = 0
-						atom.dy = 0
+						
 						giveChild(paddle, atom)
 					}
 
@@ -4811,6 +4814,8 @@ registerRule(
 					paddle.cellAtoms.splice(id, 1)
 					atom.x = slot.x
 					atom.y = slot.y
+					atom.dx = 0
+					atom.dy = 0
 
 					atom.attached = true
 					paddle.cellAtoms.push(atom)
@@ -6607,7 +6612,7 @@ registerRule(
 				const option = createChild(atom, {...COLOURTODE_PICKER_CHANNEL_OPTION, pityTop, pityBottom})
 				
 				if (oldOptions !== undefined) {
-					option.isGradient = true
+					option.isGradient = oldOptions[i].isGradient
 					option.gradient = oldOptions[i].gradient
 				}
 
