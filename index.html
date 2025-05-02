@@ -22,7 +22,10 @@
 <script src="libraries/colour.js"></script>
 <script src="the-one-true-todey-file-of-cellpond.js"></script>
 <script type="module">
-  import { addPondiverseButton } from "https://www.pondiverse.com/pondiverse.js";
+  import {
+    addPondiverseButton,
+    fetchPondiverseCreation,
+  } from "https://www.pondiverse.com/pondiverse.js";
 
   const offscreenCanvas = document.createElement("canvas");
   const offscreenContext = offscreenCanvas.getContext("2d");
@@ -48,4 +51,14 @@
       };
     });
   });
+
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const pondiverseCreation = urlSearchParams.get("creation");
+  if (pondiverseCreation) {
+    fetchPondiverseCreation(pondiverseCreation).then((creation) => {
+      const file = JSON.parse(creation.data);
+      const paddles = file.paddles;
+      unpackPaddles(paddles);
+    });
+  }
 </script>
