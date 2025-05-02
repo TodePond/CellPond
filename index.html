@@ -34,6 +34,8 @@
       const paddleCanvas = canvases[1];
       offscreenCanvas.width = canvas.width;
       offscreenCanvas.height = canvas.height;
+      offscreenContext.fillStyle = Colour.Void;
+      offscreenContext.fillRect(0, 0, canvas.width, canvas.height);
       offscreenContext.drawImage(canvas, 0, 0);
       offscreenContext.drawImage(paddleCanvas, 0, 0);
 
