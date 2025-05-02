@@ -24,16 +24,25 @@
 <script type="module">
   import { addPondiverseButton } from "https://www.pondiverse.com/pondiverse.js";
 
+  const offscreenCanvas = document.createElement("canvas");
+  const offscreenContext = offscreenCanvas.getContext("2d");
+
   requestAnimationFrame(() => {
     addPondiverseButton(() => {
       const canvases = document.querySelectorAll("canvas");
       const canvas = canvases[0];
+      const paddleCanvas = canvases[1];
+      offscreenCanvas.width = canvas.width;
+      offscreenCanvas.height = canvas.height;
+      offscreenContext.drawImage(canvas, 0, 0);
+      offscreenContext.drawImage(paddleCanvas, 0, 0);
+
       return {
         type: "cellpond",
         data: JSON.stringify({
           paddles: packPaddles(),
         }),
-        image: canvas.toDataURL("image/png"),
+        image: offscreenCanvas.toDataURL("image/png"),
       };
     });
   });
