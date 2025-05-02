@@ -9682,7 +9682,7 @@ registerRule(
 		return arrow
 	}
 
-	const packPaddles = () => {
+	window.packPaddles = () => {
 		const packedPaddles = []
 		for (const paddle of paddles) {
 			const packedPaddle = {}
@@ -9699,7 +9699,7 @@ registerRule(
 		return JSON.stringify(packedPaddles)		
 	}
 
-	const unpackPaddles = (pack) => {
+	window.unpackPaddles = (pack) => {
 	    	if (middleClicked) {
 	        	middleClicked = false
 	        	return
