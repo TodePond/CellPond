@@ -391,17 +391,20 @@ const getCells = () => {
 // Note: Cells can be in multiple sections if they are big enough :)
 // NOTE: GRID_SIZE MUST BE BIG ENOUGH SO THAT SECTIONS ARE SMALLER OR EQUAL TO WORLD CELLS
 const GRID_SIZE = 128
-for (let x = 0; x < GRID_SIZE; x++) {
-	for (let y = 0; y < GRID_SIZE; y++) {
-		const section = new Set()
-		state.grid.push(section)
-		section.left = x / GRID_SIZE
-		section.top = y / GRID_SIZE
-		section.right = section.left + 1/GRID_SIZE
-		section.bottom = section.top + 1/GRID_SIZE
-		section.isSection = true
+const initialiseGrid = () => {
+	for (let x = 0; x < GRID_SIZE; x++) {
+		for (let y = 0; y < GRID_SIZE; y++) {
+			const section = new Set()
+			state.grid.push(section)
+			section.left = x / GRID_SIZE
+			section.top = y / GRID_SIZE
+			section.right = section.left + 1/GRID_SIZE
+			section.bottom = section.top + 1/GRID_SIZE
+			section.isSection = true
+		}
 	}
 }
+initialiseGrid()
 
 const cacheCell = (cell) => {
 	const left = Math.floor(cell.left * GRID_SIZE)
@@ -426,6 +429,30 @@ const uncacheCell = (cell) => {
 		section.delete(cell)
 	}
 }
+
+const deleteAllCells = () => {
+	for (const section of state.grid) {
+		for (const cell of section.values()) {
+			cell.isDeleted = true
+			cell.sections = []
+		}
+		section.clear()
+	}
+	state.cellCount = 0
+	state.grid = []
+	initialiseGrid()
+}
+
+const overrideCells = (cells) => {
+	deleteAllCells()
+	for (const cell of cells) {
+		// cell.sections = []
+		// cacheCell(cell)
+		addCell(cell)
+	}
+	drawQueueNeedsReset = true
+}
+
 
 //=======//
 // SETUP //
@@ -9811,7 +9838,27 @@ registerRule(
 			return packedCell
 		})
 		const packedString = JSON.stringify([...packedCells])
-		return packedString
+
+		const compressedString = LZString.compress(packedString)
+		return compressedString
+	}
+
+	window.unpackWorld = (compressedString) => {
+		const packedString = LZString.decompress(compressedString)
+		const packedCells = JSON.parse(packedString)
+		// deleteAllCells()
+		const cells = packedCells.map(packedCell => {
+			const {x, y, w, h, c} = packedCell
+			const cell = makeCell({
+				x,
+				y,
+				width: w,
+				height: h,
+				colour: c,
+			})
+			return cell
+		})
+		overrideCells(cells)
 	}
 })
 

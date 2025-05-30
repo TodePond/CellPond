@@ -20,6 +20,7 @@
   Habitat.install(this);
 </script>
 <script src="libraries/colour.js"></script>
+<script src="libraries/lz-string.js"></script>
 <script src="the-one-true-todey-file-of-cellpond.js"></script>
 <script type="module">
   import {
@@ -42,7 +43,6 @@
       offscreenContext.drawImage(canvas, 0, 0);
       offscreenContext.drawImage(paddleCanvas, 0, 0);
       const world = packWorld();
-      console.log(world);
       return {
         type: "cellpond",
         data: JSON.stringify({
@@ -61,6 +61,10 @@
       const file = JSON.parse(creation.data);
       const paddles = file.paddles;
       unpackPaddles(paddles);
+      const world = file.world;
+      if (world) {
+        unpackWorld(world);
+      }
     });
   }
 </script>
