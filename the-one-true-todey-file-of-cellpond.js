@@ -9734,6 +9734,7 @@ registerRule(
 		}
 	}
 
+
 	const download = (content, fileName, contentType) => {
 		var a = document.createElement("a")
 		var file = new Blob([content], {type: contentType})
@@ -9795,6 +9796,23 @@ registerRule(
 		navigator.clipboard.writeText(pack)
 	}
 
+	// store the state of the grid
+	window.packWorld = () => {
+		const cells = getCells().values()
+		const packedCells = cells.map(cell => {
+			// x=0, y=0, width=1, height=1, colour=112
+			const packedCell = {
+				x: cell.x,
+				y: cell.y,
+				w: cell.width,
+				h: cell.height,
+				c: cell.colour,
+			}
+			return packedCell
+		})
+		const packedString = JSON.stringify([...packedCells])
+		return packedString
+	}
 })
 
 //=============================================================
