@@ -339,8 +339,14 @@ function addPondiverseDialog(
         "Upload failed. Oh no! It's probably because your world is too big and intense. Maybe your fractal is TOO DEEP. Maybe your colours are TOO COMPLEX. You are a true star.\n\nWould you like to upload your creation with an empty grid to try again?"
       );
       if (response) {
-        // const creation = getPondiverseCreation();
-        // const data = JSON.parse(creation.data);
+        openPondiverseDialog(() => {
+          return {
+            type: "screenpond",
+            data: "",
+            image: request.image,
+            title: request.title,
+          };
+        });
       }
       return;
     }
