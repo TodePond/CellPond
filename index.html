@@ -42,12 +42,12 @@
       offscreenContext.fillRect(0, 0, canvas.width, canvas.height);
       offscreenContext.drawImage(canvas, 0, 0);
       offscreenContext.drawImage(paddleCanvas, 0, 0);
-      const world = packWorld();
+      // const world = packWorld();
       return {
         type: "cellpond",
         data: JSON.stringify({
           paddles: packPaddles(),
-          world,
+          // world,
         }),
         image: offscreenCanvas.toDataURL("image/png"),
       };
@@ -63,7 +63,7 @@
       unpackPaddles(paddles);
       const world = file.world;
       if (world) {
-        unpackWorld(world);
+        // unpackWorld(world);
       }
     });
   }
