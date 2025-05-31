@@ -65,7 +65,8 @@ document.addEventListener('mousedown', function(event) {
 const urlParams = new URLSearchParams(window.location.search)
 const NO_SECRET_MODE = urlParams.has("nosecret")
 const NO_FOOLS_MODE = urlParams.has("nofools")
-const UNLOCK_MODE = urlParams.has("unlock")
+const UNLOCK_MODE = true
+// const UNLOCK_MODE = urlParams.has("unlock")
 const SCALE = urlParams.get("scale") ?? 1
 const DPR = urlParams.get("dpr") ?? devicePixelRatio
 print('DPR:', DPR)
