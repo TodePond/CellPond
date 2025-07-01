@@ -1579,8 +1579,9 @@ on.load(() => {
 	const makeNumber = ({values, channel = 0, variable, add, subtract} = {}) => {
 		let numberValues = undefined
 		
-		if (variable !== undefined) {
+		if (variable !== undefined || values === ({}).values) {
 			// placeholder for places in the codebase that don't specify a source!
+			// also placeholder for places in the codebase with empty calls
 			numberValues = [true, true, true, true, true, true, true, true, true, true]
 			//numberValues = [false, false, false, false, false, false, false, false, false, false]
 		}
@@ -2422,7 +2423,7 @@ on.load(() => {
 		}
 
 		if (addend.subtract !== undefined) {
-			results = addChannelToResults(results, addend.add, {source, multiplier: -1, isHue})
+			results = addChannelToResults(results, addend.subtract, {source, multiplier: -1, isHue})
 		}
 		
 		return results
